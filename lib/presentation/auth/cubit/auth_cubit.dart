@@ -1,0 +1,151 @@
+import '../../../core/base/base_cubit.dart';
+import '../../../data/repositories/auth_repository.dart';
+import 'auth_state.dart';
+
+class AuthCubit extends BaseCubit<AuthState> {
+  AuthCubit({required this.repository}) : super(const AuthState());
+
+  final AuthRepository repository;
+
+  Future<void> initialize() async {
+    emit(state.copyWith(status: AuthStatus.loading, clearError: true));
+
+    try {
+      final onboardingCompleted = await repository.isOnboardingCompleted();
+
+      if (!onboardingCompleted) {
+        emit(state.copyWith(status: AuthStatus.onboarding));
+        return;
+      }
+
+      final user = await repository.getCurrentUser();
+      if (user != null) {
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+          ),
+        );
+        return;
+      }
+
+      emit(state.copyWith(status: AuthStatus.unauthenticated));
+    } catch (error, stackTrace) {
+      logError('Failed to initialize auth', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          errorMessage: 'Unable to load session. Please sign in.',
+        ),
+      );
+    }
+  }
+
+  Future<void> completeOnboarding() async {
+    try {
+      await repository.setOnboardingCompleted();
+      emit(state.copyWith(status: AuthStatus.unauthenticated, clearError: true));
+    } catch (error, stackTrace) {
+      logError('Failed to complete onboarding', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          errorMessage: 'Something went wrong. Please try again.',
+        ),
+      );
+    }
+  }
+
+  Future<void> login({
+    required String email,
+    required String password,
+  }) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      final user = await repository.login(email: email, password: password);
+      emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          isSubmitting: false,
+        ),
+      );
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Login failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Sign in failed. Please try again.',
+        ),
+      );
+    }
+  }
+
+  Future<void> signup({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      final user = await repository.signup(
+        name: name,
+        email: email,
+        password: password,
+      );
+      emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          isSubmitting: false,
+        ),
+      );
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Signup failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Account creation failed. Please try again.',
+        ),
+      );
+    }
+  }
+
+  Future<void> logout() async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      await repository.logout();
+      emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          clearUser: true,
+          isSubmitting: false,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Logout failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Sign out failed. Please try again.',
+        ),
+      );
+    }
+  }
+}

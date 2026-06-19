@@ -1,0 +1,35 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'core/constants/app_constants.dart';
+import 'core/di/service_locator.dart';
+import 'core/theme/app_theme.dart';
+import 'presentation/app_gate/view/app_gate_view.dart';
+import 'presentation/auth/cubit/auth_cubit.dart';
+import 'presentation/home/cubit/home_cubit.dart';
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => sl<AuthCubit>()..initialize(),
+        ),
+        BlocProvider(
+          create: (_) => sl<HomeCubit>(),
+        ),
+      ],
+      child: MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.light,
+        home: const AppGateView(),
+      ),
+    );
+  }
+}

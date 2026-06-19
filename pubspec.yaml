@@ -29,6 +29,7 @@ flutter:
     - assets/fonts/
     - assets/images/onboarding/
     - assets/images/auth/
+    - assets/images/auth/icons/
 
   fonts:
     - family: DM Sans

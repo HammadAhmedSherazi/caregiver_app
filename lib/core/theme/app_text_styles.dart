@@ -162,6 +162,68 @@ class AppTextStyles {
         letterSpacing: -0.6,
       );
 
+  static TextStyle get authLoginButtonLabel => _base(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.authButtonText,
+        height: 1.09,
+        letterSpacing: -0.54,
+      );
+
+  static TextStyle get authTitle => _base(
+        fontSize: 26,
+        fontWeight: FontWeight.w800,
+        color: AppColors.authOnGradient,
+        height: 1.2,
+        letterSpacing: -1.04,
+      );
+
+  static TextStyle get authSubtitle => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: AppColors.authOnGradient,
+        height: 1.25,
+        letterSpacing: -0.48,
+      );
+
+  static TextStyle get authFieldHint => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.authFieldHint,
+        height: 1,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get authLink => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get authFooterTitle => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.authOnGradient,
+        height: 1.25,
+      );
+
+  static TextStyle get authFooterLink => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+      );
+
+  static TextStyle get authSocialLabel => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        height: 1.5,
+        letterSpacing: -0.48,
+        color: AppColors.authDarkText,
+      );
+
   static TextTheme get textTheme => TextTheme(
         displayLarge: displayLarge,
         displayMedium: displayMedium,

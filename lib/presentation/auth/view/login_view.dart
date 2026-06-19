@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/helpers/snackbar_helper.dart';
 import '../../../core/utils/validators/form_validators.dart';
-import '../../widgets/auth_shell.dart';
+import '../../widgets/auth/auth_or_divider.dart';
+import '../../widgets/auth/auth_page_footer.dart';
+import '../../widgets/auth/auth_page_header.dart';
+import '../../widgets/auth/auth_primary_button.dart';
+import '../../widgets/auth/auth_screen_shell.dart';
+import '../../widgets/auth/auth_social_button.dart';
+import '../../widgets/auth/auth_text_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'signup_view.dart';
@@ -21,7 +29,7 @@ class _LoginViewState extends State<LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  bool _rememberMe = true;
 
   @override
   void dispose() {
@@ -58,117 +66,145 @@ class _LoginViewState extends State<LoginView> {
           SnackbarHelper.showError(context, state.errorMessage!);
         }
       },
-      child: AuthShell(
-        title: 'Sign in',
-        subtitle: 'Welcome back. Enter your credentials to continue.',
-        footer: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Don't have an account? ",
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            TextButton(
-              onPressed: _goToSignup,
-              child: const Text('Sign up'),
-            ),
-          ],
-        ),
-        child: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            return Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'you@example.com',
-                      prefixIcon: Icon(Icons.email_outlined),
+      child: AuthScreenShell(
+        maxContentWidth: 430,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, state) {
+              return Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const AuthPageHeader(),
+                    const SizedBox(height: 39),
+                    AuthTextField(
+                      hint: 'Enter Email',
+                      prefixIconAsset: AppAssets.icEmail,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      validator: FormValidators.email,
                     ),
-                    validator: FormValidators.email,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.password],
-                    onFieldSubmitted: (_) => _onSubmit(),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
+                    const SizedBox(height: 14),
+                    AuthTextField(
+                      hint: 'Password',
+                      prefixIconAsset: AppAssets.icPassword,
+                      controller: _passwordController,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.password],
+                      onFieldSubmitted: (_) => _onSubmit(),
+                      validator: (value) =>
+                          FormValidators.required(value, fieldName: 'Password'),
+                    ),
+                    const SizedBox(height: 17),
+                    Row(
+                      children: [
+                        _RememberMeTile(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() => _rememberMe = value);
+                          },
                         ),
-                      ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () {},
+                          child: Text(
+                            'Forget Password?',
+                            style: AppTextStyles.authLink,
+                          ),
+                        ),
+                      ],
                     ),
-                    validator: (value) =>
-                        FormValidators.required(value, fieldName: 'Password'),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
+                    const SizedBox(height: 32),
+                    AuthPrimaryButton(
+                      label: 'Login Now',
+                      height: 60,
+                      borderRadius: 14,
+                      horizontalPadding: 32,
+                      labelStyle: AppTextStyles.authLoginButtonLabel,
+                      isLoading: state.isSubmitting,
+                      onPressed: _onSubmit,
+                    ),
+                    const SizedBox(height: 40),
+                    const AuthOrDivider(),
+                    const SizedBox(height: 34),
+                    AuthSocialButton(
+                      label: 'Sign in with Apple',
+                      iconAsset: AppAssets.icApple,
+                      variant: AuthSocialButtonVariant.apple,
                       onPressed: () {},
-                      child: Text(
-                        'Forgot password?',
-                        style: AppTextStyles.labelLarge.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: state.isSubmitting ? null : _onSubmit,
-                    child: state.isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Sign in'),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                      ),
+                    const SizedBox(height: 12),
+                    AuthSocialButton(
+                      label: 'Sign in with Google',
+                      iconAsset: AppAssets.icGoogle,
+                      variant: AuthSocialButtonVariant.google,
+                      onPressed: () {},
                     ),
-                    child: Text(
-                      'Demo: caregiver@example.com / password123',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.primaryDark,
-                      ),
-                      textAlign: TextAlign.center,
+                    const SizedBox(height: 12),
+                    AuthSocialButton(
+                      label: 'Sign in with Facebook',
+                      iconAsset: AppAssets.icFacebook,
+                      variant: AuthSocialButtonVariant.facebook,
+                      onPressed: () {},
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                    AuthPageFooter(
+                      title: 'Haven’t signed up yet?',
+                      actionLabel: 'Create an account',
+                      onActionTap: _goToSignup,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _RememberMeTile extends StatelessWidget {
+  const _RememberMeTile({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: value
+                ? SvgPicture.asset(AppAssets.icRememberMe)
+                : Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.authOnGradient,
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            'Remember Me',
+            style: AppTextStyles.authLink,
+          ),
+        ],
       ),
     );
   }

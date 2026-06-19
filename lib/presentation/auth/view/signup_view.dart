@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/app_assets.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/helpers/snackbar_helper.dart';
 import '../../../core/utils/validators/form_validators.dart';
-import '../../widgets/auth_shell.dart';
+import '../../widgets/auth/auth_page_footer.dart';
+import '../../widgets/auth/auth_page_header.dart';
+import '../../widgets/auth/auth_primary_button.dart';
+import '../../widgets/auth/auth_screen_shell.dart';
+import '../../widgets/auth/auth_text_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 
@@ -20,8 +26,6 @@ class _SignupViewState extends State<SignupView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -58,123 +62,93 @@ class _SignupViewState extends State<SignupView> {
           SnackbarHelper.showError(context, state.errorMessage!);
         }
       },
-      child: AuthShell(
-        title: 'Create account',
-        subtitle: 'Join Caregiver App and start managing care visits today.',
-        footer: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Already have an account? '),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Sign in'),
-            ),
-          ],
-        ),
-        child: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            return Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.name],
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Full name',
-                      hintText: 'Jane Doe',
-                      prefixIcon: Icon(Icons.person_outline),
+      child: AuthScreenShell(
+        maxContentWidth: 430,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, state) {
+              return Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const AuthPageHeader(topSpacing: 100),
+                    const SizedBox(height: 39),
+                    AuthTextField(
+                      hint: 'Enter Full Name',
+                      prefixIconAsset: AppAssets.icUser,
+                      controller: _nameController,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.name],
+                      textCapitalization: TextCapitalization.words,
+                      validator: (value) =>
+                          FormValidators.required(value, fieldName: 'Name'),
                     ),
-                    validator: (value) =>
-                        FormValidators.required(value, fieldName: 'Name'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'you@example.com',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    const SizedBox(height: 14),
+                    AuthTextField(
+                      hint: 'Enter Email',
+                      prefixIconAsset: AppAssets.icEmail,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      validator: FormValidators.email,
                     ),
-                    validator: FormValidators.email,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.newPassword],
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
+                    const SizedBox(height: 14),
+                    AuthTextField(
+                      hint: 'Password',
+                      prefixIconAsset: AppAssets.icPassword,
+                      controller: _passwordController,
+                      obscureText: true,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.newPassword],
+                      validator: (value) => FormValidators.minLength(
+                        value,
+                        8,
+                        fieldName: 'Password',
                       ),
                     ),
-                    validator: (value) =>
-                        FormValidators.minLength(value, 8, fieldName: 'Password'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: _obscureConfirmPassword,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _onSubmit(),
-                    decoration: InputDecoration(
-                      labelText: 'Confirm password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(
-                            () => _obscureConfirmPassword =
-                                !_obscureConfirmPassword,
-                          );
-                        },
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
+                    const SizedBox(height: 14),
+                    AuthTextField(
+                      hint: 'Re - Enter Password',
+                      prefixIconAsset: AppAssets.icPassword,
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _onSubmit(),
+                      validator: (value) {
+                        final requiredError = FormValidators.required(
+                          value,
+                          fieldName: 'Confirm password',
+                        );
+                        if (requiredError != null) return requiredError;
+
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: state.isSubmitting ? null : _onSubmit,
-                    child: state.isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Create account'),
-                  ),
-                ],
-              ),
-            );
-          },
+                    const SizedBox(height: 32),
+                    AuthPrimaryButton(
+                      label: 'Signup Now',
+                      height: 60,
+                      borderRadius: 14,
+                      horizontalPadding: 32,
+                      labelStyle: AppTextStyles.authLoginButtonLabel,
+                      isLoading: state.isSubmitting,
+                      onPressed: _onSubmit,
+                    ),
+                    AuthPageFooter(
+                      title: 'Already have an account?',
+                      actionLabel: 'Sign in',
+                      onActionTap: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

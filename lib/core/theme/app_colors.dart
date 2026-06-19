@@ -13,6 +13,10 @@ class AppColors {
   static const Color authGlowBottom = Color(0xFF1F78FF);
   static const Color authButtonText = Color(0xFF003399);
   static const Color authOnGradient = Color(0xFFFFFFFF);
+  static const Color authFieldHint = Color(0x590D1B2A);
+  static const Color authDarkText = Color(0xFF0D1B2A);
+  static const Color authDivider = Color(0xFF2D469A);
+  static const Color authFacebookBlue = Color(0xFF0078FF);
 
   static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Color(0xFFFFFFFF);

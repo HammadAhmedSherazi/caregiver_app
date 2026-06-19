@@ -19,6 +19,7 @@ class AuthPrimaryButton extends StatelessWidget {
     this.height = 66,
     this.borderRadius = 18,
     this.horizontalPadding = 32,
+    this.labelStyle,
   });
 
   final String label;
@@ -29,6 +30,7 @@ class AuthPrimaryButton extends StatelessWidget {
   final double height;
   final double borderRadius;
   final double horizontalPadding;
+  final TextStyle? labelStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -69,20 +71,16 @@ class AuthPrimaryButton extends StatelessWidget {
   }
 
   Widget _buildContent() {
+    final textStyle = labelStyle ?? AppTextStyles.authButtonLabel;
+
     if (!showTrailingIcon) {
-      return Text(
-        label,
-        style: AppTextStyles.authButtonLabel,
-      );
+      return Text(label, style: textStyle);
     }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.authButtonLabel,
-        ),
+        Text(label, style: textStyle),
         trailingIcon ?? const AuthForwardIcon(),
       ],
     );

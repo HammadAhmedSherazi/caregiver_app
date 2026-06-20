@@ -25,11 +25,7 @@ class AuthOrDivider extends StatelessWidget {
           ),
           child: Text(
             'OR',
-            style: AppTextStyles.labelMedium.copyWith(
-              color: AppColors.authDarkText,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.96,
-            ),
+            style: AppTextStyles.authOrLabel,
           ),
         ),
       ],

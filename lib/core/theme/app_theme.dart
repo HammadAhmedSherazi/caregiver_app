@@ -32,13 +32,24 @@ class AppTheme {
           systemOverlayStyle: SystemUiOverlayStyle.dark,
           titleTextStyle: AppTextStyles.titleLarge,
         ),
-        navigationRailTheme: const NavigationRailThemeData(
+        navigationRailTheme: NavigationRailThemeData(
           backgroundColor: AppColors.sidebar,
           indicatorColor: AppColors.primary,
-          selectedIconTheme: IconThemeData(color: Colors.white),
-          unselectedIconTheme: IconThemeData(color: AppColors.textOnDark),
-          selectedLabelTextStyle: TextStyle(color: Colors.white),
-          unselectedLabelTextStyle: TextStyle(color: AppColors.textOnDark),
+          selectedIconTheme: const IconThemeData(color: Colors.white),
+          unselectedIconTheme: const IconThemeData(color: AppColors.textOnDark),
+          selectedLabelTextStyle: AppFonts.base(
+            color: Colors.white,
+            fontWeight: AppFonts.medium,
+          ),
+          unselectedLabelTextStyle: AppFonts.base(
+            color: AppColors.textOnDark,
+            fontWeight: AppFonts.regular,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            textStyle: AppTextStyles.authFooterLink,
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(

@@ -103,7 +103,7 @@ class AuthCubit extends BaseCubit<AuthState> {
     }
   }
 
-  Future<void> signup({
+  Future<bool> signup({
     required String name,
     required String email,
     required String password,
@@ -111,18 +111,13 @@ class AuthCubit extends BaseCubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
     try {
-      final user = await repository.signup(
+      await repository.signup(
         name: name,
         email: email,
         password: password,
       );
-      emit(
-        state.copyWith(
-          status: AuthStatus.authenticated,
-          user: user,
-          isSubmitting: false,
-        ),
-      );
+      emit(state.copyWith(isSubmitting: false));
+      return true;
     } on AuthException catch (error) {
       emit(
         state.copyWith(
@@ -139,6 +134,135 @@ class AuthCubit extends BaseCubit<AuthState> {
         ),
       );
     }
+
+    return false;
+  }
+
+  Future<bool> resendVerificationEmail({required String email}) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      await repository.resendVerificationEmail(email: email);
+      emit(state.copyWith(isSubmitting: false));
+      return true;
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError(
+        'Resend verification email failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unable to resend verification email. Please try again.',
+        ),
+      );
+    }
+
+    return false;
+  }
+
+  Future<bool> submitActivationCode({
+    required String email,
+    required String code,
+  }) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      await repository.submitActivationCode(email: email, code: code);
+      emit(state.copyWith(isSubmitting: false));
+      return true;
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Activation code failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unable to verify activation code. Please try again.',
+        ),
+      );
+    }
+
+    return false;
+  }
+
+  Future<bool> completeRegistration({
+    required String email,
+    required String fullName,
+    required String ssnLast4,
+    required String dateOfBirth,
+    required String phoneNumber,
+  }) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      await repository.completeRegistration(
+        email: email,
+        fullName: fullName,
+        ssnLast4: ssnLast4,
+        dateOfBirth: dateOfBirth,
+        phoneNumber: phoneNumber,
+      );
+      emit(state.copyWith(isSubmitting: false));
+      return true;
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Registration failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Registration failed. Please try again.',
+        ),
+      );
+    }
+
+    return false;
+  }
+
+  Future<bool> acceptPrivacyTerms({required String email}) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      await repository.acceptPrivacyTerms(email: email);
+      emit(state.copyWith(isSubmitting: false));
+      return true;
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Accept terms failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unable to complete registration. Please try again.',
+        ),
+      );
+    }
+
+    return false;
   }
 
   Future<bool> forgotPassword({required String email}) async {

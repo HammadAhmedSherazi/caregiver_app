@@ -45,4 +45,17 @@ class FormValidators {
 
     return null;
   }
+
+  static String? ssnLast4(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'SSN is required';
+    }
+
+    final digits = value.trim();
+    if (digits.length != 4 || int.tryParse(digits) == null) {
+      return 'Enter the last 4 digits of your SSN';
+    }
+
+    return null;
+  }
 }

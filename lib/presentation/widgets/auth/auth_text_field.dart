@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -9,7 +10,7 @@ class AuthTextField extends StatelessWidget {
   const AuthTextField({
     super.key,
     required this.hint,
-    required this.prefixIconAsset,
+    this.prefixIconAsset,
     this.controller,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
@@ -18,11 +19,16 @@ class AuthTextField extends StatelessWidget {
     this.onFieldSubmitted,
     this.autofillHints,
     this.textCapitalization = TextCapitalization.none,
+    this.readOnly = false,
+    this.onTap,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   final String hint;
-  final String prefixIconAsset;
+  final String? prefixIconAsset;
   final TextEditingController? controller;
+  final bool readOnly;
   final bool obscureText;
   final TextInputType keyboardType;
   final TextInputAction? textInputAction;
@@ -30,13 +36,20 @@ class AuthTextField extends StatelessWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final Iterable<String>? autofillHints;
   final TextCapitalization textCapitalization;
+  final VoidCallback? onTap;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
+    final hasPrefixIcon = prefixIconAsset != null;
+
     return SizedBox(
       height: 60,
       child: TextFormField(
         controller: controller,
+        readOnly: readOnly,
+        onTap: onTap,
         obscureText: obscureText,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
@@ -44,23 +57,33 @@ class AuthTextField extends StatelessWidget {
         onFieldSubmitted: onFieldSubmitted,
         autofillHints: autofillHints,
         textCapitalization: textCapitalization,
-        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.authDarkText),
+        maxLength: maxLength,
+        inputFormatters: inputFormatters,
+        style: AppTextStyles.authFieldInput,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: AppTextStyles.authFieldHint,
           filled: true,
           fillColor: AppColors.authOnGradient,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 18),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 19, right: 13),
-            child: SvgPicture.asset(
-              prefixIconAsset,
-              width: 24,
-              height: 24,
-            ),
+          counterText: '',
+          contentPadding: EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: hasPrefixIcon ? 0 : 19,
           ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 56, minHeight: 24),
+          prefixIcon: hasPrefixIcon
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 19, right: 13),
+                  child: SvgPicture.asset(
+                    prefixIconAsset!,
+                    width: 24,
+                    height: 24,
+                  ),
+                )
+              : null,
+          prefixIconConstraints: hasPrefixIcon
+              ? const BoxConstraints(minWidth: 56, minHeight: 24)
+              : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,

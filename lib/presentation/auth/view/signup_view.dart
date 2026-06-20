@@ -12,6 +12,7 @@ import '../../widgets/auth/auth_screen_shell.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
+import 'email_verification_view.dart';
 
 class SignupView extends StatefulWidget {
   const SignupView({super.key});
@@ -36,28 +37,33 @@ class _SignupViewState extends State<SignupView> {
     super.dispose();
   }
 
-  void _onSubmit() {
+  Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    context.read<AuthCubit>().signup(
+    final success = await context.read<AuthCubit>().signup(
           name: _nameController.text,
           email: _emailController.text,
           password: _passwordController.text,
         );
+
+    if (!mounted || !success) return;
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider.value(
+          value: context.read<AuthCubit>(),
+          child: EmailVerificationView(
+            email: _emailController.text.trim(),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
-      listenWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.errorMessage != current.errorMessage,
       listener: (context, state) {
-        if (state.isAuthenticated) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-          return;
-        }
-
         if (state.errorMessage != null) {
           SnackbarHelper.showError(context, state.errorMessage!);
         }

@@ -12,14 +12,15 @@ class AppTextStyles {
     required Color color,
     double? height,
     double? letterSpacing,
+    FontStyle fontStyle = FontStyle.normal,
   }) {
-    return TextStyle(
-      fontFamily: AppFonts.fontFamily,
+    return AppFonts.base(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
+      fontStyle: fontStyle,
     );
   }
 
@@ -137,10 +138,10 @@ class AppTextStyles {
         letterSpacing: 0.5,
       );
 
-  // Auth / onboarding (Figma)
+  // Auth / onboarding (Figma — DM Sans)
   static TextStyle get onboardingHeadline => _base(
         fontSize: 45,
-        fontWeight: FontWeight.w600,
+        fontWeight: AppFonts.semiBold,
         color: AppColors.authOnGradient,
         height: 1.09,
         letterSpacing: -2.25,
@@ -148,7 +149,7 @@ class AppTextStyles {
 
   static TextStyle get onboardingSubtitle => _base(
         fontSize: 18,
-        fontWeight: FontWeight.w400,
+        fontWeight: AppFonts.regular,
         color: AppColors.authOnGradient,
         height: 1.38,
         letterSpacing: -0.54,
@@ -156,7 +157,7 @@ class AppTextStyles {
 
   static TextStyle get authButtonLabel => _base(
         fontSize: 20,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.bold,
         color: AppColors.authButtonText,
         height: 1.09,
         letterSpacing: -0.6,
@@ -164,61 +165,109 @@ class AppTextStyles {
 
   static TextStyle get authLoginButtonLabel => _base(
         fontSize: 18,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.bold,
         color: AppColors.authButtonText,
         height: 1.09,
         letterSpacing: -0.54,
       );
 
+  /// Screen titles — 26px ExtraBold, tracking -1.04px.
   static TextStyle get authTitle => _base(
         fontSize: 26,
-        fontWeight: FontWeight.w800,
+        fontWeight: AppFonts.extraBold,
         color: AppColors.authOnGradient,
-        height: 1.2,
         letterSpacing: -1.04,
       );
 
+  /// Body copy on gradient screens — 16px Regular.
   static TextStyle get authSubtitle => _base(
         fontSize: 16,
-        fontWeight: FontWeight.w400,
+        fontWeight: AppFonts.regular,
         color: AppColors.authOnGradient,
-        height: 1.25,
         letterSpacing: -0.48,
       );
 
   static TextStyle get authFieldHint => _base(
         fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: AppFonts.regular,
         color: AppColors.authFieldHint,
+        height: 1,
+        letterSpacing: -0.28,
+      );
+
+  /// Typed value inside auth fields — 14px Regular.
+  static TextStyle get authFieldInput => _base(
+        fontSize: 14,
+        fontWeight: AppFonts.regular,
+        color: AppColors.authDarkText,
         height: 1,
         letterSpacing: -0.28,
       );
 
   static TextStyle get authLink => _base(
         fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: AppFonts.regular,
         color: AppColors.authOnGradient,
         height: 1.43,
         letterSpacing: -0.28,
       );
 
+  static TextStyle get authSetupOptionLabel => _base(
+        fontSize: 15,
+        fontWeight: AppFonts.bold,
+        color: AppColors.authButtonText,
+        height: 1.4,
+        letterSpacing: -0.45,
+      );
+
+  static TextStyle get authTermsBody => _base(
+        fontSize: 16,
+        fontWeight: AppFonts.regular,
+        color: AppColors.authOnGradient,
+        height: 1.875,
+        letterSpacing: -0.48,
+      );
+
   static TextStyle get authFooterTitle => _base(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: AppFonts.semiBold,
         color: AppColors.authOnGradient,
         height: 1.25,
       );
 
   static TextStyle get authFooterLink => _base(
         fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: AppFonts.regular,
         color: AppColors.authOnGradient,
         height: 1.43,
       );
 
+  /// Resend link on email verification — 16px ExtraBold.
+  static TextStyle get authResendLink => _base(
+        fontSize: 16,
+        fontWeight: AppFonts.extraBold,
+        color: AppColors.authOnGradient,
+        letterSpacing: -0.48,
+      );
+
+  /// Resend link on finish setup — 16px Regular.
+  static TextStyle get authResendLinkRegular => _base(
+        fontSize: 16,
+        fontWeight: AppFonts.regular,
+        color: AppColors.authOnGradient,
+        letterSpacing: -0.48,
+      );
+
+  static TextStyle get authOrLabel => _base(
+        fontSize: 12,
+        fontWeight: AppFonts.semiBold,
+        color: AppColors.authDarkText,
+        letterSpacing: 0.96,
+      );
+
   static TextStyle get authSocialLabel => _base(
         fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontWeight: AppFonts.medium,
         height: 1.5,
         letterSpacing: -0.48,
         color: AppColors.authDarkText,
@@ -226,7 +275,7 @@ class AppTextStyles {
 
   static TextStyle get homeWelcome => _base(
         fontSize: 20,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.bold,
         color: AppColors.authOnGradient,
         height: 1.43,
         letterSpacing: -1,
@@ -234,7 +283,7 @@ class AppTextStyles {
 
   static TextStyle get homeDate => _base(
         fontSize: 16,
-        fontWeight: FontWeight.w300,
+        fontWeight: AppFonts.light,
         color: AppColors.authOnGradient,
         height: 1.43,
         letterSpacing: -0.32,
@@ -242,7 +291,7 @@ class AppTextStyles {
 
   static TextStyle get homeSectionTitle => _base(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.bold,
         color: AppColors.homeDarkText,
         height: 1.43,
         letterSpacing: -0.8,
@@ -250,7 +299,7 @@ class AppTextStyles {
 
   static TextStyle get homeCardTitle => _base(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: AppFonts.bold,
         color: AppColors.homeDarkText,
         height: 1.43,
         letterSpacing: -0.8,
@@ -258,7 +307,7 @@ class AppTextStyles {
 
   static TextStyle get homeCardSubtitle => _base(
         fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: AppFonts.regular,
         color: AppColors.homeMutedText,
         height: 1.43,
         letterSpacing: -0.28,
@@ -266,7 +315,7 @@ class AppTextStyles {
 
   static TextStyle get homeAddress => _base(
         fontSize: 22,
-        fontWeight: FontWeight.w800,
+        fontWeight: AppFonts.extraBold,
         color: AppColors.homeDarkText,
         height: 1.43,
         letterSpacing: -0.44,
@@ -282,7 +331,7 @@ class AppTextStyles {
 
   static TextStyle get homeShiftCountdownValue => _base(
         fontSize: 32,
-        fontWeight: FontWeight.w900,
+        fontWeight: AppFonts.black,
         color: AppColors.homeDarkText,
         height: 1.43,
         letterSpacing: -0.64,

@@ -1,11 +1,16 @@
 import '../../../core/base/base_cubit.dart';
+import '../../../data/local/remember_me_storage.dart';
 import '../../../data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends BaseCubit<AuthState> {
-  AuthCubit({required this.repository}) : super(const AuthState());
+  AuthCubit({
+    required this.repository,
+    required this.rememberMeStorage,
+  }) : super(const AuthState());
 
   final AuthRepository repository;
+  final RememberMeStorage rememberMeStorage;
 
   Future<void> initialize() async {
     emit(state.copyWith(status: AuthStatus.loading, clearError: true));
@@ -55,14 +60,24 @@ class AuthCubit extends BaseCubit<AuthState> {
     }
   }
 
+  Future<RememberMeCredentials> getRememberMeCredentials() {
+    return rememberMeStorage.load();
+  }
+
   Future<void> login({
     required String email,
     required String password,
+    required bool rememberMe,
   }) async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
     try {
       final user = await repository.login(email: email, password: password);
+      await rememberMeStorage.save(
+        enabled: rememberMe,
+        email: rememberMe ? email : null,
+        password: rememberMe ? password : null,
+      );
       emit(
         state.copyWith(
           status: AuthStatus.authenticated,
@@ -124,6 +139,33 @@ class AuthCubit extends BaseCubit<AuthState> {
         ),
       );
     }
+  }
+
+  Future<bool> forgotPassword({required String email}) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+
+    try {
+      await repository.forgotPassword(email: email);
+      emit(state.copyWith(isSubmitting: false));
+      return true;
+    } on AuthException catch (error) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: error.message,
+        ),
+      );
+    } catch (error, stackTrace) {
+      logError('Forgot password failed', error: error, stackTrace: stackTrace);
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          errorMessage: 'Unable to send reset email. Please try again.',
+        ),
+      );
+    }
+
+    return false;
   }
 
   Future<void> logout() async {

@@ -1,33 +1,80 @@
-import '../models/care_recipient_model.dart';
+import '../models/home_dashboard_model.dart';
 
 abstract class HomeRepository {
-  Future<List<CareRecipientModel>> getCareRecipients();
+  Future<HomeDashboard> getDashboard();
 }
 
 class HomeRepositoryImpl implements HomeRepository {
   @override
-  Future<List<CareRecipientModel>> getCareRecipients() async {
-    await Future<void>.delayed(const Duration(milliseconds: 800));
+  Future<HomeDashboard> getDashboard() async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
 
-    return const [
-      CareRecipientModel(
-        id: 1,
-        name: 'Margaret Johnson',
-        careType: 'Elderly Care',
-        nextVisit: 'Today, 2:00 PM',
+    const assignedVisits = [
+      AssignedVisit(
+        clientName: 'John Doe',
+        initials: 'JD',
+        scheduleLabel: 'Today · 9:00 AM · Personal Care',
+        scheduledLabel: 'Today · 9:00 AM',
+        serviceType: 'Personal Care',
       ),
-      CareRecipientModel(
-        id: 2,
-        name: 'Robert Williams',
-        careType: 'Post-Surgery Support',
-        nextVisit: 'Tomorrow, 10:30 AM',
-      ),
-      CareRecipientModel(
-        id: 3,
-        name: 'Emily Davis',
-        careType: 'Disability Support',
-        nextVisit: 'Mon, 4:15 PM',
+      AssignedVisit(
+        clientName: 'Evelyn Carter',
+        initials: 'EC',
+        scheduleLabel: 'Today · 2:00 PM · Homemaking',
+        scheduledLabel: 'Today · 2:00 PM',
+        serviceType: 'Homemaking',
       ),
     ];
+
+    return const HomeDashboard(
+      caregiverName: 'Mitchell',
+      dateLabel: 'Tuesday, Apr 22',
+      activeShift: ActiveShift(
+        clientName: 'John Doe',
+        address: '248 Oak Street, Brooklyn',
+        timeRange: '9:00 AM – 1:00 PM',
+        minutesUntilStart: 35,
+        progress: 0.62,
+        assignedVisits: assignedVisits,
+      ),
+      schedule: [
+        ScheduleEntry(
+          clientName: 'John Doe',
+          initials: 'JD',
+          timeLabel: '9:00 AM · 4h',
+          isHighPriority: true,
+        ),
+        ScheduleEntry(
+          clientName: 'John Doe',
+          initials: 'JD',
+          timeLabel: '9:00 AM · 4h',
+        ),
+        ScheduleEntry(
+          clientName: 'John Doe',
+          initials: 'JD',
+          timeLabel: '9:00 AM · 4h',
+        ),
+        ScheduleEntry(
+          clientName: 'John Doe',
+          initials: 'JD',
+          timeLabel: '9:00 AM · 4h',
+        ),
+      ],
+      taskSummary: TaskSummary(
+        completedTasks: 12,
+        totalTasks: 15,
+        remainingHours: '4.5h',
+      ),
+      pendingTasks: [
+        PendingTask(
+          timeLabel: '9:30 AM',
+          title: 'Medication reminder',
+        ),
+        PendingTask(
+          timeLabel: '9:30 AM',
+          title: 'Light housekeeping',
+        ),
+      ],
+    );
   }
 }

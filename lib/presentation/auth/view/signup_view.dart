@@ -74,16 +74,16 @@ class _SignupViewState extends State<SignupView> {
                   children: [
                     const AuthPageHeader(topSpacing: 100),
                     const SizedBox(height: 39),
-                    AuthTextField(
-                      hint: 'Enter Full Name',
-                      prefixIconAsset: AppAssets.icUser,
-                      controller: _nameController,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.name],
-                      textCapitalization: TextCapitalization.words,
-                      validator: (value) =>
-                          FormValidators.required(value, fieldName: 'Name'),
-                    ),
+                    // AuthTextField(
+                    //   hint: 'Enter Full Name',
+                    //   prefixIconAsset: AppAssets.icUser,
+                    //   controller: _nameController,
+                    //   textInputAction: TextInputAction.next,
+                    //   autofillHints: const [AutofillHints.name],
+                    //   textCapitalization: TextCapitalization.words,
+                    //   validator: (value) =>
+                    //       FormValidators.required(value, fieldName: 'Name'),
+                    // ),
                     const SizedBox(height: 14),
                     AuthTextField(
                       hint: 'Enter Email',
@@ -131,7 +131,7 @@ class _SignupViewState extends State<SignupView> {
                     ),
                     const SizedBox(height: 32),
                     AuthPrimaryButton(
-                      label: 'Signup Now',
+                      label: 'Signup',
                       height: 60,
                       borderRadius: 14,
                       horizontalPadding: 32,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../responsive/responsive_font.dart';
 import '../../responsive/responsive_helper.dart';
 import '../../responsive/screen_size.dart';
 
@@ -29,6 +30,12 @@ extension ContextExtensions on BuildContext {
   bool get isLargeScreen => screenSizeClass == ScreenSize.expanded;
 
   bool get isTabletOrLarger => !isCompactScreen;
+
+  /// Scales a Figma design font size to the current device width.
+  double sp(double designFontSize) => ResponsiveFont.size(this, designFontSize);
+
+  /// Applies width-based scaling to an [TextStyle]'s font size and letter spacing.
+  TextStyle responsiveStyle(TextStyle style) => ResponsiveFont.apply(this, style);
 
   void hideKeyboard() => FocusScope.of(this).unfocus();
 }

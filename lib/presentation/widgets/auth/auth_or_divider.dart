@@ -24,7 +24,7 @@ class AuthOrDivider extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
           ),
           child: Text(
-            'or',
+            'OR',
             style: AppTextStyles.labelMedium.copyWith(
               color: AppColors.authDarkText,
               fontWeight: FontWeight.w600,

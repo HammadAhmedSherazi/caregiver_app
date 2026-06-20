@@ -224,6 +224,101 @@ class AppTextStyles {
         color: AppColors.authDarkText,
       );
 
+  static TextStyle get homeWelcome => _base(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get homeDate => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w300,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+        letterSpacing: -0.32,
+      );
+
+  static TextStyle get homeSectionTitle => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.8,
+      );
+
+  static TextStyle get homeCardTitle => _base(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.8,
+      );
+
+  static TextStyle get homeCardSubtitle => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.homeMutedText,
+        height: 1.43,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get homeAddress => _base(
+        fontSize: 22,
+        fontWeight: FontWeight.w800,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.44,
+      );
+
+  static TextStyle get homeShiftClientName => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.homeMutedText,
+        height: 1.43,
+        letterSpacing: -0.7,
+      );
+
+  static TextStyle get homeShiftCountdownValue => _base(
+        fontSize: 32,
+        fontWeight: FontWeight.w900,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.64,
+      );
+
+  static TextStyle get homeShiftCountdownLabel => _base(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.3,
+      );
+
+  static TextStyle get homeNavLabel => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get homeConfirmDialogTitle => _base(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get homeDialogCancel => _base(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.homeDialogCancel,
+        height: 1.71,
+      );
+
   static TextTheme get textTheme => TextTheme(
         displayLarge: displayLarge,
         displayMedium: displayMedium,

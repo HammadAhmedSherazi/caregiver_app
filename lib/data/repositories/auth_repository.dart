@@ -11,6 +11,7 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
+  Future<void> forgotPassword({required String email});
   Future<void> logout();
 }
 
@@ -79,6 +80,16 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     return _currentUser!;
+  }
+
+  @override
+  Future<void> forgotPassword({required String email}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+
+    final normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.contains('@')) {
+      throw AuthException('Enter a valid email address');
+    }
   }
 
   @override

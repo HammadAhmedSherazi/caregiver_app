@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
 import '../../auth/view/login_view.dart';
-import '../../home/view/home_view.dart';
+import '../../main/view/main_shell_view.dart';
 import '../../onboarding/view/onboarding_view.dart';
 import '../../widgets/loading_widget.dart';
 
@@ -21,7 +21,7 @@ class AppGateView extends StatelessWidget {
             ),
           AuthStatus.onboarding => const OnboardingView(),
           AuthStatus.unauthenticated => const LoginView(),
-          AuthStatus.authenticated => const HomeView(),
+          AuthStatus.authenticated => const MainShellView(),
         };
       },
     );

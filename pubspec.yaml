@@ -16,6 +16,7 @@ dependencies:
   equatable: ^2.0.7
   get_it: ^8.0.3
   flutter_svg: ^2.0.17
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +31,9 @@ flutter:
     - assets/images/onboarding/
     - assets/images/auth/
     - assets/images/auth/icons/
+    - assets/images/home/
+    - assets/images/home/ic_avatar.png
+    - assets/images/home/icons/
 
   fonts:
     - family: DM Sans

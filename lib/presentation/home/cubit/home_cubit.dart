@@ -1,4 +1,5 @@
 import '../../../core/base/base_cubit.dart';
+import '../../../data/models/home_dashboard_model.dart';
 import '../../../data/repositories/home_repository.dart';
 import 'home_state.dart';
 
@@ -7,27 +8,48 @@ class HomeCubit extends BaseCubit<HomeState> {
 
   final HomeRepository repository;
 
-  Future<void> loadRecipients() async {
+  Future<void> loadDashboard() async {
     emit(state.copyWith(status: HomeStatus.loading, errorMessage: null));
 
     try {
-      final recipients = await repository.getCareRecipients();
+      final dashboard = await repository.getDashboard();
       emit(
         state.copyWith(
           status: HomeStatus.success,
-          recipients: recipients,
+          dashboard: dashboard,
         ),
       );
     } catch (error, stackTrace) {
-      logError('Failed to load care recipients', error: error, stackTrace: stackTrace);
+      logError('Failed to load dashboard', error: error, stackTrace: stackTrace);
       emit(
         state.copyWith(
           status: HomeStatus.failure,
-          errorMessage: 'Failed to load care recipients. Please try again.',
+          errorMessage: 'Failed to load dashboard. Please try again.',
         ),
       );
     }
   }
 
-  Future<void> refresh() => loadRecipients();
+  Future<void> refresh() => loadDashboard();
+
+  void completeClockIn({
+    required String clientName,
+    required String serviceType,
+  }) {
+    final dashboard = state.dashboard;
+    if (dashboard == null) return;
+
+    final shift = dashboard.activeShift.copyWith(
+      clientName: clientName,
+      serviceType: serviceType,
+      status: ShiftStatus.inProgress,
+      startedAtLabel: 'Started 9:00 AM · $serviceType',
+    );
+
+    emit(
+      state.copyWith(
+        dashboard: dashboard.copyWith(activeShift: shift),
+      ),
+    );
+  }
 }

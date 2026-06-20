@@ -18,6 +18,31 @@ class AppColors {
   static const Color authDivider = Color(0xFF2D469A);
   static const Color authFacebookBlue = Color(0xFF0078FF);
 
+  // Home dashboard (Figma)
+  static const Color homeBackground = Color(0xFFF2F5FE);
+  static const Color homeHeader = Color(0xFF081355);
+  static const Color homeAccent = Color(0xFF76A3FF);
+  static const Color homePrimary = Color(0xFF1F78FF);
+  static const Color homeIconTint = Color(0xFFDFEAFF);
+  static const Color homeNavBar = Color(0xFF0D1B2A);
+  static const Color homeDarkText = Color(0xFF0D1B2A);
+  static const Color homeMutedText = Color(0x590D1B2A);
+  static const Color homePriority = Color(0xFFFA5252);
+  static const Color homeCardShadow = Color(0x78DFE6F3);
+  static const Color homeProgressTrack = Color(0xFFF0F5FF);
+  static const Color homeProgressGradientEnd = Color(0xFFE6EFFF);
+  static const Color homeDialogOverlay = Color(0xC90D1B2A);
+  static const Color homeDialogShadow = Color(0x400D1B2A);
+  static const Color homeDialogDivider = Color(0xFFE8EBF0);
+  static const Color homeDialogCancel = Color(0xFF444444);
+  static const Color homeSheetLabel = Color(0x9E0D1B2A);
+  static const Color homeSheetDetailsBg = Color(0xFFDFEAFF);
+  static const Color homeSheetDetailsBorder = Color(0x241F78FF);
+  static const Color homeVerifiedBg = Color(0x1A00BA00);
+  static const Color homeVerifiedText = Color(0xDE00BA00);
+  static const Color homeSyncBg = Color(0x261F78FF);
+  static const Color homeOfflineBannerBg = Color(0xFFFFEFC5);
+
   static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color sidebar = Color(0xFF134E4A);

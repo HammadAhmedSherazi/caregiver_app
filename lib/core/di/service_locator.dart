@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart';
 
+import '../../data/local/remember_me_storage.dart';
+import '../../data/local/remember_me_storage_impl.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/home_repository.dart';
 import '../../presentation/auth/cubit/auth_cubit.dart';
@@ -10,7 +12,15 @@ final GetIt sl = GetIt.instance;
 Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<HomeRepository>(HomeRepositoryImpl.new);
   sl.registerLazySingleton<AuthRepository>(AuthRepositoryImpl.new);
+  sl.registerLazySingleton<RememberMeStorage>(RememberMeStorageImpl.new);
 
-  sl.registerFactory(() => HomeCubit(repository: sl<HomeRepository>()));
-  sl.registerFactory(() => AuthCubit(repository: sl<AuthRepository>()));
+  sl.registerFactory(
+    () => HomeCubit(repository: sl<HomeRepository>()),
+  );
+  sl.registerFactory(
+    () => AuthCubit(
+      repository: sl<AuthRepository>(),
+      rememberMeStorage: sl<RememberMeStorage>(),
+    ),
+  );
 }

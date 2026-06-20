@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:caregiver_app/app.dart';
 import 'package:caregiver_app/core/di/service_locator.dart';
@@ -9,6 +10,7 @@ import 'package:caregiver_app/presentation/auth/view/signup_view.dart';
 
 void main() {
   setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
     await setupServiceLocator();
   });
 

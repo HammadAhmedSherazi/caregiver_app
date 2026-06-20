@@ -6,6 +6,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
+import '../../home/cubit/home_cubit.dart';
+import '../../home/cubit/home_state.dart';
 import '../../home/view/home_tab_view.dart';
 import '../../home/widgets/home_svg_icon.dart';
 import '../widgets/main_bottom_nav_bar.dart';
@@ -22,35 +24,45 @@ class _MainShellViewState extends State<MainShellView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.homeBackground,
-      body: IndexedStack(
-        index: _selectedTab.index,
-        children: const [
-          HomeTabView(),
-          _PlaceholderTab(title: 'Schedule'),
-          _PlaceholderTab(title: 'Task'),
-          _ProfileTab(),
-        ],
-      ),
-      floatingActionButton: _selectedTab == MainTab.home
-          ? FloatingActionButton(
-              onPressed: () {},
-              backgroundColor: AppColors.homeAccent,
-              elevation: 8,
-              shape: const CircleBorder(),
-              child: const HomeSvgIcon(
-                asset: AppAssets.icHomeMessage,
-                width: 24,
-                height: 24,
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: MainBottomNavBar(
-        selectedTab: _selectedTab,
-        onTabSelected: (tab) => setState(() => _selectedTab = tab),
-      ),
+    return BlocBuilder<HomeCubit, HomeState>(
+      builder: (context, homeState) {
+        final isActiveShift =
+            homeState.dashboard?.activeShift.isInProgress ?? false;
+        final hideBottomNav = isActiveShift || homeState.isEndingShift;
+
+        return Scaffold(
+          backgroundColor: AppColors.homeBackground,
+          body: IndexedStack(
+            index: _selectedTab.index,
+            children: const [
+              HomeTabView(),
+              _PlaceholderTab(title: 'Schedule'),
+              _PlaceholderTab(title: 'Task'),
+              _ProfileTab(),
+            ],
+          ),
+          floatingActionButton: !isActiveShift && _selectedTab == MainTab.home
+              ? FloatingActionButton(
+                  onPressed: () {},
+                  backgroundColor: AppColors.homeAccent,
+                  elevation: 8,
+                  shape: const CircleBorder(),
+                  child: const HomeSvgIcon(
+                    asset: AppAssets.icHomeMessage,
+                    width: 24,
+                    height: 24,
+                  ),
+                )
+              : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          bottomNavigationBar: hideBottomNav
+              ? null
+              : MainBottomNavBar(
+                  selectedTab: _selectedTab,
+                  onTabSelected: (tab) => setState(() => _selectedTab = tab),
+                ),
+        );
+      },
     );
   }
 }

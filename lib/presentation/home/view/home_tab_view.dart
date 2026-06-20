@@ -1,8 +1,6 @@
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_assets.dart';
@@ -14,11 +12,14 @@ import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
+import '../view/active_shift_view.dart';
+import '../view/end_shift_view.dart';
 import '../widgets/shift_flow/clock_in_flow.dart';
 import '../widgets/home_icon_box.dart';
 import '../widgets/home_svg_icon.dart';
 import '../widgets/shift_progress_ring.dart';
 import '../widgets/start_shift_confirm_dialog.dart';
+import '../widgets/vertical_overlap.dart';
 
 class HomeTabView extends StatefulWidget {
   const HomeTabView({super.key});
@@ -57,6 +58,13 @@ class _HomeTabViewState extends State<HomeTabView> {
         final dashboard = state.dashboard;
         if (dashboard == null) {
           return const SizedBox.shrink();
+        }
+
+        if (dashboard.activeShift.isInProgress) {
+          if (state.isEndingShift) {
+            return EndShiftView(shift: dashboard.activeShift);
+          }
+          return ActiveShiftView(shift: dashboard.activeShift);
         }
 
         return Column(
@@ -227,13 +235,11 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
         ),
-        _VerticalOverlap(
+        VerticalOverlap(
           overlap: _cardOverlap,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-            child: activeShift.isInProgress
-                ? _InProgressShiftCard(shift: activeShift)
-                : _ActiveShiftCard(shift: activeShift),
+            child: _ActiveShiftCard(shift: activeShift),
           ),
         ),
       ],
@@ -350,103 +356,6 @@ Future<void> _onStartShiftPressed(
         clientName: result.clientName,
         serviceType: result.serviceType,
       );
-}
-
-class _InProgressShiftCard extends StatelessWidget {
-  const _InProgressShiftCard({required this.shift});
-
-  final ActiveShift shift;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(23, 26, 23, 24),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Visit in progress',
-            style: context.responsiveStyle(
-              AppTextStyles.labelSmall.copyWith(
-                fontSize: 14,
-                color: AppColors.homeMutedText,
-                letterSpacing: -0.28,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            shift.clientName,
-            style: context.responsiveStyle(AppTextStyles.homeCardTitle),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const HomeSvgIcon(
-                asset: AppAssets.icHomeLocation,
-                width: 12,
-                height: 12,
-                color: AppColors.homeDarkText,
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  shift.gpsAddress,
-                  style: context.responsiveStyle(AppTextStyles.homeCardSubtitle),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  '00:00:00',
-                  style: context.responsiveStyle(
-                    AppTextStyles.homeShiftCountdownValue.copyWith(fontSize: 48),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  shift.startedAtLabel ?? 'Started · ${shift.serviceType}',
-                  style: context.responsiveStyle(
-                    AppTextStyles.homeCardSubtitle.copyWith(fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 53,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.homeDarkText,
-                side: const BorderSide(color: AppColors.homeDialogDivider),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: context.responsiveStyle(
-                  AppTextStyles.homeCardTitle.copyWith(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              child: const Text('End shift'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _StartShiftButton extends StatelessWidget {
@@ -739,92 +648,4 @@ BoxDecoration _cardDecoration({double radius = 20}) {
       ),
     ],
   );
-}
-
-/// Paints [child] shifted upward while reducing layout height by [overlap].
-class _VerticalOverlap extends SingleChildRenderObjectWidget {
-  const _VerticalOverlap({
-    required this.overlap,
-    required super.child,
-  });
-
-  final double overlap;
-
-  @override
-  RenderObject createRenderObject(BuildContext context) {
-    return _RenderVerticalOverlap(overlap);
-  }
-
-  @override
-  void updateRenderObject(
-    BuildContext context,
-    covariant _RenderVerticalOverlap renderObject,
-  ) {
-    renderObject.overlap = overlap;
-  }
-}
-
-class _RenderVerticalOverlap extends RenderBox
-    with RenderObjectWithChildMixin<RenderBox> {
-  _RenderVerticalOverlap(double overlap) : _overlap = overlap;
-
-  double _overlap;
-
-  double get overlap => _overlap;
-
-  set overlap(double value) {
-    if (_overlap == value) {
-      return;
-    }
-    _overlap = value;
-    markNeedsLayout();
-  }
-
-  @override
-  void performLayout() {
-    final child = this.child;
-    if (child == null) {
-      size = constraints.smallest;
-      return;
-    }
-
-    child.layout(constraints, parentUsesSize: true);
-    size = constraints.constrain(
-      Size(
-        child.size.width,
-        math.max(0, child.size.height - _overlap),
-      ),
-    );
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    final child = this.child;
-    if (child == null) {
-      return;
-    }
-
-    context.paintChild(child, offset - Offset(0, _overlap));
-  }
-
-  @override
-  void applyPaintTransform(covariant RenderBox child, Matrix4 transform) {
-    transform.translateByDouble(0, -_overlap, 0, 1);
-  }
-
-  @override
-  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
-    final child = this.child;
-    if (child == null) {
-      return false;
-    }
-
-    return result.addWithPaintTransform(
-      transform: Matrix4.translationValues(0, -_overlap, 0),
-      position: position,
-      hitTest: (BoxHitTestResult result, Offset transformed) {
-        return child.hitTest(result, position: transformed);
-      },
-    );
-  }
 }

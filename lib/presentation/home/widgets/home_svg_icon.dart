@@ -18,15 +18,20 @@ class HomeSvgIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      asset,
+    return SizedBox(
       width: width,
       height: height,
-      fit: BoxFit.contain,
-      colorFilter: color != null
-          ? ColorFilter.mode(color!, BlendMode.srcIn)
-          : null,
-      placeholderBuilder: (_) => SizedBox(width: width, height: height),
+      child: SvgPicture.asset(
+        asset,
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+        alignment: Alignment.center,
+        colorFilter: color != null
+            ? ColorFilter.mode(color!, BlendMode.srcIn)
+            : null,
+        placeholderBuilder: (_) => SizedBox(width: width, height: height),
+      ),
     );
   }
 }

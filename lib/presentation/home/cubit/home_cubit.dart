@@ -44,11 +44,37 @@ class HomeCubit extends BaseCubit<HomeState> {
       serviceType: serviceType,
       status: ShiftStatus.inProgress,
       startedAtLabel: 'Started 9:00 AM · $serviceType',
+      shiftStartedAt: DateTime.now(),
     );
 
     emit(
       state.copyWith(
         dashboard: dashboard.copyWith(activeShift: shift),
+      ),
+    );
+  }
+
+  void beginEndShift() {
+    emit(state.copyWith(isEndingShift: true));
+  }
+
+  void cancelEndShift() {
+    emit(state.copyWith(isEndingShift: false));
+  }
+
+  void endShift() {
+    final dashboard = state.dashboard;
+    if (dashboard == null) return;
+
+    final shift = dashboard.activeShift.copyWith(
+      status: ShiftStatus.pending,
+      shiftStartedAt: null,
+    );
+
+    emit(
+      state.copyWith(
+        dashboard: dashboard.copyWith(activeShift: shift),
+        isEndingShift: false,
       ),
     );
   }

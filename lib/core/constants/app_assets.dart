@@ -37,6 +37,8 @@ class AppAssets {
   static const String icHomeClock = '$_homeIcons/ic_clock.svg';
   static const String icHomeUserOutline = '$_homeIcons/ic_user_outline.svg';
   static const String icHomeLocation = '$_homeIcons/ic_location.svg';
+  static const String icHomeMapWave = '$_homeIcons/ic_map_wave.svg';
+  static const String icHomeMapRing = '$_homeIcons/ic_map_ring.svg';
   static const String icHomeCall = '$_homeIcons/ic_call.svg';
   static const String icHomeRetry = '$_homeIcons/ic_retry.svg';
   static const String icHomeVerified = '$_homeIcons/ic_verified.svg';
@@ -47,4 +49,15 @@ class AppAssets {
   static const String icHomeRadioSelected = '$_homeIcons/ic_radio_selected.svg';
   static const String icHomeRadioUnselected = '$_homeIcons/ic_radio_unselected.svg';
   static const String icHomeInfo = '$_homeIcons/ic_info.svg';
+  static const String icHomeBackArrow = '$_homeIcons/ic_back_arrow.svg';
+  static const String icHomeLiveDot = '$_homeIcons/ic_live_dot.svg';
+  static const String icHomeAddNote = '$_homeIcons/ic_add_note.svg';
+  static const String icHomeCarePlan = '$_homeIcons/ic_care_plan.svg';
+  static const String icHomeTaskBullet = '$_homeIcons/ic_task_bullet.svg';
+  static const String icHomeVerifiedWhite = '$_homeIcons/ic_verified_white.svg';
+  static const String icHomeTaskChecked = '$_homeIcons/ic_task_checked.svg';
+  static const String icHomeTaskUnchecked = '$_homeIcons/ic_task_unchecked.svg';
+  static const String icHomeShiftCompletedTick =
+      '$_homeIcons/ic_shift_completed_tick.svg';
+  static const String icHomeSyncedCheck = '$_homeIcons/ic_synced_check.svg';
 }

@@ -264,9 +264,10 @@ class ShiftFlowStatusBadge extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (iconAsset != null)
-            HomeSvgIcon(asset: iconAsset!, width: 8, height: 8, color: textColor)
+            HomeSvgIcon(asset: iconAsset!, width: 8, height: 8)
           else
             Icon(Icons.circle, size: 8, color: textColor),
           const SizedBox(width: 4),
@@ -346,7 +347,6 @@ class ShiftFlowOfflineBanner extends StatelessWidget {
             asset: AppAssets.icHomeInfo,
             width: 12,
             height: 12,
-            color: AppColors.homeDarkText,
           ),
           const SizedBox(width: 8),
           Expanded(

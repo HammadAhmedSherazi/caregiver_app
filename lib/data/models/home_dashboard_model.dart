@@ -57,6 +57,13 @@ class ActiveShift extends Equatable {
     this.gpsAddress = '123 Main St, Brooklyn, NY 11201',
     this.status = ShiftStatus.pending,
     this.startedAtLabel,
+    this.shiftStartedAt,
+    this.careTasks = const [
+      'Assist with morning bathing and dressing',
+      'Prepare low-sodium breakfast',
+      'Medication reminder at 10:00 AM',
+      'Light housekeeping in kitchen',
+    ],
     this.assignedVisits = const [],
     this.serviceTypeOptions = const [
       'Personal Care',
@@ -80,6 +87,8 @@ class ActiveShift extends Equatable {
   final String gpsAddress;
   final ShiftStatus status;
   final String? startedAtLabel;
+  final DateTime? shiftStartedAt;
+  final List<String> careTasks;
   final List<AssignedVisit> assignedVisits;
   final List<String> serviceTypeOptions;
 
@@ -91,6 +100,7 @@ class ActiveShift extends Equatable {
     String? serviceType,
     ShiftStatus? status,
     String? startedAtLabel,
+    DateTime? shiftStartedAt,
   }) {
     return ActiveShift(
       clientName: clientName ?? this.clientName,
@@ -107,8 +117,10 @@ class ActiveShift extends Equatable {
       gpsAddress: gpsAddress,
       status: status ?? this.status,
       startedAtLabel: startedAtLabel ?? this.startedAtLabel,
+      shiftStartedAt: shiftStartedAt ?? this.shiftStartedAt,
       assignedVisits: assignedVisits,
       serviceTypeOptions: serviceTypeOptions,
+      careTasks: careTasks,
     );
   }
 
@@ -128,6 +140,8 @@ class ActiveShift extends Equatable {
         gpsAddress,
         status,
         startedAtLabel,
+        shiftStartedAt,
+        careTasks,
         assignedVisits,
         serviceTypeOptions,
       ];

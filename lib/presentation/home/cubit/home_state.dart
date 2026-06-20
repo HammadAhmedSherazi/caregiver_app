@@ -9,11 +9,13 @@ class HomeState extends Equatable {
     this.status = HomeStatus.initial,
     this.dashboard,
     this.errorMessage,
+    this.isEndingShift = false,
   });
 
   final HomeStatus status;
   final HomeDashboard? dashboard;
   final String? errorMessage;
+  final bool isEndingShift;
 
   bool get isLoading => status == HomeStatus.loading;
   bool get hasError => status == HomeStatus.failure;
@@ -23,14 +25,16 @@ class HomeState extends Equatable {
     HomeStatus? status,
     HomeDashboard? dashboard,
     String? errorMessage,
+    bool? isEndingShift,
   }) {
     return HomeState(
       status: status ?? this.status,
       dashboard: dashboard ?? this.dashboard,
       errorMessage: errorMessage ?? this.errorMessage,
+      isEndingShift: isEndingShift ?? this.isEndingShift,
     );
   }
 
   @override
-  List<Object?> get props => [status, dashboard, errorMessage];
+  List<Object?> get props => [status, dashboard, errorMessage, isEndingShift];
 }

@@ -13,15 +13,15 @@ class AuthCubit extends BaseCubit<AuthState> {
   final RememberMeStorage rememberMeStorage;
 
   Future<void> initialize() async {
-    emit(state.copyWith(status: AuthStatus.loading, clearError: true));
-
     try {
       final onboardingCompleted = await repository.isOnboardingCompleted();
 
       if (!onboardingCompleted) {
-        emit(state.copyWith(status: AuthStatus.onboarding));
+        emit(state.copyWith(status: AuthStatus.onboarding, clearError: true));
         return;
       }
+
+      emit(state.copyWith(status: AuthStatus.loading, clearError: true));
 
       final user = await repository.getCurrentUser();
       if (user != null) {

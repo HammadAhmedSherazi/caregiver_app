@@ -359,16 +359,15 @@ class _SelectClientCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
-          height: 92,
           decoration: BoxDecoration(
             color: AppColors.homeSheetDetailsBg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.homeSheetDetailsBg),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(17, 23, 17, 23),
+            padding: const EdgeInsets.fromLTRB(17, 22, 17, 22),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 HomeInitialsBox(
                   initials: visit.initials,
@@ -378,6 +377,7 @@ class _SelectClientCard extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         visit.clientName,
@@ -397,14 +397,18 @@ class _SelectClientCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (isSelected) ...[
-                  const SizedBox(width: 8),
-                  const HomeSvgIcon(
-                    asset: AppAssets.icHomeSelectionCheck,
-                    width: 26,
-                    height: 26,
-                  ),
-                ],
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: isSelected
+                      ? const HomeSvgIcon(
+                          asset: AppAssets.icHomeSelectionCheck,
+                          width: 26,
+                          height: 26,
+                        )
+                      : null,
+                ),
               ],
             ),
           ),

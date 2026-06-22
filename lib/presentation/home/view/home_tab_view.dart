@@ -17,6 +17,9 @@ import '../view/end_shift_view.dart';
 import '../widgets/shift_flow/clock_in_flow.dart';
 import '../widgets/home_icon_box.dart';
 import '../widgets/home_svg_icon.dart';
+import '../../auth/cubit/auth_cubit.dart';
+import '../../auth/cubit/auth_state.dart';
+import '../../widgets/user_avatar.dart';
 import '../widgets/shift_progress_ring.dart';
 import '../widgets/start_shift_confirm_dialog.dart';
 import '../widgets/vertical_overlap.dart';
@@ -220,11 +223,15 @@ class _HomeHeader extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          HomeProfileAvatar(
-                            asset: AppAssets.homeAvatar,
-                            fallbackInitial: caregiverName.isNotEmpty
-                                ? caregiverName[0].toUpperCase()
-                                : 'M',
+                          BlocBuilder<AuthCubit, AuthState>(
+                            builder: (context, authState) {
+                              final user = authState.user;
+                              return UserAvatar(
+                                imageUrl: user?.avatarUrl,
+                                name: user?.name ?? caregiverName,
+                                size: 50,
+                              );
+                            },
                           ),
                         ],
                       ),

@@ -21,6 +21,7 @@ class AppColors {
   // Home dashboard (Figma)
   static const Color homeBackground = Color(0xFFF2F5FE);
   static const Color homeHeader = Color(0xFF081355);
+  static const Color payrollHeroCard = Color(0xFF0B1758);
   static const Color homeAccent = Color(0xFF76A3FF);
   static const Color homePrimary = Color(0xFF1F78FF);
   static const Color homeIconTint = Color(0xFFDFEAFF);
@@ -42,6 +43,13 @@ class AppColors {
   static const Color homeVerifiedText = Color(0xDE00BA00);
   static const Color homeSyncBg = Color(0x261F78FF);
   static const Color homeOfflineBannerBg = Color(0xFFFFEFC5);
+
+  // Schedule tab (Figma)
+  static const Color scheduleUpcomingBg = Color(0xFFF3F7FF);
+  static const Color scheduleUpcomingText = Color(0xFF1F78FF);
+  static const Color scheduleScheduledBg = Color(0xFFE4FBF0);
+  static const Color scheduleScheduledText = Color(0xFF00BA00);
+  static const Color scheduleTimelineLine = Color(0x330D1B2A);
 
   static const Color background = Color(0xFFF8FAFC);
   static const Color surface = Color(0xFFFFFFFF);

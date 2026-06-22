@@ -17,6 +17,8 @@ dependencies:
   get_it: ^8.0.3
   flutter_svg: ^2.0.17
   shared_preferences: ^2.5.3
+  image_picker: ^1.2.2
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:
@@ -34,6 +36,12 @@ flutter:
     - assets/images/home/
     - assets/images/home/ic_avatar.png
     - assets/images/home/icons/
+    - assets/images/schedule/
+    - assets/images/schedule/icons/
+    - assets/images/profile/
+    - assets/images/profile/icons/
+    - assets/images/task/
+    - assets/images/task/icons/
 
   fonts:
     - family: DM Sans

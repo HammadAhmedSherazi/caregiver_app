@@ -60,4 +60,32 @@ class AppAssets {
   static const String icHomeShiftCompletedTick =
       '$_homeIcons/ic_shift_completed_tick.svg';
   static const String icHomeSyncedCheck = '$_homeIcons/ic_synced_check.svg';
+
+  static const String _schedule = 'assets/images/schedule';
+  static const String _scheduleIcons = '$_schedule/icons';
+
+  static const String icScheduleTimelineDot = '$_scheduleIcons/ic_timeline_dot.svg';
+  static const String icScheduleTimelineLine = '$_scheduleIcons/ic_timeline_line.svg';
+
+  static const String _profile = 'assets/images/profile';
+  static const String _profileIcons = '$_profile/icons';
+
+  static const String icProfileAward = '$_profileIcons/ic_award.svg';
+  static const String icProfileUsers = '$_profileIcons/ic_profile_users.svg';
+  static const String icProfileTrophy = '$_profileIcons/ic_trophy.svg';
+
+  static const String _task = 'assets/images/task';
+  static const String _taskIcons = '$_task/icons';
+
+  static const String icTaskSearch = '$_taskIcons/ic_search.svg';
+  static const String icTaskForm = '$_taskIcons/ic_form.svg';
+  static const String icTaskPayroll = '$_taskIcons/ic_payroll.svg';
+  static const String icTaskSignature = '$_taskIcons/ic_signature.svg';
+  static const String icTaskUpload = '$_taskIcons/ic_upload.svg';
+  static const String icTaskSubmittedCheck = '$_taskIcons/ic_submitted_check.svg';
+  static const String icTaskTickCircle = '$_taskIcons/ic_tick_circle.svg';
+  static const String icTaskCheckCircleGreen =
+      '$_taskIcons/ic_check_circle_green.svg';
+  static const String icTaskCheckCircleEmpty =
+      '$_taskIcons/ic_check_circle_empty.svg';
 }

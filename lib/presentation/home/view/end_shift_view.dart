@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/home_dashboard_model.dart';
+import '../../widgets/header_back_button.dart';
 import '../cubit/home_cubit.dart';
 import '../widgets/home_svg_icon.dart';
 import '../widgets/shift_flow/clock_out_flow.dart';
@@ -174,14 +175,11 @@ class _EndShiftHeader extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(19, 12, 18, 0),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
+                      HeaderBackButton(
                         onTap: onBack,
-                        child: const HomeSvgIcon(
-                          asset: AppAssets.icHomeBackArrow,
-                          width: 34,
-                          height: 34,
-                        ),
+                        titleStyle: AppTextStyles.homeWelcome,
                       ),
                       const SizedBox(width: 24),
                       Expanded(

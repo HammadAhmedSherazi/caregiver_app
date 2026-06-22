@@ -7,6 +7,8 @@ import 'package:caregiver_app/app.dart';
 import 'package:caregiver_app/core/di/service_locator.dart';
 import 'package:caregiver_app/presentation/auth/cubit/auth_cubit.dart';
 import 'package:caregiver_app/presentation/auth/view/signup_view.dart';
+import 'package:caregiver_app/presentation/schedule/cubit/schedule_cubit.dart';
+import 'package:caregiver_app/presentation/schedule/view/schedule_tab_view.dart';
 
 void main() {
   setUpAll(() async {
@@ -39,5 +41,22 @@ void main() {
     expect(find.text('Signup Now'), findsOneWidget);
     expect(find.text('Already have an account?'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
+  });
+
+  testWidgets('Schedule screen renders Figma layout', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      BlocProvider(
+        create: (_) => sl<ScheduleCubit>()..loadSchedule(),
+        child: const MaterialApp(home: ScheduleTabView()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('APRIL 2026'), findsOneWidget);
+    expect(find.text('MON'), findsOneWidget);
+    expect(find.text('Steven Mark'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Day'), findsOneWidget);
+    expect(find.text('Week'), findsOneWidget);
   });
 }

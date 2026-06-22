@@ -65,8 +65,9 @@ class AuthRepositoryImpl implements AuthRepository {
     if (normalizedEmail == _demoEmail && password == _demoPassword) {
       _currentUser = const UserModel(
         id: 'user-1',
-        name: 'Jane Caregiver',
+        name: 'Mitchell',
         email: _demoEmail,
+        avatarUrl: 'https://i.pravatar.cc/150?u=caregiver-mitchell',
       );
       return _currentUser!;
     }

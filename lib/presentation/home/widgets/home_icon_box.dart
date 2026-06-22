@@ -13,6 +13,7 @@ class HomeIconBox extends StatelessWidget {
     this.iconSize = 24,
     this.borderRadius = 13,
     this.color,
+    this.boxColor,
   });
 
   final String iconAsset;
@@ -21,6 +22,7 @@ class HomeIconBox extends StatelessWidget {
   final double iconSize;
   final double borderRadius;
   final Color? color;
+  final Color? boxColor;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class HomeIconBox extends StatelessWidget {
       height: height,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.homeIconTint,
+        color: boxColor ?? AppColors.homeIconTint,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: HomeSvgIcon(

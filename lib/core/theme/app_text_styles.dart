@@ -353,6 +353,154 @@ class AppTextStyles {
         letterSpacing: -0.28,
       );
 
+  static TextStyle get scheduleScreenTitle => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.bold,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get scheduleMonthLabel => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get scheduleToggleSelected => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.bold,
+        color: AppColors.authOnGradient,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get scheduleToggleUnselected => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.regular,
+        color: AppColors.homeMutedText,
+        height: 1.43,
+        letterSpacing: -0.4,
+      );
+
+  static TextStyle get scheduleDayLabel => _base(
+        fontSize: 16,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.8,
+      );
+
+  static TextStyle get scheduleDayNumber => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.4,
+      );
+
+  static TextStyle get scheduleTime => _base(
+        fontSize: 16,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.8,
+      );
+
+  static TextStyle get scheduleClientName => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get scheduleAddress => _base(
+        fontSize: 14,
+        fontWeight: AppFonts.regular,
+        color: AppColors.homeMutedText,
+        height: 1.43,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get scheduleBadge => _base(
+        fontSize: 10,
+        fontWeight: AppFonts.medium,
+        color: AppColors.homeDarkText,
+        height: 2.4,
+      );
+
+  static TextStyle get profileName => _base(
+        fontSize: 20,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -1,
+      );
+
+  static TextStyle get profileTitle => _base(
+        fontSize: 14,
+        fontWeight: AppFonts.regular,
+        color: AppColors.homeMutedText,
+        height: 1.43,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get profileStat => _base(
+        fontSize: 14,
+        fontWeight: AppFonts.regular,
+        color: AppColors.homeAccent,
+        height: 1.43,
+        letterSpacing: -0.28,
+      );
+
+  static TextStyle get profileHoursLabel => _base(
+        fontSize: 16,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -0.8,
+      );
+
+  static TextStyle get profileHoursValue => _base(
+        fontSize: 41,
+        fontWeight: AppFonts.bold,
+        color: AppColors.homeDarkText,
+        height: 1.43,
+        letterSpacing: -2.05,
+      );
+
+  static TextStyle get profileHoursUnit => _base(
+        fontSize: 18,
+        fontWeight: AppFonts.regular,
+        color: AppColors.homeMutedText,
+        height: 1.43,
+        letterSpacing: -0.36,
+      );
+
+  static TextStyle get profileGrowthBadge => _base(
+        fontSize: 10,
+        fontWeight: AppFonts.medium,
+        color: AppColors.scheduleScheduledText,
+        height: 2.4,
+      );
+
+  static TextStyle get profileChartAxis => _base(
+        fontSize: 14,
+        fontWeight: AppFonts.bold,
+        color: const Color(0xFFDADADA),
+        height: 1,
+      );
+
+  static TextStyle get profileChartToday => _base(
+        fontSize: 14,
+        fontWeight: AppFonts.medium,
+        color: const Color(0xFF00004D),
+        height: 1,
+      );
+
   static TextStyle get homeConfirmDialogTitle => _base(
         fontSize: 20,
         fontWeight: FontWeight.w700,

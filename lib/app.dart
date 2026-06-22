@@ -9,6 +9,9 @@ import 'core/theme/app_theme.dart';
 import 'presentation/app_gate/view/app_gate_view.dart';
 import 'presentation/auth/cubit/auth_cubit.dart';
 import 'presentation/home/cubit/home_cubit.dart';
+import 'presentation/profile/cubit/profile_cubit.dart';
+import 'presentation/schedule/cubit/schedule_cubit.dart';
+import 'presentation/task/cubit/task_cubit.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -22,6 +25,15 @@ class App extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => sl<HomeCubit>(),
+        ),
+        BlocProvider(
+          create: (_) => sl<ScheduleCubit>(),
+        ),
+        BlocProvider(
+          create: (_) => sl<ProfileCubit>(),
+        ),
+        BlocProvider(
+          create: (_) => sl<TaskCubit>(),
         ),
       ],
       child: MaterialApp(

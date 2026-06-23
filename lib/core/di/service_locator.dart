@@ -6,6 +6,9 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/home_repository.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/profile_repository.dart';
+import '../../data/repositories/client_repository.dart';
+import '../../data/repositories/inbox_repository.dart';
+import '../../data/repositories/notification_repository.dart';
 import '../../data/repositories/task_repository.dart';
 import '../../presentation/auth/cubit/auth_cubit.dart';
 import '../../presentation/home/cubit/home_cubit.dart';
@@ -21,6 +24,11 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<ScheduleRepository>(ScheduleRepositoryImpl.new);
   sl.registerLazySingleton<ProfileRepository>(ProfileRepositoryImpl.new);
   sl.registerLazySingleton<TaskRepository>(TaskRepositoryImpl.new);
+  sl.registerLazySingleton<NotificationRepository>(
+    NotificationRepositoryImpl.new,
+  );
+  sl.registerLazySingleton<InboxRepository>(InboxRepositoryImpl.new);
+  sl.registerLazySingleton<ClientRepository>(ClientRepositoryImpl.new);
   sl.registerLazySingleton<RememberMeStorage>(RememberMeStorageImpl.new);
 
   sl.registerFactory(

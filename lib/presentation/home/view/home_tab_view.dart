@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_assets.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/home_dashboard_model.dart';
+import '../../../data/repositories/client_repository.dart';
+import '../../clients/view/client_profile_view.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
 import '../cubit/home_cubit.dart';
@@ -25,7 +28,14 @@ import '../widgets/start_shift_confirm_dialog.dart';
 import '../widgets/vertical_overlap.dart';
 
 class HomeTabView extends StatefulWidget {
-  const HomeTabView({super.key});
+  const HomeTabView({
+    super.key,
+    this.onOpenMenu,
+    this.onOpenNotifications,
+  });
+
+  final VoidCallback? onOpenMenu;
+  final VoidCallback? onOpenNotifications;
 
   @override
   State<HomeTabView> createState() => _HomeTabViewState();
@@ -41,6 +51,17 @@ class _HomeTabViewState extends State<HomeTabView> {
         cubit.loadDashboard();
       }
     });
+  }
+
+  Future<void> _openClientProfile(BuildContext context, String clientName) async {
+    final client = await sl<ClientRepository>().findByName(clientName);
+    if (!context.mounted || client == null) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ClientProfileView(client: client),
+      ),
+    );
   }
 
   @override
@@ -77,6 +98,8 @@ class _HomeTabViewState extends State<HomeTabView> {
               caregiverName: dashboard.caregiverName,
               dateLabel: dashboard.dateLabel,
               activeShift: dashboard.activeShift,
+              onOpenMenu: widget.onOpenMenu,
+              onOpenNotifications: widget.onOpenNotifications,
             ),
             Expanded(
               child: RefreshIndicator(
@@ -99,7 +122,10 @@ class _HomeTabViewState extends State<HomeTabView> {
                     ...dashboard.schedule.map(
                       (entry) => Padding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                        child: _ScheduleCard(entry: entry),
+                        child: _ScheduleCard(
+                          entry: entry,
+                          onTap: () => _openClientProfile(context, entry.clientName),
+                        ),
                       ),
                     ),
                     Padding(
@@ -139,11 +165,15 @@ class _HomeHeader extends StatelessWidget {
     required this.caregiverName,
     required this.dateLabel,
     required this.activeShift,
+    this.onOpenMenu,
+    this.onOpenNotifications,
   });
 
   final String caregiverName;
   final String dateLabel;
   final ActiveShift activeShift;
+  final VoidCallback? onOpenMenu;
+  final VoidCallback? onOpenNotifications;
 
   static const _headerHeight = 280.0;
   static const _cardOverlap = 100.0;
@@ -211,14 +241,18 @@ class _HomeHeader extends StatelessWidget {
                           ),
                           Padding(
                             padding: const EdgeInsets.only(top: 15),
-                            child: Badge(
-                              smallSize: 8,
-                              padding: EdgeInsets.zero,
-                              backgroundColor: AppColors.authOnGradient,
-                              child: const HomeSvgIcon(
-                                asset: AppAssets.icHomeBell,
-                                width: 24,
-                                height: 24,
+                            child: GestureDetector(
+                              onTap: onOpenNotifications,
+                              behavior: HitTestBehavior.opaque,
+                              child: Badge(
+                                smallSize: 8,
+                                padding: EdgeInsets.zero,
+                                backgroundColor: AppColors.authOnGradient,
+                                child: const HomeSvgIcon(
+                                  asset: AppAssets.icHomeBell,
+                                  width: 24,
+                                  height: 24,
+                                ),
                               ),
                             ),
                           ),
@@ -226,10 +260,14 @@ class _HomeHeader extends StatelessWidget {
                           BlocBuilder<AuthCubit, AuthState>(
                             builder: (context, authState) {
                               final user = authState.user;
-                              return UserAvatar(
-                                imageUrl: user?.avatarUrl,
-                                name: user?.name ?? caregiverName,
-                                size: 50,
+                              return GestureDetector(
+                                onTap: onOpenMenu,
+                                behavior: HitTestBehavior.opaque,
+                                child: UserAvatar(
+                                  imageUrl: user?.avatarUrl,
+                                  name: user?.name ?? caregiverName,
+                                  size: 50,
+                                ),
                               );
                             },
                           ),
@@ -447,13 +485,22 @@ class _ShiftCountdown extends StatelessWidget {
 }
 
 class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({required this.entry});
+  const _ScheduleCard({
+    required this.entry,
+    this.onTap,
+  });
 
   final ScheduleEntry entry;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
       height: 92,
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 14),
       decoration: _cardDecoration(),
@@ -517,6 +564,8 @@ class _ScheduleCard extends StatelessWidget {
             color: AppColors.authButtonText,
           ),
         ],
+      ),
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/profile_page_model.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../home/widgets/home_svg_icon.dart';
+import '../../clients/view/clients_list_view.dart';
 import '../../home/widgets/vertical_overlap.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
@@ -239,6 +240,13 @@ class _ProfileCard extends StatelessWidget {
                 _ProfileStat(
                   icon: AppAssets.icProfileUsers,
                   label: '${data.visitCount} visits',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ClientsListView(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -324,14 +332,16 @@ class _ProfileStat extends StatelessWidget {
   const _ProfileStat({
     required this.icon,
     required this.label,
+    this.onTap,
   });
 
   final String icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final child = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         HomeSvgIcon(asset: icon, width: 24, height: 24),
@@ -341,6 +351,19 @@ class _ProfileStat extends StatelessWidget {
           style: context.responsiveStyle(AppTextStyles.profileStat),
         ),
       ],
+    );
+
+    if (onTap == null) {
+      return child;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: child,
+      ),
     );
   }
 }

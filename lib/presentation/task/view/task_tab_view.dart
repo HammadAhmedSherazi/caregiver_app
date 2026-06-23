@@ -18,6 +18,7 @@ import '../widgets/task_filter_chips.dart';
 import '../widgets/task_screen_header.dart';
 import '../widgets/task_search_bar.dart';
 import 'client_tasks_view.dart';
+import '../../clients/view/clients_list_view.dart';
 import 'compliance_form_view.dart';
 import 'compliance_history_view.dart';
 import 'payroll_view.dart';
@@ -205,6 +206,13 @@ class _TaskTabViewState extends State<TaskTabView> {
                           ),
                         );
                       },
+                      onClients: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ClientsListView(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -221,16 +229,25 @@ class _TaskQuickLinks extends StatelessWidget {
   const _TaskQuickLinks({
     required this.onPayroll,
     required this.onHistory,
+    required this.onClients,
   });
 
   final VoidCallback onPayroll;
   final VoidCallback onHistory;
+  final VoidCallback onClients;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         const SizedBox(height: 8),
+        _QuickLinkTile(
+          iconAsset: AppAssets.icHomeUserOutline,
+          title: 'My Clients',
+          subtitle: 'Assigned clients & profiles',
+          onTap: onClients,
+        ),
+        const SizedBox(height: 12),
         _QuickLinkTile(
           iconAsset: AppAssets.icTaskPayroll,
           title: 'Payroll',

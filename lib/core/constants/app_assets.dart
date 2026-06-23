@@ -60,6 +60,14 @@ class AppAssets {
   static const String icHomeShiftCompletedTick =
       '$_homeIcons/ic_shift_completed_tick.svg';
   static const String icHomeSyncedCheck = '$_homeIcons/ic_synced_check.svg';
+  static const String icLogout = '$_homeIcons/ic_logout.svg';
+  static const String icLogoutBold = '$_homeIcons/ic_logout_bold.svg';
+  static const String icSend = '$_homeIcons/ic_send.svg';
+  static const String icCallBulkWhite = '$_homeIcons/ic_call_bulk_white.svg';
+  static const String icCallBulk = '$_homeIcons/ic_call_bulk.svg';
+  static const String icCallOutline = '$_homeIcons/ic_call_outline.svg';
+  static const String icSearchTwotone = '$_homeIcons/ic_search_twotone.svg';
+  static const String icTrash = '$_homeIcons/ic_trash.svg';
 
   static const String _schedule = 'assets/images/schedule';
   static const String _scheduleIcons = '$_schedule/icons';

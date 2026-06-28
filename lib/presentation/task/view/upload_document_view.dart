@@ -78,7 +78,7 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
       builder: (sheetContext) {
         return TaskSuccessSheet(
           title: 'Document uploaded',
-          message: "Your driver's license has been uploaded successfully.",
+          message: 'Your document has been uploaded successfully.',
           primaryLabel: 'Done',
           onPrimary: () {
             Navigator.of(sheetContext).pop();
@@ -100,7 +100,7 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
         children: [
           TaskScreenHeader(
             title: 'Upload Document',
-            subtitle: "Driver's license",
+            subtitle: 'Required document',
             onBack: () => Navigator.of(context).pop(),
           ),
           Expanded(
@@ -114,7 +114,7 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Upload Updated Driver's License",
+                        'Upload Document',
                         style: context.responsiveStyle(
                           AppTextStyles.homeCardTitle.copyWith(
                             fontWeight: FontWeight.w700,
@@ -123,7 +123,7 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Due in 3 days · Required for compliance',
+                        'Select a file to upload',
                         style: context.responsiveStyle(
                           AppTextStyles.homeCardSubtitle,
                         ),

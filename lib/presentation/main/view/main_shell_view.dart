@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/cubit/auth_cubit.dart';
+import '../../auth/cubit/auth_state.dart';
 import '../../home/cubit/home_cubit.dart';
+import '../../widgets/get_request_view.dart';
 import '../../home/cubit/home_state.dart';
 import '../../home/view/home_tab_view.dart';
 import '../../home/widgets/home_svg_icon.dart';
@@ -13,6 +15,7 @@ import '../../notifications/view/notifications_view.dart';
 import '../../profile/view/profile_tab_view.dart';
 import '../../schedule/view/schedule_tab_view.dart';
 import '../../task/view/task_tab_view.dart';
+import '../main_tab_loader.dart';
 import '../widgets/app_side_menu.dart';
 import '../widgets/logout_dialog.dart';
 import '../widgets/main_bottom_nav_bar.dart';
@@ -27,6 +30,20 @@ class MainShellView extends StatefulWidget {
 class _MainShellViewState extends State<MainShellView> {
   MainTab _selectedTab = MainTab.home;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      reloadMainTab(context, MainTab.home);
+    });
+  }
+
+  void _selectTab(MainTab tab) {
+    setState(() => _selectedTab = tab);
+    reloadMainTab(context, tab);
+  }
 
   void _openNotifications() {
     Navigator.of(context).push(
@@ -49,13 +66,13 @@ class _MainShellViewState extends State<MainShellView> {
 
     switch (destination) {
       case SideMenuDestination.dashboard:
-        setState(() => _selectedTab = MainTab.home);
+        _selectTab(MainTab.home);
       case SideMenuDestination.schedule:
-        setState(() => _selectedTab = MainTab.schedule);
+        _selectTab(MainTab.schedule);
       case SideMenuDestination.profile:
-        setState(() => _selectedTab = MainTab.profile);
+        _selectTab(MainTab.profile);
       case SideMenuDestination.task:
-        setState(() => _selectedTab = MainTab.task);
+        _selectTab(MainTab.task);
       case SideMenuDestination.inbox:
         _openInbox();
       case SideMenuDestination.settings:
@@ -77,10 +94,7 @@ class _MainShellViewState extends State<MainShellView> {
     await Future<void>.delayed(const Duration(milliseconds: 280));
     if (!mounted) return;
 
-    final confirmed = await LogoutDialog.show(context);
-    if (confirmed == true && mounted) {
-      await context.read<AuthCubit>().logout();
-    }
+    await LogoutDialog.show(context);
   }
 
   void _showPlaceholderSnack(String message) {
@@ -91,10 +105,17 @@ class _MainShellViewState extends State<MainShellView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeCubit, HomeState>(
+    return PostActionListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) =>
+          current.errorMessage != null &&
+          current.errorMessage != previous.errorMessage &&
+          (previous.isSubmitting || current.isSubmitting),
+      errorMessage: (state) => state.errorMessage,
+      onClearError: () => context.read<AuthCubit>().clearActionError(),
+      child: BlocBuilder<HomeCubit, HomeState>(
       builder: (context, homeState) {
         final isActiveShift =
-            homeState.dashboard?.activeShift.isInProgress ?? false;
+            homeState.dashboard?.activeShift?.isInProgress ?? false;
         final hideBottomNav = isActiveShift || homeState.isEndingShift;
         final caregiverName = homeState.dashboard?.caregiverName;
 
@@ -120,7 +141,7 @@ class _MainShellViewState extends State<MainShellView> {
                 onOpenNotifications: _openNotifications,
               ),
               ScheduleTabView(
-                onBack: () => setState(() => _selectedTab = MainTab.home),
+                onBack: () => _selectTab(MainTab.home),
               ),
               const TaskTabView(),
               const ProfileTabView(),
@@ -144,10 +165,11 @@ class _MainShellViewState extends State<MainShellView> {
               ? null
               : MainBottomNavBar(
                   selectedTab: _selectedTab,
-                  onTabSelected: (tab) => setState(() => _selectedTab = tab),
+                  onTabSelected: _selectTab,
                 ),
         );
       },
+    ),
     );
   }
 }

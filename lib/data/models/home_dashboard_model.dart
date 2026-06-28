@@ -6,7 +6,7 @@ class HomeDashboard extends Equatable {
   const HomeDashboard({
     required this.caregiverName,
     required this.dateLabel,
-    required this.activeShift,
+    this.activeShift,
     required this.schedule,
     required this.taskSummary,
     required this.pendingTasks,
@@ -14,16 +14,21 @@ class HomeDashboard extends Equatable {
 
   final String caregiverName;
   final String dateLabel;
-  final ActiveShift activeShift;
+  final ActiveShift? activeShift;
   final List<ScheduleEntry> schedule;
   final TaskSummary taskSummary;
   final List<PendingTask> pendingTasks;
 
-  HomeDashboard copyWith({ActiveShift? activeShift}) {
+  bool get hasShiftCard => activeShift != null;
+
+  HomeDashboard copyWith({
+    ActiveShift? activeShift,
+    bool clearActiveShift = false,
+  }) {
     return HomeDashboard(
       caregiverName: caregiverName,
       dateLabel: dateLabel,
-      activeShift: activeShift ?? this.activeShift,
+      activeShift: clearActiveShift ? null : (activeShift ?? this.activeShift),
       schedule: schedule,
       taskSummary: taskSummary,
       pendingTasks: pendingTasks,
@@ -58,19 +63,9 @@ class ActiveShift extends Equatable {
     this.status = ShiftStatus.pending,
     this.startedAtLabel,
     this.shiftStartedAt,
-    this.careTasks = const [
-      'Assist with morning bathing and dressing',
-      'Prepare low-sodium breakfast',
-      'Medication reminder at 10:00 AM',
-      'Light housekeeping in kitchen',
-    ],
+    this.careTasks = const [],
     this.assignedVisits = const [],
-    this.serviceTypeOptions = const [
-      'Personal Care',
-      'Homemaking',
-      'Respite',
-      'Companion Care',
-    ],
+    this.serviceTypeOptions = const [],
   });
 
   final String clientName;
@@ -93,6 +88,26 @@ class ActiveShift extends Equatable {
   final List<String> serviceTypeOptions;
 
   bool get isInProgress => status == ShiftStatus.inProgress;
+
+  /// Small label above the client name on the home shift card.
+  String get cardHeading {
+    if (isInProgress) return 'Active Shift';
+    if (minutesUntilStart <= 0) return 'Ready to Start';
+    return 'Upcoming Shift';
+  }
+
+  /// Start Shift is only offered before clock-in.
+  bool get showStartShiftButton => status == ShiftStatus.pending;
+
+  /// Countdown ring only when a future scheduled start exists.
+  bool get showProgressRing =>
+      status == ShiftStatus.pending && minutesUntilStart > 0;
+
+  /// Footer line under the action area.
+  String get cardScheduleLabel {
+    if (scheduledTimeDisplay != '—') return scheduledTimeDisplay;
+    return timeRange;
+  }
 
   ActiveShift copyWith({
     String? clientName,

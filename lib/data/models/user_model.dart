@@ -14,11 +14,12 @@ class UserModel extends BaseModel {
   final String? avatarUrl;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
     return UserModel(
-      id: json['id'] as String,
+      id: rawId is int ? rawId.toString() : rawId as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
     );
   }
 

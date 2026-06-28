@@ -9,8 +9,8 @@ import '../../../data/models/task_page_model.dart';
 import '../../home/widgets/home_icon_box.dart';
 import '../../home/widgets/home_svg_icon.dart';
 import '../../home/widgets/vertical_overlap.dart';
-import '../../widgets/error_widget.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/get_request_view.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../cubit/task_cubit.dart';
 import '../cubit/task_state.dart';
 import '../widgets/task_cards.dart';
@@ -35,17 +35,6 @@ class _TaskTabViewState extends State<TaskTabView> {
   final _searchController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cubit = context.read<TaskCubit>();
-      if (cubit.state.data == null) {
-        cubit.loadTasks();
-      }
-    });
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -57,7 +46,7 @@ class _TaskTabViewState extends State<TaskTabView> {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => ComplianceFormView(
-              title: 'May 2026 compliance',
+              title: task.title,
               questions: data.monthlyComplianceQuestions,
               isMonthly: true,
             ),
@@ -81,7 +70,19 @@ class _TaskTabViewState extends State<TaskTabView> {
       case TaskItemType.visit:
         Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => ClientTasksView(data: data.clientTasks),
+            builder: (_) => ClientTasksView(
+              data: ClientTasksData(
+                clientName: task.clientName ?? task.title,
+                completedCount:
+                    task.status == TaskItemStatus.submitted ? 1 : 0,
+                totalCount: 1,
+                progressPercent:
+                    task.status == TaskItemStatus.submitted ? 100 : 0,
+                complianceTitle: '',
+                complianceSubtitle: '',
+                careTasks: const [],
+              ),
+            ),
           ),
         );
     }
@@ -100,17 +101,18 @@ class _TaskTabViewState extends State<TaskTabView> {
   Widget build(BuildContext context) {
     return BlocBuilder<TaskCubit, TaskState>(
       builder: (context, state) {
-        if (state.isLoading && state.data == null) {
-          return const LoadingWidget(message: 'Loading tasks...');
-        }
+        return GetRequestView(
+          isLoading: state.isLoading,
+          hasError: state.hasError,
+          onRetry: () => context.read<TaskCubit>().loadTasks(),
+          skeleton: const TaskTabSkeleton(),
+          child: _buildContent(context, state),
+        );
+      },
+    );
+  }
 
-        if (state.hasError && state.data == null) {
-          return ErrorDisplayWidget(
-            message: state.errorMessage ?? 'Something went wrong',
-            onRetry: () => context.read<TaskCubit>().loadTasks(),
-          );
-        }
-
+  Widget _buildContent(BuildContext context, TaskState state) {
         final data = state.data;
         if (data == null) {
           return const SizedBox.shrink();
@@ -192,7 +194,7 @@ class _TaskTabViewState extends State<TaskTabView> {
                       onPayroll: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) => PayrollView(payroll: data.payroll),
+                            builder: (_) => const PayrollView(),
                           ),
                         );
                       },
@@ -220,8 +222,6 @@ class _TaskTabViewState extends State<TaskTabView> {
             ),
           ],
         );
-      },
-    );
   }
 }
 

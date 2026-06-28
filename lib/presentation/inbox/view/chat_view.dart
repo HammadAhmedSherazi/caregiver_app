@@ -120,7 +120,11 @@ class _ChatViewState extends State<ChatView> {
     }
 
     if (_error != null) {
-      return ErrorDisplayWidget(message: _error!, onRetry: _load);
+      return ErrorDisplayWidget(onRetry: _load);
+    }
+
+    if (_messages.isEmpty) {
+      return const Center(child: Text('No messages yet'));
     }
 
     return Stack(

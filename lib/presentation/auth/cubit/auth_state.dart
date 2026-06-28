@@ -12,7 +12,7 @@ enum AuthStatus {
 
 class AuthState extends Equatable {
   const AuthState({
-    this.status = AuthStatus.onboarding,
+    this.status = AuthStatus.initial,
     this.user,
     this.errorMessage,
     this.isSubmitting = false,

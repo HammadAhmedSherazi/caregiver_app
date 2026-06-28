@@ -20,15 +20,6 @@ class EndShiftView extends StatefulWidget {
 
   final ActiveShift shift;
 
-  static const _completionTasks = [
-    'Bathing assistance',
-    'Dressing assistance',
-    'Meal preparation',
-    'Toileting assistance',
-    'Medication reminder',
-    'Light housekeeping',
-  ];
-
   static const _cardOverlap = 100.0;
 
   @override
@@ -42,7 +33,7 @@ class _EndShiftViewState extends State<EndShiftView> {
   @override
   void initState() {
     super.initState();
-    _completedTaskIndexes = {0};
+    _completedTaskIndexes = {};
   }
 
   @override
@@ -101,23 +92,25 @@ class _EndShiftViewState extends State<EndShiftView> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               children: [
-                Text(
-                  'Confirm completed tasks',
-                  style: context.responsiveStyle(
-                    AppTextStyles.homeCardTitle.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      letterSpacing: -0.8,
+                if (widget.shift.careTasks.isNotEmpty) ...[
+                  Text(
+                    'Confirm completed tasks',
+                    style: context.responsiveStyle(
+                      AppTextStyles.homeCardTitle.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        letterSpacing: -0.8,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 13),
-                _EndShiftTasksCard(
-                  tasks: EndShiftView._completionTasks,
-                  completedIndexes: _completedTaskIndexes,
-                  onToggle: _toggleTask,
-                ),
-                const SizedBox(height: 25),
+                  const SizedBox(height: 13),
+                  _EndShiftTasksCard(
+                    tasks: widget.shift.careTasks,
+                    completedIndexes: _completedTaskIndexes,
+                    onToggle: _toggleTask,
+                  ),
+                  const SizedBox(height: 25),
+                ],
                 const _EndShiftNotesHeading(),
                 const SizedBox(height: 13),
                 _EndShiftNotesField(controller: _notesController),

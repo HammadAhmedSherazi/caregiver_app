@@ -49,8 +49,10 @@ class ActiveShiftView extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               children: [
                 _ActiveShiftQuickActions(),
-                const SizedBox(height: 12),
-                _ActiveShiftCareTasksCard(tasks: shift.careTasks),
+                if (shift.careTasks.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _ActiveShiftCareTasksCard(tasks: shift.careTasks),
+                ],
                 const SizedBox(height: 24),
                 _ActiveShiftEndButton(
                   onPressed: () =>

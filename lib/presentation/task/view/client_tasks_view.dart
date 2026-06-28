@@ -84,48 +84,50 @@ class _ClientTasksViewState extends State<ClientTasksView> {
                   ),
                 ),
                 const SizedBox(height: 28),
-                for (var i = 0; i < _tasks.length; i++) ...[
-                  ClientCareTaskCard(
-                    task: _tasks[i],
-                    onToggle: () {
-                      setState(() {
-                        _tasks[i] = ClientCareTask(
-                          id: _tasks[i].id,
-                          timeLabel: _tasks[i].timeLabel,
-                          title: _tasks[i].title,
-                          isCompleted: !_tasks[i].isCompleted,
-                        );
-                      });
+                if (_tasks.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Text(
+                      'No care tasks for this visit',
+                      style: context.responsiveStyle(
+                        AppTextStyles.homeCardSubtitle,
+                      ),
+                    ),
+                  )
+                else
+                  for (var i = 0; i < _tasks.length; i++) ...[
+                    ClientCareTaskCard(
+                      task: _tasks[i],
+                      onToggle: () {
+                        setState(() {
+                          _tasks[i] = ClientCareTask(
+                            id: _tasks[i].id,
+                            timeLabel: _tasks[i].timeLabel,
+                            title: _tasks[i].title,
+                            isCompleted: !_tasks[i].isCompleted,
+                          );
+                        });
+                      },
+                    ),
+                    if (i < _tasks.length - 1) const SizedBox(height: 10),
+                  ],
+                if (data.complianceTitle.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  ClientComplianceTaskCard(
+                    title: data.complianceTitle,
+                    subtitle: data.complianceSubtitle,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ComplianceFormView(
+                            title: data.complianceTitle,
+                            questions: const [],
+                          ),
+                        ),
+                      );
                     },
                   ),
-                  if (i < _tasks.length - 1) const SizedBox(height: 10),
                 ],
-                const SizedBox(height: 24),
-                ClientComplianceTaskCard(
-                  title: data.complianceTitle,
-                  subtitle: data.complianceSubtitle,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ComplianceFormView(
-                          title: data.complianceTitle,
-                          questions: const [
-                            ComplianceQuestion(
-                              id: 'v1',
-                              prompt:
-                                  'Did you complete all assigned care tasks?',
-                            ),
-                            ComplianceQuestion(
-                              id: 'v2',
-                              prompt:
-                                  'Were there any incidents or concerns?',
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
           ),

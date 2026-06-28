@@ -160,18 +160,23 @@ class PaystubItem extends Equatable {
     required this.id,
     required this.periodLabel,
     required this.hoursLabel,
-    required this.netPay,
-    required this.isPaid,
+    required this.grossPay,
+    required this.status,
+    required this.stubAvailable,
   });
 
   final String id;
   final String periodLabel;
   final String hoursLabel;
-  final String netPay;
-  final bool isPaid;
+  final String grossPay;
+  final String status;
+  final bool stubAvailable;
+
+  bool get isPaid => status == 'Paid';
 
   @override
-  List<Object?> get props => [id, periodLabel, hoursLabel, netPay, isPaid];
+  List<Object?> get props =>
+      [id, periodLabel, hoursLabel, grossPay, status, stubAvailable];
 }
 
 class PayrollSummary extends Equatable {
@@ -207,40 +212,42 @@ class PayrollSummary extends Equatable {
 
 class PaystubDetail extends Equatable {
   const PaystubDetail({
+    required this.id,
     required this.periodLabel,
-    required this.netPay,
+    required this.grossPay,
     required this.payDate,
     required this.hoursWorked,
     required this.rate,
-    required this.grossPay,
-    required this.federalTax,
-    required this.stateTax,
-    required this.fica,
+    required this.status,
+    required this.program,
+    required this.stubAvailable,
     required this.visitSummary,
   });
 
+  final String id;
   final String periodLabel;
-  final String netPay;
+  final String grossPay;
   final String payDate;
   final String hoursWorked;
   final String rate;
-  final String grossPay;
-  final String federalTax;
-  final String stateTax;
-  final String fica;
+  final String status;
+  final String program;
+  final bool stubAvailable;
   final List<MapEntry<String, String>> visitSummary;
+
+  bool get isPaid => status == 'Paid';
 
   @override
   List<Object?> get props => [
+        id,
         periodLabel,
-        netPay,
+        grossPay,
         payDate,
         hoursWorked,
         rate,
-        grossPay,
-        federalTax,
-        stateTax,
-        fica,
+        status,
+        program,
+        stubAvailable,
         visitSummary,
       ];
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
@@ -6,7 +7,7 @@ import '../../../data/models/client_model.dart';
 import '../../../data/repositories/client_repository.dart';
 import '../../task/widgets/task_screen_header.dart';
 import '../../widgets/error_widget.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../widgets/client_list_widgets.dart';
 import '../widgets/clients_search_bar.dart';
 import 'client_profile_view.dart';
@@ -116,12 +117,19 @@ class _ClientsListViewState extends State<ClientsListView> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const LoadingWidget(message: 'Loading clients...');
+    if (_error != null) {
+      return ErrorDisplayWidget(onRetry: _load);
     }
 
-    if (_error != null) {
-      return ErrorDisplayWidget(message: _error!, onRetry: _load);
+    if (_isLoading) {
+      return Skeletonizer(
+        enabled: true,
+        effect: ShimmerEffect(
+          baseColor: AppColors.homeSheetDetailsBg,
+          highlightColor: AppColors.surface,
+        ),
+        child: const ClientsListSkeleton(),
+      );
     }
 
     final clients = _filteredClients;

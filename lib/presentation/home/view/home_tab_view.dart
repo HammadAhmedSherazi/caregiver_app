@@ -11,8 +11,8 @@ import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/home_dashboard_model.dart';
 import '../../../data/repositories/client_repository.dart';
 import '../../clients/view/client_profile_view.dart';
-import '../../widgets/error_widget.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/get_request_view.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 import '../view/active_shift_view.dart';
@@ -42,17 +42,6 @@ class HomeTabView extends StatefulWidget {
 }
 
 class _HomeTabViewState extends State<HomeTabView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cubit = context.read<HomeCubit>();
-      if (cubit.state.dashboard == null) {
-        cubit.loadDashboard();
-      }
-    });
-  }
-
   Future<void> _openClientProfile(BuildContext context, String clientName) async {
     final client = await sl<ClientRepository>().findByName(clientName);
     if (!context.mounted || client == null) return;
@@ -66,29 +55,39 @@ class _HomeTabViewState extends State<HomeTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeCubit, HomeState>(
-      builder: (context, state) {
-        if (state.isLoading && state.dashboard == null) {
-          return const LoadingWidget(message: 'Loading dashboard...');
-        }
-
-        if (state.hasError && state.dashboard == null) {
-          return ErrorDisplayWidget(
-            message: state.errorMessage ?? 'Something went wrong',
+    return PostActionListener<HomeCubit, HomeState>(
+      listenWhen: (previous, current) =>
+          current.errorMessage != null &&
+          current.errorMessage != previous.errorMessage &&
+          current.dashboard != null,
+      errorMessage: (state) => state.errorMessage,
+      onClearError: () => context.read<HomeCubit>().clearActionError(),
+      child: BlocBuilder<HomeCubit, HomeState>(
+        builder: (context, state) {
+          return GetRequestView(
+            isLoading: state.isLoading,
+            hasError: state.hasError,
             onRetry: () => context.read<HomeCubit>().loadDashboard(),
+            skeleton: const HomeTabSkeleton(),
+            child: _buildContent(context, state),
           );
-        }
+        },
+      ),
+    );
+  }
 
+  Widget _buildContent(BuildContext context, HomeState state) {
         final dashboard = state.dashboard;
         if (dashboard == null) {
           return const SizedBox.shrink();
         }
 
-        if (dashboard.activeShift.isInProgress) {
+        final shift = dashboard.activeShift;
+        if (shift != null && shift.isInProgress) {
           if (state.isEndingShift) {
-            return EndShiftView(shift: dashboard.activeShift);
+            return EndShiftView(shift: shift);
           }
-          return ActiveShiftView(shift: dashboard.activeShift);
+          return ActiveShiftView(shift: shift);
         }
 
         return Column(
@@ -107,7 +106,7 @@ class _HomeTabViewState extends State<HomeTabView> {
                 color: AppColors.homePrimary,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(bottom: 100),
+                  padding: const EdgeInsets.only(bottom: 100, top: 30),
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -155,8 +154,6 @@ class _HomeTabViewState extends State<HomeTabView> {
             ),
           ],
         );
-      },
-    );
   }
 }
 
@@ -171,15 +168,18 @@ class _HomeHeader extends StatelessWidget {
 
   final String caregiverName;
   final String dateLabel;
-  final ActiveShift activeShift;
+  final ActiveShift? activeShift;
   final VoidCallback? onOpenMenu;
   final VoidCallback? onOpenNotifications;
 
   static const _headerHeight = 280.0;
+  static const _headerHeightCompact = 132.0;
   static const _cardOverlap = 100.0;
 
   @override
   Widget build(BuildContext context) {
+    final showShiftCard = activeShift != null;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -188,7 +188,7 @@ class _HomeHeader extends StatelessWidget {
           child: ColoredBox(
             color: AppColors.homeHeader,
             child: SizedBox(
-              height: _headerHeight,
+              height: showShiftCard ? _headerHeight : _headerHeightCompact,
               child: Stack(
                 clipBehavior: Clip.hardEdge,
                 children: [
@@ -280,13 +280,14 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
         ),
-        VerticalOverlap(
-          overlap: _cardOverlap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-            child: _ActiveShiftCard(shift: activeShift),
+        if (showShiftCard)
+          VerticalOverlap(
+            overlap: _cardOverlap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+              child: _ActiveShiftCard(shift: activeShift!),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -303,11 +304,16 @@ class _ActiveShiftCard extends StatelessWidget {
       builder: (context, constraints) {
         final cardWidth = constraints.maxWidth;
         final ringSize = (cardWidth * 0.34).clamp(96.0, 132.0);
-        final showRing = cardWidth >= 300;
+        final showRing = shift.showProgressRing && cardWidth >= 300;
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(24, 23, 16, 20),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            23,
+            showRing ? 16 : 24,
+            20,
+          ),
           decoration: _cardDecoration(),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -317,6 +323,17 @@ class _ActiveShiftCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(
+                      shift.cardHeading,
+                      style: context.responsiveStyle(
+                        AppTextStyles.homeCardSubtitle.copyWith(
+                          color: AppColors.homeAccent,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -346,17 +363,19 @@ class _ActiveShiftCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 15),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _StartShiftButton(
-                        onPressed: () =>
-                            _onStartShiftPressed(context, shift),
+                    if (shift.showStartShiftButton) ...[
+                      const SizedBox(height: 15),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: _StartShiftButton(
+                          onPressed: () =>
+                              _onStartShiftPressed(context, shift),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
+                    ],
+                    SizedBox(height: shift.showStartShiftButton ? 20 : 12),
                     Text(
-                      shift.timeRange,
+                      shift.cardScheduleLabel,
                       style: context.responsiveStyle(
                         AppTextStyles.homeCardSubtitle.copyWith(
                           color: AppColors.homeDarkText,

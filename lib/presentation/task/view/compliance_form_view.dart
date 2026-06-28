@@ -80,10 +80,9 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
           },
           showSummary: widget.isMonthly,
           summaryRows: widget.isMonthly
-              ? const [
-                  MapEntry('Period', 'May 2026'),
-                  MapEntry('Submitted', 'Jun 20, 2026'),
-                  MapEntry('Status', 'On time'),
+              ? [
+                  MapEntry('Form', widget.title),
+                  MapEntry('Status', 'Submitted'),
                 ]
               : const [],
         );
@@ -109,7 +108,11 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
   }
 
   Widget _buildMonthlyForm(BuildContext context) {
-    final sectionLabel = widget.sectionLabel ?? 'John Doe · April 2026';
+    if (_questions.isEmpty) {
+      return _buildEmptyForm(context);
+    }
+
+    final sectionLabel = widget.sectionLabel ?? widget.title;
 
     return Scaffold(
       backgroundColor: AppColors.homeBackground,
@@ -131,9 +134,9 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: ComplianceFormHeroCard(
-                    title: widget.heroTitle ?? 'Certifying May 2026',
+                    title: widget.heroTitle ?? widget.title,
                     subtitle: widget.heroSubtitle ??
-                        'Filed on June 1, 2026 · Required by your agency',
+                        'Complete all required fields before submitting',
                   ),
                 ),
               ),
@@ -183,6 +186,10 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
   }
 
   Widget _buildSimpleForm(BuildContext context) {
+    if (_questions.isEmpty) {
+      return _buildEmptyForm(context);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.homeBackground,
       body: Column(
@@ -214,6 +221,30 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
                   onPressed: _canSubmit ? _submit : null,
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyForm(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.homeBackground,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TaskScreenHeader(
+            title: widget.title,
+            onBack: () => Navigator.of(context).pop(),
+            height: 160,
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                'No form data available',
+                style: context.responsiveStyle(AppTextStyles.homeCardSubtitle),
+              ),
             ),
           ),
         ],

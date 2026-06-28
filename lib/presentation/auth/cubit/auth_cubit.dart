@@ -13,30 +13,53 @@ class AuthCubit extends BaseCubit<AuthState> {
   final RememberMeStorage rememberMeStorage;
 
   Future<void> initialize() async {
+    emit(state.copyWith(status: AuthStatus.loading, clearError: true));
+
     try {
-      final onboardingCompleted = await repository.isOnboardingCompleted();
-
-      if (!onboardingCompleted) {
-        emit(state.copyWith(status: AuthStatus.onboarding, clearError: true));
-        return;
-      }
-
-      emit(state.copyWith(status: AuthStatus.loading, clearError: true));
-
-      final user = await repository.getCurrentUser();
-      if (user != null) {
+      final hasSession = await repository.hasStoredSession();
+      if (hasSession) {
+        final user = await repository.getCurrentUser();
+        await repository.setOnboardingCompleted();
         emit(
           state.copyWith(
             status: AuthStatus.authenticated,
             user: user,
+            clearError: true,
           ),
         );
         return;
       }
 
-      emit(state.copyWith(status: AuthStatus.unauthenticated));
+      final onboardingCompleted = await repository.isOnboardingCompleted();
+      if (!onboardingCompleted) {
+        emit(state.copyWith(status: AuthStatus.onboarding, clearError: true));
+        return;
+      }
+
+      emit(state.copyWith(status: AuthStatus.unauthenticated, clearError: true));
     } catch (error, stackTrace) {
       logError('Failed to initialize auth', error: error, stackTrace: stackTrace);
+
+      final hasSession = await repository.hasStoredSession();
+      if (hasSession) {
+        final user = await repository.getCurrentUser();
+        await repository.setOnboardingCompleted();
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+            clearError: true,
+          ),
+        );
+        return;
+      }
+
+      final onboardingCompleted = await repository.isOnboardingCompleted();
+      if (!onboardingCompleted) {
+        emit(state.copyWith(status: AuthStatus.onboarding, clearError: true));
+        return;
+      }
+
       emit(
         state.copyWith(
           status: AuthStatus.unauthenticated,
@@ -73,6 +96,7 @@ class AuthCubit extends BaseCubit<AuthState> {
 
     try {
       final user = await repository.login(email: email, password: password);
+      await repository.setOnboardingCompleted();
       await rememberMeStorage.save(
         enabled: rememberMe,
         email: rememberMe ? email : null,
@@ -290,6 +314,10 @@ class AuthCubit extends BaseCubit<AuthState> {
     }
 
     return false;
+  }
+
+  void clearActionError() {
+    emit(state.copyWith(clearError: true));
   }
 
   Future<void> logout() async {

@@ -1,3 +1,4 @@
+import '../api/caregiver_api.dart';
 import '../models/profile_page_model.dart';
 import '../models/user_model.dart';
 
@@ -6,55 +7,33 @@ abstract class ProfileRepository {
 }
 
 class ProfileRepositoryImpl implements ProfileRepository {
-  static const _demoAvatarUrl = 'https://i.pravatar.cc/150?u=caregiver-mitchell';
+  ProfileRepositoryImpl({required CaregiverApi api}) : _api = api;
+
+  final CaregiverApi _api;
 
   @override
   Future<ProfilePageData> getProfile({UserModel? user}) async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
+    final profile = await _api.getMe();
 
-    final displayName = user?.name ?? 'Mitchell';
+    final displayName = user?.name ?? profile.name;
     final firstName = displayName.split(' ').first;
+    final title = profile.caregiverType.isEmpty
+        ? profile.status
+        : '${profile.caregiverType[0].toUpperCase()}${profile.caregiverType.substring(1)} caregiver';
 
     return ProfilePageData(
       headerTitle: firstName,
       name: displayName,
-      title: 'Certified Home Healer',
-      avatarUrl: user?.avatarUrl ?? _demoAvatarUrl,
-      experienceYears: 3,
-      visitCount: 247,
-      hoursThisWeek: 28.5,
+      title: title,
+      avatarUrl: user?.avatarUrl,
+      experienceYears: 0,
+      visitCount: 0,
+      hoursThisWeek: 0,
       targetHours: 40,
-      weekChangePercent: 12,
+      weekChangePercent: 0,
       targetLineHours: 20,
       chartMaxHours: 30,
-      weeklyHours: const [
-        ProfileDayHours(
-          dayLabel: 'M',
-          hours: 30,
-          style: ProfileBarStyle.accent,
-        ),
-        ProfileDayHours(
-          dayLabel: 'T',
-          hours: 19.7,
-          style: ProfileBarStyle.light,
-        ),
-        ProfileDayHours(
-          dayLabel: 'W',
-          hours: 11.6,
-          style: ProfileBarStyle.primary,
-        ),
-        ProfileDayHours(
-          dayLabel: 'T',
-          hours: 23.5,
-          style: ProfileBarStyle.accent,
-          isToday: true,
-        ),
-        ProfileDayHours(
-          dayLabel: 'F',
-          hours: 15,
-          style: ProfileBarStyle.light,
-        ),
-      ],
+      weeklyHours: const [],
     );
   }
 }

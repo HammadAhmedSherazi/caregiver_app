@@ -26,11 +26,12 @@ class HomeState extends Equatable {
     HomeDashboard? dashboard,
     String? errorMessage,
     bool? isEndingShift,
+    bool clearError = false,
   }) {
     return HomeState(
       status: status ?? this.status,
       dashboard: dashboard ?? this.dashboard,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isEndingShift: isEndingShift ?? this.isEndingShift,
     );
   }

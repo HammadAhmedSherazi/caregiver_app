@@ -1,3 +1,5 @@
+import '../api/caregiver_api.dart';
+import '../mappers/api_mappers.dart';
 import '../models/schedule_page_model.dart';
 
 abstract class ScheduleRepository {
@@ -5,14 +7,21 @@ abstract class ScheduleRepository {
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  static final _defaultSelectedDate = DateTime(2026, 4, 21);
+  ScheduleRepositoryImpl({required CaregiverApi api}) : _api = api;
+
+  final CaregiverApi _api;
 
   @override
   Future<SchedulePageData> getSchedulePage({DateTime? selectedDate}) async {
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-
-    final date = selectedDate ?? _defaultSelectedDate;
+    final date = selectedDate ?? DateTime.now();
     final monday = _mondayOfWeek(date);
+    final friday = monday.add(const Duration(days: 4));
+
+    final response = await _api.getSchedule(
+      from: _formatQueryDate(monday),
+      to: _formatQueryDate(friday),
+      upcoming: false,
+    );
 
     final days = List.generate(5, (index) {
       final dayDate = monday.add(Duration(days: index));
@@ -24,39 +33,17 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       );
     });
 
+    final appointments = response.data
+        .where((item) => _isSameDay(item.scheduledStart, date))
+        .map(scheduleItemToAppointment)
+        .toList();
+
     return SchedulePageData(
       monthLabel: _monthLabel(date),
       days: days,
       selectedDate: date,
-      appointments: _appointmentsForDate(date),
+      appointments: appointments,
     );
-  }
-
-  List<ScheduleAppointment> _appointmentsForDate(DateTime date) {
-    if (!_isSameDay(date, _defaultSelectedDate)) {
-      return const [];
-    }
-
-    return const [
-      ScheduleAppointment(
-        timeLabel: '2:00 PM',
-        clientName: 'Steven Mark',
-        address: '248 Oak Street, Brooklyn, NY 11201',
-        status: ScheduleAppointmentStatus.upcoming,
-      ),
-      ScheduleAppointment(
-        timeLabel: '9:00 PM',
-        clientName: 'Mary Smith',
-        address: '248 Oak Street, Brooklyn, NY 11201',
-        status: ScheduleAppointmentStatus.scheduled,
-      ),
-      ScheduleAppointment(
-        timeLabel: '9:00 PM',
-        clientName: 'Mary Smith',
-        address: '248 Oak Street, Brooklyn, NY 11201',
-        status: ScheduleAppointmentStatus.scheduled,
-      ),
-    ];
   }
 
   DateTime _mondayOfWeek(DateTime date) {
@@ -66,6 +53,12 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _formatQueryDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   String _monthLabel(DateTime date) {

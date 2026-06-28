@@ -1,3 +1,9 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/network/api_exception.dart';
+import '../api/caregiver_api.dart';
+import '../local/session_storage.dart';
+import '../local/token_storage.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRepository {
@@ -5,6 +11,7 @@ abstract class AuthRepository {
   Future<void> setOnboardingCompleted();
 
   Future<UserModel?> getCurrentUser();
+  Future<bool> hasStoredSession();
   Future<UserModel> login({required String email, required String password});
   Future<void> signup({
     required String name,
@@ -29,28 +36,72 @@ abstract class AuthRepository {
 }
 
 class AuthRepositoryImpl implements AuthRepository {
-  bool _onboardingCompleted = false;
-  UserModel? _currentUser;
+  AuthRepositoryImpl({
+    required CaregiverApi api,
+    required TokenStorage tokenStorage,
+    required SessionStorage sessionStorage,
+  })  : _api = api,
+        _tokenStorage = tokenStorage,
+        _sessionStorage = sessionStorage;
 
-  static const _demoEmail = 'caregiver@example.com';
-  static const _demoPassword = 'password123';
+  static const _keyOnboardingCompleted = 'onboarding_completed';
+
+  final CaregiverApi _api;
+  final TokenStorage _tokenStorage;
+  final SessionStorage _sessionStorage;
+
+  UserModel? _cachedUser;
 
   @override
   Future<bool> isOnboardingCompleted() async {
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    return _onboardingCompleted;
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyOnboardingCompleted) ?? false;
   }
 
   @override
   Future<void> setOnboardingCompleted() async {
-    await Future<void>.delayed(const Duration(milliseconds: 150));
-    _onboardingCompleted = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyOnboardingCompleted, true);
+  }
+
+  @override
+  Future<bool> hasStoredSession() async {
+    final token = await _tokenStorage.getToken();
+    return token != null && token.isNotEmpty;
   }
 
   @override
   Future<UserModel?> getCurrentUser() async {
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    return _currentUser;
+    final token = await _tokenStorage.getToken();
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    _cachedUser ??= await _sessionStorage.loadUser();
+
+    try {
+      final profile = await _api.getMe();
+      _cachedUser = UserModel(
+        id: profile.id.toString(),
+        name: profile.name,
+        email: profile.email,
+      );
+      await _sessionStorage.saveUser(_cachedUser!);
+      return _cachedUser;
+    } on UnauthorizedException {
+      await _clearSession();
+      return null;
+    } catch (_) {
+      if (_cachedUser != null) {
+        return _cachedUser;
+      }
+
+      return const UserModel(
+        id: '0',
+        name: 'Caregiver',
+        email: '',
+      );
+    }
   }
 
   @override
@@ -58,21 +109,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 800));
-
-    final normalizedEmail = email.trim().toLowerCase();
-
-    if (normalizedEmail == _demoEmail && password == _demoPassword) {
-      _currentUser = const UserModel(
-        id: 'user-1',
-        name: 'Mitchell',
-        email: _demoEmail,
-        avatarUrl: 'https://i.pravatar.cc/150?u=caregiver-mitchell',
-      );
-      return _currentUser!;
+    try {
+      final result = await _api.login(email: email, password: password);
+      _cachedUser = result.user;
+      await _sessionStorage.saveUser(result.user);
+      return result.user;
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
     }
-
-    throw AuthException('Invalid email or password');
   }
 
   @override
@@ -81,26 +125,12 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 1000));
-
-    if (password.length < 8) {
-      throw AuthException('Password must be at least 8 characters');
-    }
-
-    final normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.contains('@')) {
-      throw AuthException('Enter a valid email address');
-    }
+    throw AuthException('Account signup is not available in the mobile app.');
   }
 
   @override
   Future<void> resendVerificationEmail({required String email}) async {
-    await Future<void>.delayed(const Duration(milliseconds: 800));
-
-    final normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.contains('@')) {
-      throw AuthException('Enter a valid email address');
-    }
+    throw AuthException('Email verification is not available in the mobile app.');
   }
 
   @override
@@ -108,11 +138,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String code,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 800));
-
-    if (code.trim().length < 4) {
-      throw AuthException('Enter a valid activation code');
-    }
+    throw AuthException('Activation codes are not available in the mobile app.');
   }
 
   @override
@@ -123,50 +149,31 @@ class AuthRepositoryImpl implements AuthRepository {
     required String dateOfBirth,
     required String phoneNumber,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 1000));
-
-    if (fullName.trim().isEmpty) {
-      throw AuthException('Full name is required');
-    }
-
-    if (ssnLast4.trim().length != 4) {
-      throw AuthException('Enter the last 4 digits of your SSN');
-    }
-
-    if (dateOfBirth.trim().isEmpty) {
-      throw AuthException('Date of birth is required');
-    }
-
-    final normalizedPhone = phoneNumber.trim();
-    if (normalizedPhone.length < 7) {
-      throw AuthException('Enter a valid phone number');
-    }
+    throw AuthException('Registration is not available in the mobile app.');
   }
 
   @override
   Future<void> acceptPrivacyTerms({required String email}) async {
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-
-    final normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.contains('@')) {
-      throw AuthException('Enter a valid email address');
-    }
+    throw AuthException('Registration is not available in the mobile app.');
   }
 
   @override
   Future<void> forgotPassword({required String email}) async {
-    await Future<void>.delayed(const Duration(milliseconds: 800));
-
-    final normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail.contains('@')) {
-      throw AuthException('Enter a valid email address');
-    }
+    throw AuthException('Password reset is not available in the mobile app.');
   }
 
   @override
   Future<void> logout() async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    _currentUser = null;
+    try {
+      await _api.logout();
+    } finally {
+      await _clearSession();
+    }
+  }
+
+  Future<void> _clearSession() async {
+    _cachedUser = null;
+    await _sessionStorage.clearUser();
   }
 }
 

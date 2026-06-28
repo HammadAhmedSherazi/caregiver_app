@@ -12,8 +12,8 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../home/widgets/home_svg_icon.dart';
 import '../../clients/view/clients_list_view.dart';
 import '../../home/widgets/vertical_overlap.dart';
-import '../../widgets/error_widget.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/get_request_view.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/header_back_button.dart';
 import '../cubit/profile_cubit.dart';
@@ -33,35 +33,27 @@ class ProfileTabView extends StatefulWidget {
 }
 
 class _ProfileTabViewState extends State<ProfileTabView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadProfile());
-  }
-
   void _loadProfile() {
-    final cubit = context.read<ProfileCubit>();
-    if (cubit.state.data != null) return;
-
     final user = context.read<AuthCubit>().state.user;
-    cubit.loadProfile(user: user);
+    context.read<ProfileCubit>().loadProfile(user: user);
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
-        if (state.isLoading && state.data == null) {
-          return const LoadingWidget(message: 'Loading profile...');
-        }
+        return GetRequestView(
+          isLoading: state.isLoading,
+          hasError: state.hasError,
+          onRetry: _loadProfile,
+          skeleton: const ProfileTabSkeleton(),
+          child: _buildContent(state),
+        );
+      },
+    );
+  }
 
-        if (state.hasError && state.data == null) {
-          return ErrorDisplayWidget(
-            message: state.errorMessage ?? 'Something went wrong',
-            onRetry: _loadProfile,
-          );
-        }
-
+  Widget _buildContent(ProfileState state) {
         final data = state.data;
         if (data == null) {
           return const SizedBox.shrink();
@@ -93,8 +85,6 @@ class _ProfileTabViewState extends State<ProfileTabView> {
             ],
           ),
         );
-      },
-    );
   }
 }
 

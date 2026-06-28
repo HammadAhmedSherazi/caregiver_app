@@ -5,15 +5,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/helpers/snackbar_helper.dart';
 import '../../../core/utils/validators/form_validators.dart';
-import '../../widgets/auth/auth_or_divider.dart';
 import '../../widgets/auth/auth_page_footer.dart';
 import '../../widgets/auth/auth_page_header.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_screen_shell.dart';
-import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
+import '../../widgets/get_request_view.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_view.dart';
@@ -95,12 +93,13 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (context, state) {
-        if (state.errorMessage != null) {
-          SnackbarHelper.showError(context, state.errorMessage!);
-        }
-      },
+    return PostActionListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) =>
+          current.errorMessage != null &&
+          current.errorMessage != previous.errorMessage &&
+          (previous.isSubmitting || current.isSubmitting),
+      errorMessage: (state) => state.errorMessage,
+      onClearError: () => context.read<AuthCubit>().clearActionError(),
       child: AuthScreenShell(
         maxContentWidth: 430,
         child: LayoutBuilder(
@@ -152,14 +151,14 @@ class _LoginViewState extends State<LoginView> {
                                       setState(() => _rememberMe = value);
                                     },
                                   ),
-                                  const Spacer(),
-                                  GestureDetector(
-                                    onTap: _goToForgotPassword,
-                                    child: Text(
-                                      'Forget Password?',
-                                      style: AppTextStyles.authLink,
-                                    ),
-                                  ),
+                                  // const Spacer(),
+                                  // GestureDetector(
+                                  //   onTap: _goToForgotPassword,
+                                  //   child: Text(
+                                  //     'Forget Password?',
+                                  //     style: AppTextStyles.authLink,
+                                  //   ),
+                                  // ),
                                 ],
                               ),
                               const SizedBox(height: 32),
@@ -197,12 +196,12 @@ class _LoginViewState extends State<LoginView> {
                               // ),
                             ],
                           ),
-                          AuthPageFooter(
-                            title: 'Haven’t signed up yet?',
-                            actionLabel: 'Create an account',
-                            onActionTap: _goToSignup,
-                            topSpacing: 32,
-                          ),
+                          // AuthPageFooter(
+                          //   title: 'Haven’t signed up yet?',
+                          //   actionLabel: 'Create an account',
+                          //   onActionTap: _goToSignup,
+                          //   topSpacing: 32,
+                          // ),
                         ],
                       ),
                     ),

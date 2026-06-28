@@ -67,7 +67,7 @@ class PayrollPaystubCard extends StatelessWidget {
                             color: AppColors.homeDarkText.withValues(alpha: 0.35),
                           ),
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -79,7 +79,7 @@ class PayrollPaystubCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    stub.netPay,
+                    stub.grossPay,
                     style: context.responsiveStyle(
                       AppTextStyles.homeCardTitle.copyWith(
                         fontSize: 14,
@@ -89,30 +89,43 @@ class PayrollPaystubCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  if (stub.isPaid)
-                    const PayrollPaidBadge()
-                  else
-                    Container(
-                      height: 24,
-                      constraints: const BoxConstraints(minWidth: 62),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.homePriority.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Text(
-                        'Pending',
-                        style: context.responsiveStyle(
-                          AppTextStyles.scheduleBadge.copyWith(
-                            color: AppColors.homePriority,
-                          ),
-                        ),
-                      ),
-                    ),
+                  _PayStatusBadge(status: stub.status),
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PayStatusBadge extends StatelessWidget {
+  const _PayStatusBadge({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == 'Paid') {
+      return const PayrollPaidBadge();
+    }
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 120),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.homePriority.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        status.isEmpty ? 'Pending' : status,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.responsiveStyle(
+          AppTextStyles.scheduleBadge.copyWith(
+            color: AppColors.homePriority,
+            fontSize: 11,
           ),
         ),
       ),

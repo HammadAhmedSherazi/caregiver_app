@@ -6,11 +6,9 @@ import '../../core/theme/app_text_styles.dart';
 class ErrorDisplayWidget extends StatelessWidget {
   const ErrorDisplayWidget({
     super.key,
-    required this.message,
     this.onRetry,
   });
 
-  final String message;
   final VoidCallback? onRetry;
 
   @override
@@ -28,15 +26,28 @@ class ErrorDisplayWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              message,
-              style: AppTextStyles.bodyMedium,
+              'Something went wrong',
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: onRetry,
-                child: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.homePrimary,
+                  foregroundColor: AppColors.authOnGradient,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Try again'),
               ),
             ],
           ],

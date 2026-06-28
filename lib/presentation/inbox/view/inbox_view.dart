@@ -91,7 +91,7 @@ class _InboxViewState extends State<InboxView> {
     }
 
     if (_error != null) {
-      return ErrorDisplayWidget(message: _error!, onRetry: _load);
+      return ErrorDisplayWidget(onRetry: _load);
     }
 
     final items = _threads ?? [];

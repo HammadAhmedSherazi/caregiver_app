@@ -33,7 +33,7 @@ class ProfilePageData extends Equatable {
     required this.headerTitle,
     required this.name,
     required this.title,
-    required this.avatarUrl,
+    this.avatarUrl,
     required this.experienceYears,
     required this.visitCount,
     required this.hoursThisWeek,
@@ -47,7 +47,7 @@ class ProfilePageData extends Equatable {
   final String headerTitle;
   final String name;
   final String title;
-  final String avatarUrl;
+  final String? avatarUrl;
   final int experienceYears;
   final int visitCount;
   final double hoursThisWeek;

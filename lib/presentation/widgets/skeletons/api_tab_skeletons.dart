@@ -921,6 +921,154 @@ class ClientsListSkeleton extends StatelessWidget {
   }
 }
 
+class NotificationsListSkeleton extends StatelessWidget {
+  const NotificationsListSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      children: [
+        for (var i = 0; i < 4; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _SkeletonCard(
+              height: 118,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SkeletonIconBox(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Schedule Updated',
+                          style: AppTextStyles.homeCardTitle,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 4),
+                        Expanded(
+                          child: Text(
+                            'New visit added for Thursday at 6:00 PM.',
+                            style: AppTextStyles.homeCardSubtitle,
+                            maxLines: 2,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '4 days ago',
+                            style: AppTextStyles.homeCardSubtitle,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class InboxListSkeleton extends StatelessWidget {
+  const InboxListSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      children: [
+        for (var i = 0; i < 4; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _SkeletonCard(
+              height: 118,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SkeletonAvatar(size: 48),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Salena James',
+                          style: AppTextStyles.homeCardTitle,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 4),
+                        Expanded(
+                          child: Text(
+                            'Hi, can you confirm your shift on Thursday?',
+                            style: AppTextStyles.homeCardSubtitle,
+                            maxLines: 2,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '4 days ago',
+                            style: AppTextStyles.homeCardSubtitle,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class ChatMessagesSkeleton extends StatelessWidget {
+  const ChatMessagesSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
+      children: [
+        for (final isMine in [false, true, false, true, false])
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Align(
+              alignment:
+                  isMine ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 280),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  isMine
+                      ? 'Account setup help.'
+                      : 'How can we help you today?',
+                  style: AppTextStyles.homeCardSubtitle,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _SkeletonCard extends StatelessWidget {
   const _SkeletonCard({
     required this.height,

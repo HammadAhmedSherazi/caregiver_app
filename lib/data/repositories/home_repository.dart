@@ -46,9 +46,7 @@ class HomeRepositoryImpl implements HomeRepository {
         .toList();
 
     final todayItems = todaySchedule.data;
-    final scheduleItems =
-        todayItems.isNotEmpty ? todayItems : upcomingSchedule.data;
-    final nextShift = _pickNextShift(scheduleItems, now);
+    final nextShift = _pickNextShift(todayItems, now);
     final activeShift = _buildActiveShift(
       activeVisit: activeVisit,
       nextShift: nextShift,
@@ -94,24 +92,28 @@ class HomeRepositoryImpl implements HomeRepository {
     required List<AssignedVisit> assignedVisits,
     required DateTime now,
   }) {
-    if (activeVisit == null && nextShift == null) {
+    final activeVisitInProgress =
+        activeVisit != null && activeVisit.isActive ? activeVisit : null;
+
+    if (activeVisitInProgress == null && nextShift == null) {
       return null;
     }
 
-    final clientId = activeVisit?.clientId ?? nextShift!.clientId;
+    final clientId = activeVisitInProgress?.clientId ?? nextShift!.clientId;
     final matchingAssignment = _findAssignment(assignments, clientId);
 
-    final clientName =
-        activeVisit?.clientName ?? nextShift?.clientName ?? 'Client';
+    final clientName = activeVisitInProgress?.clientName ??
+        nextShift?.clientName ??
+        'Client';
     final address = nextShift?.address ??
         matchingAssignment?.address ??
         'Address unavailable';
 
-    final shiftStatus = activeVisit != null
+    final shiftStatus = activeVisitInProgress != null
         ? ShiftStatus.inProgress
         : ShiftStatus.pending;
 
-    final shiftStartedAt = activeVisit?.clockInAt;
+    final shiftStartedAt = activeVisitInProgress?.clockInAt;
     final startedAtLabel = shiftStartedAt != null
         ? 'Started ${formatTimeLabel(shiftStartedAt)}'
         : null;
@@ -140,12 +142,14 @@ class HomeRepositoryImpl implements HomeRepository {
       }
     }
 
-    if (activeVisit != null) {
-      final elapsed = now.difference(activeVisit.clockInAt).inMinutes;
+    if (activeVisitInProgress != null) {
+      final elapsed = now.difference(activeVisitInProgress.clockInAt).inMinutes;
       progress = (elapsed / 240).clamp(0.0, 1.0);
     }
 
     return ActiveShift(
+      clientId: clientId,
+      scheduleId: activeVisitInProgress == null ? nextShift?.id : null,
       clientName: clientName,
       address: address,
       timeRange: timeRange,
@@ -190,10 +194,25 @@ class HomeRepositoryImpl implements HomeRepository {
 
   bool _isRelevantShift(ScheduleItemModel item, DateTime now) {
     final status = item.status.toLowerCase();
-    if (status == 'completed' || status == 'cancelled') {
+    if (status == 'completed' ||
+        status == 'cancelled' ||
+        status == 'clocked out' ||
+        status == 'missed') {
       return false;
     }
-    return item.scheduledEnd.isAfter(now);
+
+    if (!item.scheduledEnd.isAfter(now)) {
+      return false;
+    }
+
+    final today = DateTime(now.year, now.month, now.day);
+    final shiftDay = DateTime(
+      item.scheduledStart.year,
+      item.scheduledStart.month,
+      item.scheduledStart.day,
+    );
+
+    return !shiftDay.isAfter(today);
   }
 
   AssignmentModel? _findAssignment(

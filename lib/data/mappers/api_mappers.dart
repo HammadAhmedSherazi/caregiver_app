@@ -1,9 +1,14 @@
 import '../models/api/assignment_model.dart';
+import '../models/api/conversation_model.dart';
+import '../models/api/notification_item_model.dart';
 import '../models/api/pay_item_model.dart';
 import '../models/api/schedule_item_model.dart';
 import '../models/api/visit_model.dart';
+import '../models/chat_message_model.dart';
 import '../models/client_model.dart';
 import '../models/home_dashboard_model.dart';
+import '../models/inbox_thread_model.dart';
+import '../models/notification_model.dart';
 import '../models/schedule_page_model.dart';
 import '../models/task_page_model.dart';
 
@@ -157,5 +162,49 @@ ScheduleEntry scheduleItemToScheduleEntry(ScheduleItemModel item) {
     initials: initialsFromName(item.clientName),
     timeLabel: '${formatTimeLabel(item.scheduledStart)} · ${durationHours.round()}h',
     isHighPriority: item.status == 'Scheduled',
+  );
+}
+
+NotificationKind notificationTypeToKind(String type) {
+  switch (type) {
+    case 'secure_message':
+    case 'communication_sent':
+    case 'communication_failed':
+    case 'communication_received':
+      return NotificationKind.message;
+    default:
+      return NotificationKind.schedule;
+  }
+}
+
+AppNotification notificationItemToAppNotification(NotificationItemModel item) {
+  return AppNotification(
+    id: item.id.toString(),
+    title: item.title,
+    body: item.body,
+    timestampLabel: item.timeAgo,
+    kind: notificationTypeToKind(item.type),
+    isRead: item.read,
+  );
+}
+
+InboxThread conversationToInboxThread(ConversationSummaryModel conversation) {
+  return InboxThread(
+    id: conversation.id.toString(),
+    contactName: conversation.counterpart.name,
+    preview: conversation.lastMessage,
+    timestampLabel: conversation.timeAgo,
+    avatarUrl: conversation.counterpart.avatarUrl,
+  );
+}
+
+ChatMessage conversationMessageToChatMessage(ConversationMessageModel message) {
+  return ChatMessage(
+    id: message.id.toString(),
+    text: message.body,
+    direction: message.isMine
+        ? ChatMessageDirection.outgoing
+        : ChatMessageDirection.incoming,
+    timestampLabel: message.time,
   );
 }

@@ -53,6 +53,8 @@ class ActiveShift extends Equatable {
     required this.timeRange,
     required this.minutesUntilStart,
     required this.progress,
+    this.clientId,
+    this.scheduleId,
     this.clientInitials = 'JD',
     this.authorizedHours = '4h / week',
     this.scheduledTimeDisplay = '9:00 – 1:00 PM',
@@ -73,6 +75,8 @@ class ActiveShift extends Equatable {
   final String timeRange;
   final int minutesUntilStart;
   final double progress;
+  final int? clientId;
+  final int? scheduleId;
   final String clientInitials;
   final String authorizedHours;
   final String scheduledTimeDisplay;
@@ -116,6 +120,8 @@ class ActiveShift extends Equatable {
     ShiftStatus? status,
     String? startedAtLabel,
     DateTime? shiftStartedAt,
+    int? clientId,
+    int? scheduleId,
   }) {
     return ActiveShift(
       clientName: clientName ?? this.clientName,
@@ -123,6 +129,8 @@ class ActiveShift extends Equatable {
       timeRange: timeRange,
       minutesUntilStart: minutesUntilStart,
       progress: progress,
+      clientId: clientId ?? this.clientId,
+      scheduleId: scheduleId ?? this.scheduleId,
       clientInitials: clientInitials,
       authorizedHours: authorizedHours,
       scheduledTimeDisplay: scheduledTimeDisplay,
@@ -146,6 +154,8 @@ class ActiveShift extends Equatable {
         timeRange,
         minutesUntilStart,
         progress,
+        clientId,
+        scheduleId,
         clientInitials,
         authorizedHours,
         scheduledTimeDisplay,

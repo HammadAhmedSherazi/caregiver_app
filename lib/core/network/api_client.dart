@@ -1,13 +1,20 @@
 import 'package:dio/dio.dart';
 
+import '../../data/local/session_storage.dart';
 import '../../data/local/token_storage.dart';
 import '../utils/helpers/logger.dart';
 import 'api_config.dart';
 import 'api_exception.dart';
+import 'session_expired_notifier.dart';
 
 class ApiClient {
-  ApiClient({required TokenStorage tokenStorage})
-      : _tokenStorage = tokenStorage,
+  ApiClient({
+    required TokenStorage tokenStorage,
+    required SessionStorage sessionStorage,
+    required SessionExpiredNotifier sessionExpiredNotifier,
+  })  : _tokenStorage = tokenStorage,
+        _sessionStorage = sessionStorage,
+        _sessionExpiredNotifier = sessionExpiredNotifier,
         _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,
@@ -26,7 +33,8 @@ class ApiClient {
           }
           handler.next(options);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
+          await _handleUnauthorizedIfNeeded(error);
           handler.reject(_wrapError(error));
         },
       ),
@@ -34,7 +42,29 @@ class ApiClient {
   }
 
   final TokenStorage _tokenStorage;
+  final SessionStorage _sessionStorage;
+  final SessionExpiredNotifier _sessionExpiredNotifier;
   final Dio _dio;
+  bool _isHandlingUnauthorized = false;
+
+  Future<void> _handleUnauthorizedIfNeeded(DioException error) async {
+    if (error.response?.statusCode != 401) return;
+    if (_isPublicAuthRequest(error.requestOptions.path)) return;
+    if (_isHandlingUnauthorized) return;
+
+    _isHandlingUnauthorized = true;
+    try {
+      await _tokenStorage.clearToken();
+      await _sessionStorage.clearUser();
+      _sessionExpiredNotifier.notify();
+    } finally {
+      _isHandlingUnauthorized = false;
+    }
+  }
+
+  bool _isPublicAuthRequest(String path) {
+    return path.endsWith('/login');
+  }
 
   Dio get dio => _dio;
 
@@ -57,6 +87,20 @@ class ApiClient {
     Options? options,
   }) {
     return _dio.post<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  Future<Response<T>> delete<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return _dio.delete<T>(
       path,
       data: data,
       queryParameters: queryParameters,

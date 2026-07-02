@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../../core/network/api_client.dart';
+import '../../core/network/session_expired_notifier.dart';
 import '../../data/local/remember_me_storage.dart';
 import '../../data/local/remember_me_storage_impl.dart';
 import '../../data/local/session_storage.dart';
@@ -28,8 +29,13 @@ final GetIt sl = GetIt.instance;
 Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<TokenStorage>(TokenStorageImpl.new);
   sl.registerLazySingleton<SessionStorage>(SessionStorageImpl.new);
+  sl.registerLazySingleton<SessionExpiredNotifier>(SessionExpiredNotifier.new);
   sl.registerLazySingleton<ApiClient>(
-    () => ApiClient(tokenStorage: sl<TokenStorage>()),
+    () => ApiClient(
+      tokenStorage: sl<TokenStorage>(),
+      sessionStorage: sl<SessionStorage>(),
+      sessionExpiredNotifier: sl<SessionExpiredNotifier>(),
+    ),
   );
   sl.registerLazySingleton<CaregiverApi>(
     () => CaregiverApi(
@@ -61,9 +67,11 @@ Future<void> setupServiceLocator() async {
     () => VisitRepositoryImpl(api: sl<CaregiverApi>()),
   );
   sl.registerLazySingleton<NotificationRepository>(
-    NotificationRepositoryImpl.new,
+    () => NotificationRepositoryImpl(api: sl<CaregiverApi>()),
   );
-  sl.registerLazySingleton<InboxRepository>(InboxRepositoryImpl.new);
+  sl.registerLazySingleton<InboxRepository>(
+    () => InboxRepositoryImpl(api: sl<CaregiverApi>()),
+  );
   sl.registerLazySingleton<ClientRepository>(
     () => ClientRepositoryImpl(api: sl<CaregiverApi>()),
   );

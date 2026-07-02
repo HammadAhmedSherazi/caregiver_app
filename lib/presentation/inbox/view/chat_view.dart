@@ -5,8 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/chat_message_model.dart';
 import '../../../data/models/inbox_thread_model.dart';
 import '../../../data/repositories/inbox_repository.dart';
-import '../../widgets/error_widget.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/get_request_view.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
 import '../widgets/chat_screen_header.dart';
@@ -29,7 +29,8 @@ class _ChatViewState extends State<ChatView> {
   final _messageController = TextEditingController();
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
-  String? _error;
+  bool _hasError = false;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _ChatViewState extends State<ChatView> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
-      _error = null;
+      _hasError = false;
     });
 
     try {
@@ -59,35 +60,35 @@ class _ChatViewState extends State<ChatView> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unable to load conversation.';
         _isLoading = false;
+        _hasError = true;
       });
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    setState(() {
-      _messages = [
-        ..._messages,
-        ChatMessage(
-          id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-          text: text,
-          direction: ChatMessageDirection.outgoing,
-          timestampLabel: _formatTime(DateTime.now()),
-        ),
-      ];
-    });
-    _messageController.clear();
-  }
-
-  String _formatTime(DateTime time) {
-    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
-    final period = time.hour >= 12 ? 'PM' : 'AM';
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute $period';
+    setState(() => _isSending = true);
+    try {
+      final message = await _repository.sendMessage(
+        threadId: widget.thread.id,
+        body: text,
+      );
+      if (!mounted) return;
+      setState(() {
+        _messages = [..._messages, message];
+        _isSending = false;
+      });
+      _messageController.clear();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSending = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to send message.')),
+      );
+    }
   }
 
   @override
@@ -103,28 +104,38 @@ class _ChatViewState extends State<ChatView> {
             onBack: () => Navigator.of(context).pop(),
             onCall: () {},
           ),
-          Expanded(child: _buildBody()),
+          Expanded(
+            child: GetRequestView(
+              isLoading: _isLoading,
+              hasError: _hasError,
+              onRetry: _load,
+              skeleton: const ChatMessagesSkeleton(),
+              child: _buildMessages(),
+            ),
+          ),
           ChatInputBar(
             controller: _messageController,
             onSend: _sendMessage,
-            enabled: !_isLoading && _error == null,
+            enabled: !_isLoading && !_isSending && !_hasError,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const LoadingWidget(message: 'Loading conversation...');
-    }
-
-    if (_error != null) {
-      return ErrorDisplayWidget(onRetry: _load);
-    }
-
+  Widget _buildMessages() {
     if (_messages.isEmpty) {
-      return const Center(child: Text('No messages yet'));
+      return RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.homePrimary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(child: Text('No messages yet')),
+          ],
+        ),
+      );
     }
 
     return Stack(

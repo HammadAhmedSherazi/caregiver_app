@@ -419,6 +419,8 @@ Future<void> _onStartShiftPressed(
   context.read<HomeCubit>().completeClockIn(
         clientName: result.clientName,
         serviceType: result.serviceType,
+        clientId: shift.clientId,
+        scheduleId: shift.scheduleId,
       );
 }
 

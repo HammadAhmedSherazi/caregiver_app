@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/client_model.dart';
 import '../../../data/repositories/client_repository.dart';
 import '../../task/widgets/task_screen_header.dart';
-import '../../widgets/error_widget.dart';
+import '../../widgets/get_request_view.dart';
 import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../widgets/client_list_widgets.dart';
 import '../widgets/clients_search_bar.dart';
@@ -25,7 +24,7 @@ class _ClientsListViewState extends State<ClientsListView> {
   final _searchController = TextEditingController();
   List<ClientModel> _clients = [];
   bool _isLoading = true;
-  String? _error;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -42,7 +41,7 @@ class _ClientsListViewState extends State<ClientsListView> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
-      _error = null;
+      _hasError = false;
     });
 
     try {
@@ -55,8 +54,8 @@ class _ClientsListViewState extends State<ClientsListView> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unable to load clients.';
         _isLoading = false;
+        _hasError = true;
       });
     }
   }
@@ -110,31 +109,34 @@ class _ClientsListViewState extends State<ClientsListView> {
             ],
           ),
           const SizedBox(height: 38),
-          Expanded(child: _buildBody()),
+          Expanded(
+            child: GetRequestView(
+              isLoading: _isLoading,
+              hasError: _hasError,
+              onRetry: _load,
+              skeleton: const ClientsListSkeleton(),
+              child: _buildContent(),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (_error != null) {
-      return ErrorDisplayWidget(onRetry: _load);
-    }
-
-    if (_isLoading) {
-      return Skeletonizer(
-        enabled: true,
-        effect: ShimmerEffect(
-          baseColor: AppColors.homeSheetDetailsBg,
-          highlightColor: AppColors.surface,
-        ),
-        child: const ClientsListSkeleton(),
-      );
-    }
-
+  Widget _buildContent() {
     final clients = _filteredClients;
     if (clients.isEmpty) {
-      return const Center(child: Text('No clients found'));
+      return RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.homePrimary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(child: Text('No clients found')),
+          ],
+        ),
+      );
     }
 
     return RefreshIndicator(

@@ -33,6 +33,7 @@ abstract class AuthRepository {
   Future<void> acceptPrivacyTerms({required String email});
   Future<void> forgotPassword({required String email});
   Future<void> logout();
+  Future<void> clearLocalSession();
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -89,7 +90,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _sessionStorage.saveUser(_cachedUser!);
       return _cachedUser;
     } on UnauthorizedException {
-      await _clearSession();
+      await clearLocalSession();
       return null;
     } catch (_) {
       if (_cachedUser != null) {
@@ -167,13 +168,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _api.logout();
     } finally {
-      await _clearSession();
+      await clearLocalSession();
     }
   }
 
-  Future<void> _clearSession() async {
+  @override
+  Future<void> clearLocalSession() async {
     _cachedUser = null;
     await _sessionStorage.clearUser();
+    await _tokenStorage.clearToken();
   }
 }
 

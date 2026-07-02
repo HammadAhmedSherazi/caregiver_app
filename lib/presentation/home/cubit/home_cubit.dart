@@ -38,6 +38,10 @@ class HomeCubit extends BaseCubit<HomeState> {
 
   Future<void> refresh() => loadDashboard();
 
+  void reset() {
+    emit(const HomeState());
+  }
+
   void clearActionError() {
     emit(state.copyWith(clearError: true));
   }
@@ -96,6 +100,7 @@ class HomeCubit extends BaseCubit<HomeState> {
   }
 
   Future<void> endShift({
+    int? scheduleId,
     double? latitude,
     double? longitude,
     String? notes,
@@ -105,6 +110,7 @@ class HomeCubit extends BaseCubit<HomeState> {
 
     try {
       await visitRepository.clockOut(
+        scheduleId: scheduleId,
         latitude: latitude,
         longitude: longitude,
         notes: notes,

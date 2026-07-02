@@ -5,8 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/inbox_thread_model.dart';
 import '../../../data/repositories/inbox_repository.dart';
 import '../../task/widgets/task_screen_header.dart';
-import '../../widgets/error_widget.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/get_request_view.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../widgets/inbox_thread_card.dart';
 import 'chat_view.dart';
 
@@ -21,8 +21,8 @@ class InboxView extends StatefulWidget {
 class _InboxViewState extends State<InboxView> {
   final _repository = sl<InboxRepository>();
   List<InboxThread>? _threads;
-  String? _error;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -33,7 +33,7 @@ class _InboxViewState extends State<InboxView> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
-      _error = null;
+      _hasError = false;
     });
 
     try {
@@ -46,8 +46,8 @@ class _InboxViewState extends State<InboxView> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unable to load inbox.';
         _isLoading = false;
+        _hasError = true;
       });
     }
   }
@@ -79,24 +79,34 @@ class _InboxViewState extends State<InboxView> {
             height: 171,
             onBack: () => Navigator.of(context).pop(),
           ),
-          Expanded(child: _buildBody()),
+          Expanded(
+            child: GetRequestView(
+              isLoading: _isLoading,
+              hasError: _hasError,
+              onRetry: _load,
+              skeleton: const InboxListSkeleton(),
+              child: _buildContent(),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const LoadingWidget(message: 'Loading inbox...');
-    }
-
-    if (_error != null) {
-      return ErrorDisplayWidget(onRetry: _load);
-    }
-
+  Widget _buildContent() {
     final items = _threads ?? [];
     if (items.isEmpty) {
-      return const Center(child: Text('No messages'));
+      return RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.homePrimary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(child: Text('No messages')),
+          ],
+        ),
+      );
     }
 
     return RefreshIndicator(

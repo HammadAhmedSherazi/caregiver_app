@@ -19,15 +19,17 @@ class AuthCubit extends BaseCubit<AuthState> {
       final hasSession = await repository.hasStoredSession();
       if (hasSession) {
         final user = await repository.getCurrentUser();
-        await repository.setOnboardingCompleted();
-        emit(
-          state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-            clearError: true,
-          ),
-        );
-        return;
+        if (user != null && await repository.hasStoredSession()) {
+          await repository.setOnboardingCompleted();
+          emit(
+            state.copyWith(
+              status: AuthStatus.authenticated,
+              user: user,
+              clearError: true,
+            ),
+          );
+          return;
+        }
       }
 
       final onboardingCompleted = await repository.isOnboardingCompleted();
@@ -43,15 +45,17 @@ class AuthCubit extends BaseCubit<AuthState> {
       final hasSession = await repository.hasStoredSession();
       if (hasSession) {
         final user = await repository.getCurrentUser();
-        await repository.setOnboardingCompleted();
-        emit(
-          state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-            clearError: true,
-          ),
-        );
-        return;
+        if (user != null && await repository.hasStoredSession()) {
+          await repository.setOnboardingCompleted();
+          emit(
+            state.copyWith(
+              status: AuthStatus.authenticated,
+              user: user,
+              clearError: true,
+            ),
+          );
+          return;
+        }
       }
 
       final onboardingCompleted = await repository.isOnboardingCompleted();
@@ -318,6 +322,18 @@ class AuthCubit extends BaseCubit<AuthState> {
 
   void clearActionError() {
     emit(state.copyWith(clearError: true));
+  }
+
+  Future<void> handleSessionExpired() async {
+    await repository.clearLocalSession();
+    emit(
+      state.copyWith(
+        status: AuthStatus.unauthenticated,
+        clearUser: true,
+        isSubmitting: false,
+        errorMessage: 'Session expired. Please sign in again.',
+      ),
+    );
   }
 
   Future<void> logout() async {

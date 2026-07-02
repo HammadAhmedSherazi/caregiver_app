@@ -33,7 +33,7 @@ class ActiveShiftView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _ActiveShiftHeader(
-                onBack: () => context.read<HomeCubit>().endShift(),
+                onBack: () => context.read<HomeCubit>().beginEndShift(),
               ),
               VerticalOverlap(
                 overlap: _cardOverlap,

@@ -49,7 +49,16 @@ class VisitModel extends BaseModel {
   final VisitLocationModel? clockInLocation;
   final bool? evvVerified;
 
-  bool get isActive => status == 'Clocked In';
+  bool get isActive {
+    if (clockOutAt != null) return false;
+
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'clocked in' ||
+        normalized == 'clocked_in' ||
+        normalized == 'in progress' ||
+        normalized == 'in_progress' ||
+        normalized == 'active';
+  }
 
   factory VisitModel.fromJson(Map<String, dynamic> json) {
     return VisitModel(

@@ -59,7 +59,10 @@ class _EndShiftViewState extends State<EndShiftView> {
     );
     if (!mounted) return;
     if (completed) {
-      context.read<HomeCubit>().endShift();
+      context.read<HomeCubit>().endShift(
+            notes: _notesController.text.trim(),
+            scheduleId: widget.shift.scheduleId,
+          );
     }
   }
 

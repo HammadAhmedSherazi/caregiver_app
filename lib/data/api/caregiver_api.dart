@@ -5,6 +5,8 @@ import '../../core/network/api_config.dart';
 import '../../core/network/api_exception.dart';
 import '../models/api/assignment_model.dart';
 import '../models/api/caregiver_profile_model.dart';
+import '../models/api/conversation_model.dart';
+import '../models/api/notification_item_model.dart';
 import '../models/api/paginated_response.dart';
 import '../models/api/pay_item_model.dart';
 import '../models/api/schedule_item_model.dart';
@@ -108,7 +110,8 @@ class CaregiverApi {
       if (data == null || data is! Map<String, dynamic>) {
         return null;
       }
-      return VisitModel.fromJson(data);
+      final visit = VisitModel.fromJson(data);
+      return visit.isActive ? visit : null;
     } catch (error) {
       if (error is DioException && error.error is NotFoundException) {
         return null;
@@ -235,6 +238,151 @@ class CaregiverApi {
     try {
       final response = await _apiClient.downloadBytes('/pay/$id/stub');
       return response.data ?? const [];
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<PaginatedResponse<NotificationItemModel>> getNotifications({
+    bool unreadOnly = false,
+    int perPage = 25,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/notifications',
+        queryParameters: {
+          'per_page': perPage,
+          if (unreadOnly) 'unread': 1,
+        },
+      );
+      return _parsePaginated(response.data, NotificationItemModel.fromJson);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<int> getNotificationsUnreadCount() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/notifications/unread-count',
+      );
+      return response.data?['count'] as int? ?? 0;
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<void> markNotificationRead(int id) async {
+    try {
+      await _apiClient.post<void>('/notifications/$id/read');
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<int> markAllNotificationsRead() async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/notifications/read-all',
+      );
+      return response.data?['updated'] as int? ?? 0;
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<void> deleteNotification(int id) async {
+    try {
+      await _apiClient.delete<void>('/notifications/$id');
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<PaginatedResponse<ConversationSummaryModel>> getConversations({
+    bool unreadOnly = false,
+    String? search,
+    int perPage = 20,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/conversations',
+        queryParameters: {
+          'per_page': perPage,
+          if (unreadOnly) 'unread': 1,
+          if (search != null && search.isNotEmpty) 'search': search,
+        },
+      );
+      return _parsePaginated(response.data, ConversationSummaryModel.fromJson);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<int> getConversationsUnreadCount() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/conversations/unread-count',
+      );
+      return response.data?['count'] as int? ?? 0;
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ConversationDetailModel> getConversation(int id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/conversations/$id',
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid conversation response');
+      }
+      return ConversationDetailModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ConversationMessageModel> sendConversationMessage({
+    required int conversationId,
+    required String body,
+  }) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/conversations/$conversationId/messages',
+        data: {'body': body},
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid message response');
+      }
+      return ConversationMessageModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ConversationSummaryModel> startConversation({
+    required String subject,
+    required String body,
+    required List<int> participantIds,
+  }) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/conversations',
+        data: {
+          'subject': subject,
+          'body': body,
+          'participant_ids': participantIds,
+        },
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid conversation response');
+      }
+      return ConversationSummaryModel.fromJson(data);
     } catch (error) {
       ApiClient.rethrowAsApiException(error);
     }

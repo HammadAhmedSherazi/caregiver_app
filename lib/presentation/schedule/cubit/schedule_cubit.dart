@@ -8,11 +8,28 @@ class ScheduleCubit extends BaseCubit<ScheduleState> {
 
   final ScheduleRepository repository;
 
-  Future<void> loadSchedule({DateTime? selectedDate}) async {
+  void setViewMode(ScheduleViewMode mode) {
+    final data = state.data;
+    if (data == null) return;
+
+    loadSchedule(
+      selectedDate: data.selectedDate,
+      viewMode: mode,
+    );
+  }
+
+  Future<void> loadSchedule({
+    DateTime? selectedDate,
+    ScheduleViewMode? viewMode,
+  }) async {
     emit(state.copyWith(status: ScheduleStatus.loading, clearError: true));
 
     try {
-      final data = await repository.getSchedulePage(selectedDate: selectedDate);
+      final currentMode = viewMode ?? state.data?.viewMode ?? ScheduleViewMode.day;
+      final data = await repository.getSchedulePage(
+        selectedDate: selectedDate,
+        viewMode: currentMode,
+      );
       emit(
         state.copyWith(
           status: ScheduleStatus.success,
@@ -31,15 +48,4 @@ class ScheduleCubit extends BaseCubit<ScheduleState> {
   }
 
   Future<void> selectDate(DateTime date) => loadSchedule(selectedDate: date);
-
-  void setViewMode(ScheduleViewMode mode) {
-    final data = state.data;
-    if (data == null) return;
-
-    emit(
-      state.copyWith(
-        data: data.copyWith(viewMode: mode),
-      ),
-    );
-  }
 }

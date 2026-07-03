@@ -43,15 +43,21 @@ class _TaskTabViewState extends State<TaskTabView> {
   void _openTask(BuildContext context, TaskItem task, TaskPageData data) {
     switch (task.type) {
       case TaskItemType.complianceForm:
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ComplianceFormView(
-              title: task.title,
-              questions: data.monthlyComplianceQuestions,
-              isMonthly: true,
-            ),
-          ),
-        );
+        Navigator.of(context)
+            .push<bool>(
+              MaterialPageRoute<bool>(
+                builder: (_) => ComplianceFormView(
+                  formId: int.tryParse(task.id),
+                  title: task.title,
+                  isMonthly: true,
+                ),
+              ),
+            )
+            .then((submitted) {
+          if (submitted == true && context.mounted) {
+            context.read<TaskCubit>().loadTasks();
+          }
+        });
       case TaskItemType.documentUpload:
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -201,10 +207,7 @@ class _TaskTabViewState extends State<TaskTabView> {
                       onHistory: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) => ComplianceHistoryView(
-                              summary: data.complianceHistorySummary,
-                              records: data.complianceHistory,
-                            ),
+                            builder: (_) => const ComplianceHistoryView(),
                           ),
                         );
                       },

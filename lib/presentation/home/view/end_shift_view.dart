@@ -9,8 +9,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/home_dashboard_model.dart';
-import '../../widgets/header_back_button.dart';
 import '../cubit/home_cubit.dart';
+import '../cubit/home_state.dart';
+import '../../widgets/header_back_button.dart';
 import '../widgets/home_svg_icon.dart';
 import '../widgets/shift_flow/clock_out_flow.dart';
 import '../widgets/vertical_overlap.dart';
@@ -27,13 +28,16 @@ class EndShiftView extends StatefulWidget {
 }
 
 class _EndShiftViewState extends State<EndShiftView> {
-  late Set<int> _completedTaskIndexes;
+  late Set<int> _completedTaskIds;
   final _notesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _completedTaskIndexes = {};
+    _completedTaskIds = {
+      for (final task in widget.shift.careTasks)
+        if (task.isCompleted) task.id,
+    };
   }
 
   @override
@@ -42,14 +46,15 @@ class _EndShiftViewState extends State<EndShiftView> {
     super.dispose();
   }
 
-  void _toggleTask(int index) {
+  void _toggleTask(int taskId) {
     setState(() {
-      if (_completedTaskIndexes.contains(index)) {
-        _completedTaskIndexes.remove(index);
+      if (_completedTaskIds.contains(taskId)) {
+        _completedTaskIds.remove(taskId);
       } else {
-        _completedTaskIndexes.add(index);
+        _completedTaskIds.add(taskId);
       }
     });
+    context.read<HomeCubit>().toggleCareTask(taskId);
   }
 
   Future<void> _onSubmitClockOut() async {
@@ -59,7 +64,8 @@ class _EndShiftViewState extends State<EndShiftView> {
     );
     if (!mounted) return;
     if (completed) {
-      context.read<HomeCubit>().endShift(
+      await context.read<HomeCubit>().endShift(
+            visitId: widget.shift.visitId,
             notes: _notesController.text.trim(),
             scheduleId: widget.shift.scheduleId,
           );
@@ -109,7 +115,7 @@ class _EndShiftViewState extends State<EndShiftView> {
                   const SizedBox(height: 13),
                   _EndShiftTasksCard(
                     tasks: widget.shift.careTasks,
-                    completedIndexes: _completedTaskIndexes,
+                    completedTaskIds: _completedTaskIds,
                     onToggle: _toggleTask,
                   ),
                   const SizedBox(height: 25),
@@ -118,7 +124,17 @@ class _EndShiftViewState extends State<EndShiftView> {
                 const SizedBox(height: 13),
                 _EndShiftNotesField(controller: _notesController),
                 const SizedBox(height: 33),
-                _EndShiftSubmitButton(onPressed: _onSubmitClockOut),
+                BlocBuilder<HomeCubit, HomeState>(
+                  buildWhen: (previous, current) =>
+                      previous.isClockingOut != current.isClockingOut,
+                  builder: (context, state) {
+                    return _EndShiftSubmitButton(
+                      isLoading: state.isClockingOut,
+                      onPressed:
+                          state.isClockingOut ? null : _onSubmitClockOut,
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -409,12 +425,12 @@ class _EndShiftClockButton extends StatelessWidget {
 class _EndShiftTasksCard extends StatelessWidget {
   const _EndShiftTasksCard({
     required this.tasks,
-    required this.completedIndexes,
+    required this.completedTaskIds,
     required this.onToggle,
   });
 
-  final List<String> tasks;
-  final Set<int> completedIndexes;
+  final List<CareTaskItem> tasks;
+  final Set<int> completedTaskIds;
   final ValueChanged<int> onToggle;
 
   @override
@@ -438,9 +454,9 @@ class _EndShiftTasksCard extends StatelessWidget {
           for (var i = 0; i < tasks.length; i++) ...[
             if (i > 0) const SizedBox(height: 18),
             _EndShiftTaskRow(
-              label: tasks[i],
-              isCompleted: completedIndexes.contains(i),
-              onTap: () => onToggle(i),
+              label: tasks[i].label,
+              isCompleted: completedTaskIds.contains(tasks[i].id),
+              onTap: () => onToggle(tasks[i].id),
             ),
           ],
         ],
@@ -579,9 +595,13 @@ class _EndShiftNotesField extends StatelessWidget {
 }
 
 class _EndShiftSubmitButton extends StatelessWidget {
-  const _EndShiftSubmitButton({required this.onPressed});
+  const _EndShiftSubmitButton({
+    required this.onPressed,
+    this.isLoading = false,
+  });
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -590,10 +610,12 @@ class _EndShiftSubmitButton extends StatelessWidget {
         width: 325,
         height: 53,
         child: FilledButton(
-          onPressed: onPressed,
+          onPressed: isLoading ? null : onPressed,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.homePrimary,
             foregroundColor: AppColors.authOnGradient,
+            disabledBackgroundColor: AppColors.homePrimary,
+            disabledForegroundColor: AppColors.authOnGradient,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -607,7 +629,16 @@ class _EndShiftSubmitButton extends StatelessWidget {
               ),
             ),
           ),
-          child: const Text('Submit clock-out'),
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.authOnGradient,
+                  ),
+                )
+              : const Text('Submit clock-out'),
         ),
       ),
     );

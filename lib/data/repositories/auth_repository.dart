@@ -34,6 +34,7 @@ abstract class AuthRepository {
   Future<void> forgotPassword({required String email});
   Future<void> logout();
   Future<void> clearLocalSession();
+  Future<bool> refreshSession();
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -177,6 +178,21 @@ class AuthRepositoryImpl implements AuthRepository {
     _cachedUser = null;
     await _sessionStorage.clearUser();
     await _tokenStorage.clearToken();
+  }
+
+  @override
+  Future<bool> refreshSession() async {
+    final token = await _tokenStorage.getToken();
+    if (token == null || token.isEmpty) return false;
+
+    try {
+      final result = await _api.refresh();
+      _cachedUser = result.user;
+      await _sessionStorage.saveUser(result.user);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

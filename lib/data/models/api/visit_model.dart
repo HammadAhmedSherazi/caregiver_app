@@ -37,6 +37,7 @@ class VisitModel extends BaseModel {
     this.totalHours,
     this.clockInLocation,
     this.evvVerified,
+    this.scheduleId,
   });
 
   final int id;
@@ -48,6 +49,7 @@ class VisitModel extends BaseModel {
   final double? totalHours;
   final VisitLocationModel? clockInLocation;
   final bool? evvVerified;
+  final int? scheduleId;
 
   bool get isActive {
     if (clockOutAt != null) return false;
@@ -77,6 +79,7 @@ class VisitModel extends BaseModel {
             )
           : null,
       evvVerified: json['evv_verified'] as bool?,
+      scheduleId: json['schedule_id'] as int?,
     );
   }
 
@@ -92,6 +95,7 @@ class VisitModel extends BaseModel {
         if (clockInLocation != null)
           'clock_in_location': clockInLocation!.toJson(),
         if (evvVerified != null) 'evv_verified': evvVerified,
+        if (scheduleId != null) 'schedule_id': scheduleId,
       };
 
   @override
@@ -105,5 +109,6 @@ class VisitModel extends BaseModel {
         totalHours,
         clockInLocation,
         evvVerified,
+        scheduleId,
       ];
 }

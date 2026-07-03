@@ -3,7 +3,10 @@ import '../mappers/api_mappers.dart';
 import '../models/schedule_page_model.dart';
 
 abstract class ScheduleRepository {
-  Future<SchedulePageData> getSchedulePage({DateTime? selectedDate});
+  Future<SchedulePageData> getSchedulePage({
+    DateTime? selectedDate,
+    ScheduleViewMode viewMode = ScheduleViewMode.day,
+  });
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
@@ -12,18 +15,29 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   final CaregiverApi _api;
 
   @override
-  Future<SchedulePageData> getSchedulePage({DateTime? selectedDate}) async {
+  Future<SchedulePageData> getSchedulePage({
+    DateTime? selectedDate,
+    ScheduleViewMode viewMode = ScheduleViewMode.day,
+  }) async {
     final date = selectedDate ?? DateTime.now();
-    final monday = _mondayOfWeek(date);
-    final friday = monday.add(const Duration(days: 4));
 
+    if (viewMode == ScheduleViewMode.week) {
+      return _loadWeek(date);
+    }
+
+    return _loadDay(date);
+  }
+
+  Future<SchedulePageData> _loadDay(DateTime date) async {
+    final query = _formatQueryDate(date);
     final response = await _api.getSchedule(
-      from: _formatQueryDate(monday),
-      to: _formatQueryDate(friday),
+      from: query,
+      to: query,
       upcoming: false,
     );
 
     final days = List.generate(5, (index) {
+      final monday = _mondayOfWeek(date);
       final dayDate = monday.add(Duration(days: index));
       return ScheduleDay(
         date: dayDate,
@@ -43,6 +57,42 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
       days: days,
       selectedDate: date,
       appointments: appointments,
+      viewMode: ScheduleViewMode.day,
+    );
+  }
+
+  Future<SchedulePageData> _loadWeek(DateTime date) async {
+    final week = await _api.getScheduleWeek(date: _formatQueryDate(date));
+    final selected = week.days.firstWhere(
+      (day) => day.isToday || _isSameDay(day.dateTime, date),
+      orElse: () => week.days.first,
+    );
+
+    final days = week.days
+        .map(
+          (day) => ScheduleDay(
+            date: day.dateTime,
+            dayLabel: day.weekdayShort,
+            dayNumber: day.dayNumber,
+            isSelected: _isSameDay(day.dateTime, selected.dateTime),
+          ),
+        )
+        .toList();
+
+    final selectedDay = week.days.firstWhere(
+      (day) => _isSameDay(day.dateTime, selected.dateTime),
+      orElse: () => week.days.first,
+    );
+
+    final appointments =
+        selectedDay.visits.map(scheduleItemToAppointment).toList();
+
+    return SchedulePageData(
+      monthLabel: week.month.toUpperCase(),
+      days: days,
+      selectedDate: selectedDay.dateTime,
+      appointments: appointments,
+      viewMode: ScheduleViewMode.week,
     );
   }
 

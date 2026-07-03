@@ -6,15 +6,18 @@ import '../utils/helpers/logger.dart';
 import 'api_config.dart';
 import 'api_exception.dart';
 import 'session_expired_notifier.dart';
+import 'token_refresh_handler.dart';
 
 class ApiClient {
   ApiClient({
     required TokenStorage tokenStorage,
     required SessionStorage sessionStorage,
     required SessionExpiredNotifier sessionExpiredNotifier,
+    required TokenRefreshHandler tokenRefreshHandler,
   })  : _tokenStorage = tokenStorage,
         _sessionStorage = sessionStorage,
         _sessionExpiredNotifier = sessionExpiredNotifier,
+        _tokenRefreshHandler = tokenRefreshHandler,
         _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,
@@ -34,6 +37,9 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
+          final retried = await _tryRefreshAndRetry(error, handler);
+          if (retried) return;
+
           await _handleUnauthorizedIfNeeded(error);
           handler.reject(_wrapError(error));
         },
@@ -44,8 +50,39 @@ class ApiClient {
   final TokenStorage _tokenStorage;
   final SessionStorage _sessionStorage;
   final SessionExpiredNotifier _sessionExpiredNotifier;
+  final TokenRefreshHandler _tokenRefreshHandler;
   final Dio _dio;
   bool _isHandlingUnauthorized = false;
+
+  Future<bool> _tryRefreshAndRetry(
+    DioException error,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (error.response?.statusCode != 401) return false;
+    if (_shouldSkipAuthRecovery(error.requestOptions.path)) return false;
+    if (error.requestOptions.extra['_authRetried'] == true) return false;
+
+    final refreshed = await _tokenRefreshHandler.tryRefresh();
+    if (!refreshed) return false;
+
+    try {
+      final options = error.requestOptions;
+      options.extra['_authRetried'] = true;
+      final token = await _tokenStorage.getToken();
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+      final response = await _dio.fetch<dynamic>(options);
+      handler.resolve(response);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _shouldSkipAuthRecovery(String path) {
+    return path.endsWith('/login') || path.endsWith('/refresh');
+  }
 
   Future<void> _handleUnauthorizedIfNeeded(DioException error) async {
     if (error.response?.statusCode != 401) return;
@@ -63,7 +100,7 @@ class ApiClient {
   }
 
   bool _isPublicAuthRequest(String path) {
-    return path.endsWith('/login');
+    return path.endsWith('/login') || path.endsWith('/refresh');
   }
 
   Dio get dio => _dio;
@@ -105,6 +142,17 @@ class ApiClient {
       data: data,
       queryParameters: queryParameters,
       options: options,
+    );
+  }
+
+  Future<Response<T>> postMultipart<T>(
+    String path, {
+    required FormData data,
+  }) {
+    return _dio.post<T>(
+      path,
+      data: data,
+      options: Options(contentType: 'multipart/form-data'),
     );
   }
 

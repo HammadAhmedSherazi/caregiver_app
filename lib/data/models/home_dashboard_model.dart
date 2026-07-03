@@ -2,22 +2,51 @@ import 'package:equatable/equatable.dart';
 
 enum ShiftStatus { pending, inProgress }
 
+class CareTaskItem extends Equatable {
+  const CareTaskItem({
+    required this.id,
+    required this.label,
+    this.isCompleted = false,
+  });
+
+  final int id;
+  final String label;
+  final bool isCompleted;
+
+  CareTaskItem copyWith({bool? isCompleted}) {
+    return CareTaskItem(
+      id: id,
+      label: label,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, label, isCompleted];
+}
+
 class HomeDashboard extends Equatable {
   const HomeDashboard({
     required this.caregiverName,
     required this.dateLabel,
+    this.avatarUrl,
     this.activeShift,
     required this.schedule,
     required this.taskSummary,
     required this.pendingTasks,
+    this.unreadNotifications = 0,
+    this.unreadConversations = 0,
   });
 
   final String caregiverName;
   final String dateLabel;
+  final String? avatarUrl;
   final ActiveShift? activeShift;
   final List<ScheduleEntry> schedule;
   final TaskSummary taskSummary;
   final List<PendingTask> pendingTasks;
+  final int unreadNotifications;
+  final int unreadConversations;
 
   bool get hasShiftCard => activeShift != null;
 
@@ -32,6 +61,9 @@ class HomeDashboard extends Equatable {
       schedule: schedule,
       taskSummary: taskSummary,
       pendingTasks: pendingTasks,
+      avatarUrl: avatarUrl,
+      unreadNotifications: unreadNotifications,
+      unreadConversations: unreadConversations,
     );
   }
 
@@ -43,6 +75,9 @@ class HomeDashboard extends Equatable {
         schedule,
         taskSummary,
         pendingTasks,
+        avatarUrl,
+        unreadNotifications,
+        unreadConversations,
       ];
 }
 
@@ -53,6 +88,7 @@ class ActiveShift extends Equatable {
     required this.timeRange,
     required this.minutesUntilStart,
     required this.progress,
+    this.visitId,
     this.clientId,
     this.scheduleId,
     this.clientInitials = 'JD',
@@ -75,6 +111,7 @@ class ActiveShift extends Equatable {
   final String timeRange;
   final int minutesUntilStart;
   final double progress;
+  final int? visitId;
   final int? clientId;
   final int? scheduleId;
   final String clientInitials;
@@ -87,7 +124,7 @@ class ActiveShift extends Equatable {
   final ShiftStatus status;
   final String? startedAtLabel;
   final DateTime? shiftStartedAt;
-  final List<String> careTasks;
+  final List<CareTaskItem> careTasks;
   final List<AssignedVisit> assignedVisits;
   final List<String> serviceTypeOptions;
 
@@ -120,8 +157,10 @@ class ActiveShift extends Equatable {
     ShiftStatus? status,
     String? startedAtLabel,
     DateTime? shiftStartedAt,
+    int? visitId,
     int? clientId,
     int? scheduleId,
+    List<CareTaskItem>? careTasks,
   }) {
     return ActiveShift(
       clientName: clientName ?? this.clientName,
@@ -129,6 +168,7 @@ class ActiveShift extends Equatable {
       timeRange: timeRange,
       minutesUntilStart: minutesUntilStart,
       progress: progress,
+      visitId: visitId ?? this.visitId,
       clientId: clientId ?? this.clientId,
       scheduleId: scheduleId ?? this.scheduleId,
       clientInitials: clientInitials,
@@ -143,7 +183,7 @@ class ActiveShift extends Equatable {
       shiftStartedAt: shiftStartedAt ?? this.shiftStartedAt,
       assignedVisits: assignedVisits,
       serviceTypeOptions: serviceTypeOptions,
-      careTasks: careTasks,
+      careTasks: careTasks ?? this.careTasks,
     );
   }
 
@@ -154,6 +194,7 @@ class ActiveShift extends Equatable {
         timeRange,
         minutesUntilStart,
         progress,
+        visitId,
         clientId,
         scheduleId,
         clientInitials,

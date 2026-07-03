@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ import '../../../core/utils/document_picker_service.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/selected_document.dart';
 import '../../home/widgets/home_icon_box.dart';
+import '../cubit/task_cubit.dart';
 import '../widgets/document_source_sheet.dart';
 import '../widgets/task_cards.dart';
 import '../widgets/task_primary_button.dart';
@@ -25,6 +27,15 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
   final _pickerService = DocumentPickerService();
   SelectedDocument? _selectedDocument;
   bool _isPicking = false;
+  bool _isUploading = false;
+  String _documentType = 'ID';
+
+  static const _documentTypes = [
+    'ID',
+    'Mail/Letter',
+    'Signed Form',
+    'Other',
+  ];
 
   Future<void> _pickDocument() async {
     final source = await showDocumentSourceSheet(context);
@@ -67,26 +78,43 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final document = _selectedDocument;
-    if (document == null) return;
+    if (document == null || _isUploading) return;
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return TaskSuccessSheet(
-          title: 'Document uploaded',
-          message: 'Your document has been uploaded successfully.',
-          primaryLabel: 'Done',
-          onPrimary: () {
-            Navigator.of(sheetContext).pop();
-            Navigator.of(context).pop();
-          },
-        );
-      },
-    );
+    setState(() => _isUploading = true);
+
+    try {
+      await context.read<TaskCubit>().uploadDocument(
+            document: document,
+            type: _documentType,
+          );
+      if (!mounted) return;
+
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) {
+          return TaskSuccessSheet(
+            title: 'Document uploaded',
+            message: 'Your document has been uploaded successfully.',
+            primaryLabel: 'Done',
+            onPrimary: () {
+              Navigator.of(sheetContext).pop();
+              Navigator.of(context).pop();
+            },
+          );
+        },
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Unable to upload document. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
   }
 
   @override
@@ -129,6 +157,37 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: taskCardDecoration(),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _documentType,
+                      isExpanded: true,
+                      items: _documentTypes
+                          .map(
+                            (type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(
+                                type,
+                                style: context.responsiveStyle(
+                                  AppTextStyles.homeCardTitle,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: _isUploading
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() => _documentType = value);
+                              }
+                            },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -177,8 +236,10 @@ class _UploadDocumentViewState extends State<UploadDocumentView> {
                 ],
                 const SizedBox(height: 24),
                 TaskPrimaryButton(
-                  label: 'Upload document',
-                  onPressed: document != null && !_isPicking ? _submit : null,
+                  label: _isUploading ? 'Uploading...' : 'Upload document',
+                  onPressed: document != null && !_isPicking && !_isUploading
+                      ? _submit
+                      : null,
                 ),
               ],
             ),

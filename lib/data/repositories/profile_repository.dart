@@ -13,27 +13,43 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<ProfilePageData> getProfile({UserModel? user}) async {
-    final profile = await _api.getMe();
+    final profileFuture = _api.getMe();
+    final earningsFuture = _api.getEarningsSummary();
+
+    final profile = await profileFuture;
+    final earnings = await earningsFuture;
 
     final displayName = user?.name ?? profile.name;
-    final firstName = displayName.split(' ').first;
+    final firstName = profile.firstName ?? displayName.split(' ').first;
     final title = profile.caregiverType.isEmpty
         ? profile.status
         : '${profile.caregiverType[0].toUpperCase()}${profile.caregiverType.substring(1)} caregiver';
+
+    final weeklyHours = earnings.hoursSeries
+        .map(
+          (week) => ProfileDayHours(
+            dayLabel: week.label,
+            hours: week.hours,
+            style: ProfileBarStyle.primary,
+          ),
+        )
+        .toList();
 
     return ProfilePageData(
       headerTitle: firstName,
       name: displayName,
       title: title,
-      avatarUrl: user?.avatarUrl,
+      avatarUrl: profile.avatarUrl ?? user?.avatarUrl,
       experienceYears: 0,
       visitCount: 0,
-      hoursThisWeek: 0,
+      hoursThisWeek: weeklyHours.isNotEmpty ? weeklyHours.last.hours : 0,
       targetHours: 40,
       weekChangePercent: 0,
       targetLineHours: 20,
-      chartMaxHours: 30,
-      weeklyHours: const [],
+      chartMaxHours: weeklyHours.isEmpty
+          ? 30
+          : weeklyHours.map((e) => e.hours).reduce((a, b) => a > b ? a : b) + 5,
+      weeklyHours: weeklyHours,
     );
   }
 }

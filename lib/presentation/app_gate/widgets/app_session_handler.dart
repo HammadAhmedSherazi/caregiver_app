@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/network/session_expired_notifier.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
 import '../../home/cubit/home_cubit.dart';
@@ -20,17 +21,30 @@ class AppSessionHandler extends StatefulWidget {
   State<AppSessionHandler> createState() => _AppSessionHandlerState();
 }
 
-class _AppSessionHandlerState extends State<AppSessionHandler> {
+class _AppSessionHandlerState extends State<AppSessionHandler>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     sl<SessionExpiredNotifier>().onSessionExpired = _onSessionExpired;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     sl<SessionExpiredNotifier>().onSessionExpired = null;
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final auth = context.read<AuthCubit>().state;
+      if (auth.status == AuthStatus.authenticated) {
+        sl<AuthRepository>().refreshSession();
+      }
+    }
   }
 
   void _onSessionExpired() {

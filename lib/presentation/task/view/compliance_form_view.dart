@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/task_page_model.dart';
 import '../../home/widgets/vertical_overlap.dart';
+import '../../widgets/get_request_view.dart';
+import '../../widgets/skeletons/api_tab_skeletons.dart';
+import '../cubit/task_cubit.dart';
 import '../widgets/compliance_form_widgets.dart';
 import '../widgets/task_cards.dart';
 import '../widgets/task_primary_button.dart';
@@ -14,14 +18,16 @@ import '../widgets/task_success_sheet.dart';
 class ComplianceFormView extends StatefulWidget {
   const ComplianceFormView({
     super.key,
+    this.formId,
     required this.title,
-    required this.questions,
+    this.questions = const [],
     this.isMonthly = false,
     this.heroTitle,
     this.heroSubtitle,
     this.sectionLabel,
   });
 
+  final int? formId;
   final String title;
   final List<ComplianceQuestion> questions;
   final bool isMonthly;
@@ -36,15 +42,51 @@ class ComplianceFormView extends StatefulWidget {
 class _ComplianceFormViewState extends State<ComplianceFormView> {
   late List<ComplianceQuestion> _questions;
   final _notesController = TextEditingController();
-  bool _hasSignature = false;
+  String? _signatureBase64;
+  bool _isLoading = false;
+  bool _isSubmitting = false;
+  bool _loadFailed = false;
 
   static const _headerHeight = 209.0;
   static const _heroOverlap = 32.0;
+  static const _placeholderSignature =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+  bool get _hasSignature => _signatureBase64 != null;
 
   @override
   void initState() {
     super.initState();
     _questions = List.of(widget.questions);
+    if (widget.formId != null && _questions.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadForm());
+    }
+  }
+
+  Future<void> _loadForm() async {
+    final formId = widget.formId;
+    if (formId == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+    });
+
+    try {
+      final questions =
+          await context.read<TaskCubit>().loadComplianceForm(formId);
+      if (!mounted) return;
+      setState(() {
+        _questions = questions;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadFailed = true;
+      });
+    }
   }
 
   @override
@@ -55,12 +97,49 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
 
   bool get _canSubmit {
     final allAnswered = _questions.every((q) => q.selectedYes != null);
-    return allAnswered && _hasSignature;
+    return allAnswered && _hasSignature && !_isSubmitting;
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_canSubmit) return;
 
+    final formId = widget.formId;
+    if (formId != null) {
+      setState(() => _isSubmitting = true);
+      try {
+        final answers = {
+          for (final question in _questions) question.id: question.selectedYes!,
+        };
+        await context.read<TaskCubit>().submitComplianceForm(
+              formId: formId,
+              answers: answers,
+              signature: _signatureBase64!,
+              additionalNotes: _notesController.text.trim().isEmpty
+                  ? null
+                  : _notesController.text.trim(),
+            );
+        if (!mounted) return;
+        _showSuccessSheet();
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to submit form. Please try again.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
+      }
+      return;
+    }
+
+    _showSuccessSheet();
+  }
+
+  void _showSuccessSheet() {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -76,7 +155,7 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
           primaryLabel: 'Done',
           onPrimary: () {
             Navigator.of(sheetContext).pop();
-            Navigator.of(context).pop();
+            Navigator.of(context).pop(true);
           },
           showSummary: widget.isMonthly,
           summaryRows: widget.isMonthly
@@ -90,6 +169,14 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
     );
   }
 
+  void _captureSignature() {
+    setState(() => _signatureBase64 = _placeholderSignature);
+  }
+
+  void _clearSignature() {
+    setState(() => _signatureBase64 = null);
+  }
+
   void _updateQuestion(String id, bool value) {
     setState(() {
       final index = _questions.indexWhere((q) => q.id == id);
@@ -101,6 +188,31 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading || _loadFailed) {
+      return Scaffold(
+        backgroundColor: AppColors.homeBackground,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TaskScreenHeader(
+              title: widget.title,
+              onBack: () => Navigator.of(context).pop(),
+              height: 160,
+            ),
+            Expanded(
+              child: GetRequestView(
+                isLoading: _isLoading,
+                hasError: _loadFailed,
+                onRetry: _loadForm,
+                skeleton: const TaskTabSkeleton(),
+                child: const SizedBox.shrink(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (widget.isMonthly) {
       return _buildMonthlyForm(context);
     }
@@ -169,12 +281,12 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
                 const SizedBox(height: 24),
                 ComplianceSignatureCard(
                   hasSignature: _hasSignature,
-                  onSign: () => setState(() => _hasSignature = true),
-                  onClear: () => setState(() => _hasSignature = false),
+                  onSign: _captureSignature,
+                  onClear: _clearSignature,
                 ),
                 const SizedBox(height: 32),
                 TaskPrimaryButton(
-                  label: 'Submit form',
+                  label: _isSubmitting ? 'Submitting...' : 'Submit form',
                   onPressed: _canSubmit ? _submit : null,
                 ),
               ],
@@ -213,11 +325,11 @@ class _ComplianceFormViewState extends State<ComplianceFormView> {
                 ],
                 _SimpleSignatureCard(
                   hasSignature: _hasSignature,
-                  onTap: () => setState(() => _hasSignature = true),
+                  onTap: _captureSignature,
                 ),
                 const SizedBox(height: 24),
                 TaskPrimaryButton(
-                  label: 'Submit',
+                  label: _isSubmitting ? 'Submitting...' : 'Submit',
                   onPressed: _canSubmit ? _submit : null,
                 ),
               ],

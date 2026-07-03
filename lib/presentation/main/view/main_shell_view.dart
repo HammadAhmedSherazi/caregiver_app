@@ -114,9 +114,8 @@ class _MainShellViewState extends State<MainShellView> {
       onClearError: () => context.read<AuthCubit>().clearActionError(),
       child: BlocBuilder<HomeCubit, HomeState>(
       builder: (context, homeState) {
-        final isActiveShift =
-            homeState.dashboard?.activeShift?.isInProgress ?? false;
-        final hideBottomNav = isActiveShift || homeState.isEndingShift;
+        final hideBottomNav =
+            homeState.showActiveShiftScreen || homeState.isEndingShift;
         final caregiverName = homeState.dashboard?.caregiverName;
 
         return Scaffold(
@@ -147,7 +146,8 @@ class _MainShellViewState extends State<MainShellView> {
               const ProfileTabView(),
             ],
           ),
-          floatingActionButton: !isActiveShift && _selectedTab == MainTab.home
+          floatingActionButton: !homeState.showActiveShiftScreen &&
+                  _selectedTab == MainTab.home
               ? FloatingActionButton(
                   onPressed: _openInbox,
                   backgroundColor: AppColors.homeAccent,

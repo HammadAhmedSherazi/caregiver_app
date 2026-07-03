@@ -1,5 +1,7 @@
 import '../api/caregiver_api.dart';
+import '../mappers/api_mappers.dart';
 import '../models/api/visit_model.dart';
+import '../models/api/visit_task_model.dart';
 
 abstract class VisitRepository {
   Future<VisitModel?> getActiveVisit();
@@ -14,6 +16,12 @@ abstract class VisitRepository {
     double? latitude,
     double? longitude,
     String? notes,
+  });
+  Future<List<VisitTaskModel>> getTasks(int scheduleId);
+  Future<VisitTaskModel> toggleTask({
+    required int scheduleId,
+    required int taskId,
+    bool? isCompleted,
   });
 }
 
@@ -52,6 +60,24 @@ class VisitRepositoryImpl implements VisitRepository {
       latitude: latitude,
       longitude: longitude,
       notes: notes,
+    );
+  }
+
+  @override
+  Future<List<VisitTaskModel>> getTasks(int scheduleId) {
+    return _api.getVisitTasks(scheduleId);
+  }
+
+  @override
+  Future<VisitTaskModel> toggleTask({
+    required int scheduleId,
+    required int taskId,
+    bool? isCompleted,
+  }) {
+    return _api.toggleVisitTask(
+      scheduleId: scheduleId,
+      taskId: taskId,
+      isCompleted: isCompleted,
     );
   }
 }

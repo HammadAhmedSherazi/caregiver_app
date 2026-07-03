@@ -10,6 +10,11 @@ class CaregiverProfileModel extends BaseModel {
     required this.liveIn,
     required this.hourlyWage,
     required this.status,
+    this.firstName,
+    this.lastName,
+    this.initials,
+    this.avatarUrl,
+    this.address,
     this.payEligibilityStart,
   });
 
@@ -21,6 +26,11 @@ class CaregiverProfileModel extends BaseModel {
   final bool liveIn;
   final double hourlyWage;
   final String status;
+  final String? firstName;
+  final String? lastName;
+  final String? initials;
+  final String? avatarUrl;
+  final String? address;
   final String? payEligibilityStart;
 
   factory CaregiverProfileModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +43,11 @@ class CaregiverProfileModel extends BaseModel {
       liveIn: json['live_in'] as bool? ?? false,
       hourlyWage: (json['hourly_wage'] as num?)?.toDouble() ?? 0,
       status: json['status'] as String? ?? '',
+      firstName: json['first_name'] as String?,
+      lastName: json['last_name'] as String?,
+      initials: json['initials'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
+      address: json['address'] as String?,
       payEligibilityStart: json['pay_eligibility_start'] as String?,
     );
   }
@@ -47,6 +62,11 @@ class CaregiverProfileModel extends BaseModel {
         'live_in': liveIn,
         'hourly_wage': hourlyWage,
         'status': status,
+        if (firstName != null) 'first_name': firstName,
+        if (lastName != null) 'last_name': lastName,
+        if (initials != null) 'initials': initials,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (address != null) 'address': address,
         if (payEligibilityStart != null)
           'pay_eligibility_start': payEligibilityStart,
       };
@@ -61,6 +81,11 @@ class CaregiverProfileModel extends BaseModel {
         liveIn,
         hourlyWage,
         status,
+        firstName,
+        lastName,
+        initials,
+        avatarUrl,
+        address,
         payEligibilityStart,
       ];
 }

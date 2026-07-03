@@ -294,6 +294,47 @@ class PayrollContentSkeleton extends StatelessWidget {
   }
 }
 
+class ComplianceHistorySkeleton extends StatelessWidget {
+  const ComplianceHistorySkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppColors.homeBackground,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 25, 24, 40),
+        children: [
+          Text('Record', style: AppTextStyles.homeCardTitle),
+          const SizedBox(height: 16),
+          for (var i = 0; i < 4; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: _SkeletonCard(
+                height: 72,
+                child: Row(
+                  children: [
+                    const _SkeletonAvatar(size: 40),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('May 2026', style: AppTextStyles.homeCardTitle),
+                          Text('Submitted', style: AppTextStyles.homeCardSubtitle),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class ProfileTabSkeleton extends StatelessWidget {
   const ProfileTabSkeleton({super.key});
 

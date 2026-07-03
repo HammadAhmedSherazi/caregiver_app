@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../core/network/api_client.dart';
 import '../../core/network/session_expired_notifier.dart';
+import '../../core/network/token_refresh_handler.dart';
 import '../../data/local/remember_me_storage.dart';
 import '../../data/local/remember_me_storage_impl.dart';
 import '../../data/local/session_storage.dart';
@@ -30,11 +31,13 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<TokenStorage>(TokenStorageImpl.new);
   sl.registerLazySingleton<SessionStorage>(SessionStorageImpl.new);
   sl.registerLazySingleton<SessionExpiredNotifier>(SessionExpiredNotifier.new);
+  sl.registerLazySingleton<TokenRefreshHandler>(TokenRefreshHandler.new);
   sl.registerLazySingleton<ApiClient>(
     () => ApiClient(
       tokenStorage: sl<TokenStorage>(),
       sessionStorage: sl<SessionStorage>(),
       sessionExpiredNotifier: sl<SessionExpiredNotifier>(),
+      tokenRefreshHandler: sl<TokenRefreshHandler>(),
     ),
   );
   sl.registerLazySingleton<CaregiverApi>(
@@ -44,15 +47,17 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
-  sl.registerLazySingleton<HomeRepository>(
-    () => HomeRepositoryImpl(api: sl<CaregiverApi>()),
-  );
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
+  sl.registerLazySingleton<AuthRepository>(() {
+    final repository = AuthRepositoryImpl(
       api: sl<CaregiverApi>(),
       tokenStorage: sl<TokenStorage>(),
       sessionStorage: sl<SessionStorage>(),
-    ),
+    );
+    sl<TokenRefreshHandler>().onRefresh = repository.refreshSession;
+    return repository;
+  });
+  sl.registerLazySingleton<HomeRepository>(
+    () => HomeRepositoryImpl(api: sl<CaregiverApi>()),
   );
   sl.registerLazySingleton<ScheduleRepository>(
     () => ScheduleRepositoryImpl(api: sl<CaregiverApi>()),

@@ -527,7 +527,7 @@ class _ActiveShiftQuickActionTile extends StatelessWidget {
 class _ActiveShiftCareTasksCard extends StatelessWidget {
   const _ActiveShiftCareTasksCard({required this.tasks});
 
-  final List<String> tasks;
+  final List<CareTaskItem> tasks;
 
   @override
   Widget build(BuildContext context) {
@@ -561,7 +561,7 @@ class _ActiveShiftCareTasksCard extends StatelessWidget {
           const SizedBox(height: 18),
           for (var i = 0; i < tasks.length; i++) ...[
             if (i > 0) const SizedBox(height: 14),
-            _ActiveShiftTaskRow(label: tasks[i]),
+            _ActiveShiftTaskRow(label: tasks[i].label),
           ],
         ],
       ),

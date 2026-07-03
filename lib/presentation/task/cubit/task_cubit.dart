@@ -1,6 +1,7 @@
 import '../../../core/base/base_cubit.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/pay_stub_file_helper.dart';
+import '../../../data/models/selected_document.dart';
 import '../../../data/models/task_page_model.dart';
 import '../../../data/repositories/task_repository.dart';
 import 'task_state.dart';
@@ -46,6 +47,45 @@ class TaskCubit extends BaseCubit<TaskState> {
 
   Future<PayrollSummary> loadPayrollSummary() {
     return repository.getPayrollSummary();
+  }
+
+  Future<ComplianceHistoryPage> loadComplianceHistory() {
+    return repository.getComplianceHistoryPage();
+  }
+
+  Future<List<ComplianceQuestion>> loadComplianceForm(int id) async {
+    final form = await repository.getComplianceForm(id);
+    return form.questions
+        .map((q) => ComplianceQuestion(id: q.key, prompt: q.text))
+        .toList();
+  }
+
+  Future<void> submitComplianceForm({
+    required int formId,
+    required Map<String, bool> answers,
+    required String signature,
+    String? additionalNotes,
+  }) async {
+    await repository.submitComplianceForm(
+      id: formId,
+      answers: answers,
+      signature: signature,
+      additionalNotes: additionalNotes,
+    );
+  }
+
+  Future<void> uploadDocument({
+    required SelectedDocument document,
+    required String type,
+    int? clientId,
+    String? notes,
+  }) async {
+    await repository.uploadDocument(
+      document: document,
+      type: type,
+      clientId: clientId,
+      notes: notes,
+    );
   }
 
   Future<void> downloadAndOpenPayStub(String id) async {

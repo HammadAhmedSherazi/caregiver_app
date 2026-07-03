@@ -155,6 +155,19 @@ class ComplianceHistoryRecord extends Equatable {
       [id, periodLabel, submittedLabel, isSubmitted, hasAttachment];
 }
 
+class ComplianceHistoryPage extends Equatable {
+  const ComplianceHistoryPage({
+    required this.summary,
+    required this.records,
+  });
+
+  final ComplianceHistorySummary summary;
+  final List<ComplianceHistoryRecord> records;
+
+  @override
+  List<Object?> get props => [summary, records];
+}
+
 class PaystubItem extends Equatable {
   const PaystubItem({
     required this.id,
@@ -222,6 +235,11 @@ class PaystubDetail extends Equatable {
     required this.program,
     required this.stubAvailable,
     required this.visitSummary,
+    this.netPay,
+    this.federalTax,
+    this.stateTax,
+    this.fica,
+    this.estimatedBreakdown = false,
   });
 
   final String id;
@@ -234,6 +252,11 @@ class PaystubDetail extends Equatable {
   final String program;
   final bool stubAvailable;
   final List<MapEntry<String, String>> visitSummary;
+  final String? netPay;
+  final String? federalTax;
+  final String? stateTax;
+  final String? fica;
+  final bool estimatedBreakdown;
 
   bool get isPaid => status == 'Paid';
 
@@ -249,6 +272,11 @@ class PaystubDetail extends Equatable {
         program,
         stubAvailable,
         visitSummary,
+        netPay,
+        federalTax,
+        stateTax,
+        fica,
+        estimatedBreakdown,
       ];
 }
 

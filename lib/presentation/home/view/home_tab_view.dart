@@ -12,6 +12,7 @@ import '../../../data/models/home_dashboard_model.dart';
 import '../../../data/repositories/client_repository.dart';
 import '../../clients/view/client_profile_view.dart';
 import '../../widgets/get_request_view.dart';
+import '../../widgets/app_splash_view.dart';
 import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
@@ -62,16 +63,39 @@ class _HomeTabViewState extends State<HomeTabView> {
           current.dashboard != null,
       errorMessage: (state) => state.errorMessage,
       onClearError: () => context.read<HomeCubit>().clearActionError(),
-      child: BlocBuilder<HomeCubit, HomeState>(
-        builder: (context, state) {
-          return GetRequestView(
-            isLoading: state.isLoading,
-            hasError: state.hasError,
-            onRetry: () => context.read<HomeCubit>().loadDashboard(),
-            skeleton: const HomeTabSkeleton(),
-            child: _buildContent(context, state),
-          );
+      child: BlocListener<HomeCubit, HomeState>(
+        listenWhen: (previous, current) =>
+            current.infoMessage != null &&
+            current.infoMessage != previous.infoMessage,
+        listener: (context, state) {
+          final message = state.infoMessage;
+          if (message == null || message.isEmpty) return;
+
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(message),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          context.read<HomeCubit>().clearActionError();
         },
+        child: BlocBuilder<HomeCubit, HomeState>(
+          builder: (context, state) {
+            if (state.isLoading && state.dashboard == null) {
+              return const AppSplashView();
+            }
+
+            return GetRequestView(
+              isLoading: false,
+              hasError: state.hasError,
+              onRetry: () => context.read<HomeCubit>().loadDashboard(),
+              skeleton: const HomeTabSkeleton(),
+              child: _buildContent(context, state),
+            );
+          },
+        ),
       ),
     );
   }
@@ -83,7 +107,7 @@ class _HomeTabViewState extends State<HomeTabView> {
         }
 
         final shift = dashboard.activeShift;
-        if (shift != null && shift.isInProgress) {
+        if (shift != null && state.showActiveShiftScreen) {
           if (state.isEndingShift) {
             return EndShiftView(shift: shift);
           }
@@ -97,6 +121,7 @@ class _HomeTabViewState extends State<HomeTabView> {
               caregiverName: dashboard.caregiverName,
               dateLabel: dashboard.dateLabel,
               activeShift: dashboard.activeShift,
+              unreadNotifications: dashboard.unreadNotifications,
               onOpenMenu: widget.onOpenMenu,
               onOpenNotifications: widget.onOpenNotifications,
             ),
@@ -162,6 +187,7 @@ class _HomeHeader extends StatelessWidget {
     required this.caregiverName,
     required this.dateLabel,
     required this.activeShift,
+    this.unreadNotifications = 0,
     this.onOpenMenu,
     this.onOpenNotifications,
   });
@@ -169,6 +195,7 @@ class _HomeHeader extends StatelessWidget {
   final String caregiverName;
   final String dateLabel;
   final ActiveShift? activeShift;
+  final int unreadNotifications;
   final VoidCallback? onOpenMenu;
   final VoidCallback? onOpenNotifications;
 
@@ -245,6 +272,12 @@ class _HomeHeader extends StatelessWidget {
                               onTap: onOpenNotifications,
                               behavior: HitTestBehavior.opaque,
                               child: Badge(
+                                isLabelVisible: unreadNotifications > 0,
+                                label: Text(
+                                  unreadNotifications > 99
+                                      ? '99+'
+                                      : '$unreadNotifications',
+                                ),
                                 smallSize: 8,
                                 padding: EdgeInsets.zero,
                                 backgroundColor: AppColors.authOnGradient,

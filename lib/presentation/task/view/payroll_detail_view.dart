@@ -161,6 +161,62 @@ class _PayrollDetailViewState extends State<PayrollDetailView> {
                     ),
                   ),
                 ],
+                if (detail.netPay != null) ...[
+                  const SizedBox(height: 24),
+                  PayrollSectionTitle(
+                    title: detail.estimatedBreakdown
+                        ? 'Estimated breakdown'
+                        : 'Pay breakdown',
+                  ),
+                  const SizedBox(height: 16),
+                  PayrollInfoCard(
+                    padding: const EdgeInsets.fromLTRB(16, 23, 16, 20),
+                    child: Column(
+                      children: [
+                        PayrollDetailRow(
+                          label: 'Gross pay',
+                          value: detail.grossPay,
+                        ),
+                        if (detail.federalTax != null) ...[
+                          const SizedBox(height: 20),
+                          PayrollDetailRow(
+                            label: 'Federal tax',
+                            value: detail.federalTax!,
+                          ),
+                        ],
+                        if (detail.stateTax != null) ...[
+                          const SizedBox(height: 20),
+                          PayrollDetailRow(
+                            label: 'State tax',
+                            value: detail.stateTax!,
+                          ),
+                        ],
+                        if (detail.fica != null) ...[
+                          const SizedBox(height: 20),
+                          PayrollDetailRow(
+                            label: 'FICA',
+                            value: detail.fica!,
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        PayrollDetailRow(
+                          label: 'Net pay',
+                          value: detail.netPay!,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (detail.estimatedBreakdown) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tax amounts are estimated. Authoritative net pay comes from your payroll provider.',
+                      textAlign: TextAlign.center,
+                      style: context.responsiveStyle(
+                        AppTextStyles.homeCardSubtitle,
+                      ),
+                    ),
+                  ],
+                ],
                 const SizedBox(height: 32),
                 TaskPrimaryButton(
                   label: _isDownloading ? 'Downloading...' : 'Download PDF',

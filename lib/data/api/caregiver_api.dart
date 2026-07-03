@@ -5,12 +5,19 @@ import '../../core/network/api_config.dart';
 import '../../core/network/api_exception.dart';
 import '../models/api/assignment_model.dart';
 import '../models/api/caregiver_profile_model.dart';
+import '../models/api/compliance_form_model.dart';
 import '../models/api/conversation_model.dart';
+import '../models/api/dashboard_model.dart';
+import '../models/api/document_model.dart';
+import '../models/api/earnings_summary_model.dart';
 import '../models/api/notification_item_model.dart';
 import '../models/api/paginated_response.dart';
+import '../models/api/pay_detail_model.dart';
 import '../models/api/pay_item_model.dart';
 import '../models/api/schedule_item_model.dart';
+import '../models/api/schedule_week_model.dart';
 import '../models/api/visit_model.dart';
+import '../models/api/visit_task_model.dart';
 import '../models/user_model.dart';
 import '../local/token_storage.dart';
 
@@ -53,6 +60,28 @@ class CaregiverApi {
 
       if (token == null || userJson == null) {
         throw ApiException('Invalid login response');
+      }
+
+      await _tokenStorage.saveToken(token);
+
+      return LoginResult(
+        token: token,
+        user: UserModel.fromJson(userJson),
+      );
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<LoginResult> refresh() async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>('/refresh');
+      final body = response.data ?? const {};
+      final token = body['token'] as String?;
+      final userJson = body['user'] as Map<String, dynamic>?;
+
+      if (token == null || userJson == null) {
+        throw ApiException('Invalid refresh response');
       }
 
       await _tokenStorage.saveToken(token);
@@ -383,6 +412,245 @@ class CaregiverApi {
         throw ApiException('Invalid conversation response');
       }
       return ConversationSummaryModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<DashboardModel> getDashboard() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>('/dashboard');
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid dashboard response');
+      }
+      return DashboardModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ScheduleWeekModel> getScheduleWeek({String? date}) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/schedule/week',
+        queryParameters: {if (date != null) 'date': date},
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid schedule week response');
+      }
+      return ScheduleWeekModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<PayDetailModel> getPayDetail(int id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>('/pay/$id');
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid pay detail response');
+      }
+      return PayDetailModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<EarningsSummaryModel> getEarningsSummary({
+    int? year,
+    int periods = 6,
+    int weeks = 8,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/earnings/summary',
+        queryParameters: {
+          if (year != null) 'year': year,
+          'periods': periods,
+          'weeks': weeks,
+        },
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid earnings summary response');
+      }
+      return EarningsSummaryModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<PaginatedResponse<ComplianceFormListItemModel>> getComplianceForms({
+    String? status,
+    int perPage = 25,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/compliance-forms',
+        queryParameters: {
+          'per_page': perPage,
+          if (status != null) 'status': status,
+        },
+      );
+      return _parsePaginated(response.data, ComplianceFormListItemModel.fromJson);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ComplianceHistoryModel> getComplianceHistory() async {
+    try {
+      final response =
+          await _apiClient.get<Map<String, dynamic>>('/compliance-forms/history');
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid compliance history response');
+      }
+      return ComplianceHistoryModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ComplianceFormDetailModel> getComplianceForm(int id) async {
+    try {
+      final response =
+          await _apiClient.get<Map<String, dynamic>>('/compliance-forms/$id');
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid compliance form response');
+      }
+      return ComplianceFormDetailModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<ComplianceFormDetailModel> submitComplianceForm({
+    required int id,
+    required Map<String, bool> answers,
+    required String signature,
+    String? additionalNotes,
+  }) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/compliance-forms/$id/submit',
+        data: {
+          'answers': answers,
+          'signature': signature,
+          if (additionalNotes != null && additionalNotes.isNotEmpty)
+            'additional_notes': additionalNotes,
+        },
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid compliance submit response');
+      }
+      return ComplianceFormDetailModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<PaginatedResponse<DocumentModel>> getDocuments({
+    int perPage = 25,
+  }) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/documents',
+        queryParameters: {'per_page': perPage},
+      );
+      return _parsePaginated(response.data, DocumentModel.fromJson);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<DocumentModel> uploadDocument({
+    required String filePath,
+    required String fileName,
+    required String type,
+    int? clientId,
+    String? notes,
+    String? mimeType,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName,
+        ),
+        'type': type,
+        if (clientId != null) 'client_id': clientId,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      });
+
+      final response = await _apiClient.postMultipart<Map<String, dynamic>>(
+        '/documents',
+        data: formData,
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid document upload response');
+      }
+      return DocumentModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<List<VisitTaskModel>> getVisitTasks(int scheduleId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '/visits/$scheduleId/tasks',
+      );
+      final data = response.data?['data'] as List<dynamic>? ?? const [];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(VisitTaskModel.fromJson)
+          .toList();
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<List<VisitTaskModel>> addVisitTasks({
+    required int scheduleId,
+    required List<Map<String, String>> tasks,
+  }) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/visits/$scheduleId/tasks',
+        data: {'tasks': tasks},
+      );
+      final data = response.data?['data'] as List<dynamic>? ?? const [];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(VisitTaskModel.fromJson)
+          .toList();
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<VisitTaskModel> toggleVisitTask({
+    required int scheduleId,
+    required int taskId,
+    bool? isCompleted,
+  }) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/visits/$scheduleId/tasks/$taskId/toggle',
+        data: isCompleted != null ? {'is_completed': isCompleted} : null,
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid task toggle response');
+      }
+      return VisitTaskModel.fromJson(data);
     } catch (error) {
       ApiClient.rethrowAsApiException(error);
     }

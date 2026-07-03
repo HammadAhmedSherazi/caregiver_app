@@ -23,6 +23,9 @@ class HomeCubit extends BaseCubit<HomeState> {
         state.copyWith(
           status: HomeStatus.success,
           dashboard: dashboard,
+          isEndingShift: (dashboard.activeShift?.isInProgress ?? false)
+              ? state.isEndingShift
+              : false,
         ),
       );
     } catch (error, stackTrace) {
@@ -43,7 +46,7 @@ class HomeCubit extends BaseCubit<HomeState> {
   }
 
   void clearActionError() {
-    emit(state.copyWith(clearError: true));
+    emit(state.copyWith(clearError: true, clearInfo: true));
   }
 
   Future<void> completeClockIn({
@@ -100,13 +103,16 @@ class HomeCubit extends BaseCubit<HomeState> {
   }
 
   Future<void> endShift({
+    int? visitId,
     int? scheduleId,
     double? latitude,
     double? longitude,
     String? notes,
   }) async {
     final dashboard = state.dashboard;
-    if (dashboard == null) return;
+    if (dashboard == null || state.isClockingOut) return;
+
+    emit(state.copyWith(isClockingOut: true, clearError: true, clearInfo: true));
 
     try {
       await visitRepository.clockOut(
@@ -116,24 +122,71 @@ class HomeCubit extends BaseCubit<HomeState> {
         notes: notes,
       );
 
-      final dashboard = await repository.getDashboard();
+      final refreshed = await repository.getDashboard();
+      final stillOpen = refreshed.activeShift?.isInProgress ?? false;
+      final anotherVisit =
+          stillOpen && refreshed.activeShift?.visitId != visitId;
 
       emit(
         state.copyWith(
-          dashboard: dashboard,
+          dashboard: refreshed,
           isEndingShift: false,
+          isClockingOut: false,
+          infoMessage: anotherVisit
+              ? 'Clock-out saved. Another open visit for ${refreshed.activeShift!.clientName} still needs to be ended.'
+              : null,
         ),
       );
     } on ApiException catch (error) {
-      emit(state.copyWith(errorMessage: error.message));
+      emit(
+        state.copyWith(
+          errorMessage: error.message,
+          isClockingOut: false,
+        ),
+      );
     } catch (error, stackTrace) {
       logError('Clock out failed', error: error, stackTrace: stackTrace);
       emit(
         state.copyWith(
           errorMessage: 'Clock out failed. Please try again.',
           isEndingShift: false,
+          isClockingOut: false,
         ),
       );
+    }
+  }
+
+  Future<void> toggleCareTask(int taskId) async {
+    final dashboard = state.dashboard;
+    final shift = dashboard?.activeShift;
+    final scheduleId = shift?.scheduleId;
+    if (dashboard == null || shift == null || scheduleId == null) return;
+
+    try {
+      final updated = await visitRepository.toggleTask(
+        scheduleId: scheduleId,
+        taskId: taskId,
+      );
+      final tasks = shift.careTasks
+          .map(
+            (task) => task.id == taskId
+                ? task.copyWith(isCompleted: updated.isCompleted)
+                : task,
+          )
+          .toList();
+
+      emit(
+        state.copyWith(
+          dashboard: dashboard.copyWith(
+            activeShift: shift.copyWith(careTasks: tasks),
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      emit(state.copyWith(errorMessage: error.message));
+    } catch (error, stackTrace) {
+      logError('Task toggle failed', error: error, stackTrace: stackTrace);
+      emit(state.copyWith(errorMessage: 'Unable to update task.'));
     }
   }
 }

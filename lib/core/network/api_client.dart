@@ -10,14 +10,11 @@ import 'token_refresh_handler.dart';
 
 class ApiClient {
   ApiClient({
-    required TokenStorage tokenStorage,
+    required this._tokenStorage,
     required SessionStorage sessionStorage,
-    required SessionExpiredNotifier sessionExpiredNotifier,
-    required TokenRefreshHandler tokenRefreshHandler,
-  })  : _tokenStorage = tokenStorage,
-        _sessionStorage = sessionStorage,
-        _sessionExpiredNotifier = sessionExpiredNotifier,
-        _tokenRefreshHandler = tokenRefreshHandler,
+    required this._sessionExpiredNotifier,
+    required this._tokenRefreshHandler,
+  })  : _sessionStorage = sessionStorage,
         _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,

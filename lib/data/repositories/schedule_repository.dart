@@ -10,7 +10,7 @@ abstract class ScheduleRepository {
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  ScheduleRepositoryImpl({required CaregiverApi api}) : _api = api;
+  ScheduleRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

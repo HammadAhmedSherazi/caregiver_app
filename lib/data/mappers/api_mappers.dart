@@ -66,6 +66,46 @@ String formatCurrency(double amount) {
   return '\$${amount.toStringAsFixed(2)}';
 }
 
+String relativeDueLabel(DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final target = DateTime(date.year, date.month, date.day);
+  final diff = target.difference(today).inDays;
+  if (diff < 0) return 'Overdue';
+  if (diff == 0) return 'Due Today';
+  if (diff == 1) return 'Due Tomorrow';
+  return 'Due In $diff Days';
+}
+
+String shortMonthDay(DateTime date) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${months[date.month - 1]} ${date.day}';
+}
+
+bool isDocumentUploadNotification(NotificationItemModel notification) {
+  if (notification.type != 'secure_message') return false;
+  final text = '${notification.title} ${notification.body}'.toLowerCase();
+  return text.contains('upload') ||
+      text.contains('document') ||
+      text.contains('license') ||
+      text.contains('driver') ||
+      text.contains('id card') ||
+      text.contains('file');
+}
+
 ClientModel assignmentToClient(AssignmentModel assignment) {
   return ClientModel(
     id: assignment.id.toString(),
@@ -143,6 +183,54 @@ TaskItem visitToTaskItem(VisitModel visit) {
     clientName: visit.clientName,
     initials: initialsFromName(visit.clientName),
     timeLabel: subtitle,
+  );
+}
+
+TaskItem visitToSignatureTaskItem(VisitModel visit) {
+  final referenceDate = visit.clockOutAt ?? visit.clockInAt;
+  final isOverdue = referenceDate.isBefore(
+    DateTime.now().subtract(const Duration(days: 3)),
+  );
+
+  return TaskItem(
+    id: visit.id.toString(),
+    type: TaskItemType.visitSignature,
+    title: 'Sign Visit Note · ${shortMonthDay(referenceDate)}',
+    subtitle: isOverdue ? 'Overdue' : relativeDueLabel(referenceDate),
+    status: isOverdue ? TaskItemStatus.overdue : TaskItemStatus.pending,
+    actionLabel: 'Sign Now',
+    clientName: visit.clientName,
+    initials: initialsFromName(visit.clientName),
+    isHighPriority: isOverdue,
+  );
+}
+
+TaskItem scheduleItemToVisitTaskItem(ScheduleItemModel item) {
+  return TaskItem(
+    id: item.id.toString(),
+    type: TaskItemType.visit,
+    title: item.clientName,
+    subtitle: relativeDueLabel(item.scheduledStart),
+    status: TaskItemStatus.pending,
+    actionLabel: 'Start Shift',
+    clientName: item.clientName,
+    initials: initialsFromName(item.clientName),
+    timeLabel: formatTimeLabel(item.scheduledStart),
+  );
+}
+
+TaskItem notificationToDocumentTaskItem(NotificationItemModel notification) {
+  return TaskItem(
+    id: notification.id.toString(),
+    type: TaskItemType.documentUpload,
+    title: notification.title,
+    subtitle: notification.timeAgo.isNotEmpty
+        ? notification.timeAgo
+        : relativeDueLabel(notification.createdAt),
+    status: notification.read
+        ? TaskItemStatus.submitted
+        : TaskItemStatus.pending,
+    actionLabel: 'Upload Now',
   );
 }
 
@@ -429,12 +517,12 @@ TaskItem complianceFormToTaskItem(ComplianceFormListItemModel form) {
   return TaskItem(
     id: form.id.toString(),
     type: TaskItemType.complianceForm,
-    title: '${form.periodLabel} Compliance',
-    subtitle: form.isOverdue ? 'Overdue' : form.status,
+    title: '${form.periodLabel} Compliance Form Due',
+    subtitle: form.isOverdue ? 'Overdue' : (form.status == 'Due' ? 'Due Today' : form.status),
     status: form.submitted
         ? TaskItemStatus.submitted
         : (form.isOverdue ? TaskItemStatus.overdue : TaskItemStatus.pending),
-    actionLabel: 'Complete form',
+    actionLabel: 'Complete Form',
     isHighPriority: form.isOverdue,
   );
 }

@@ -1,7 +1,6 @@
 import '../api/caregiver_api.dart';
 import '../mappers/api_mappers.dart';
 import '../models/api/compliance_form_model.dart';
-import '../models/api/pay_item_model.dart';
 import '../models/selected_document.dart';
 import '../models/task_page_model.dart';
 
@@ -35,24 +34,46 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<TaskPageData> getTaskPage() async {
     final payFuture = getPayrollSummary();
-    final visitFuture = _api.getVisits();
-    final complianceFuture = _api.getComplianceForms();
-    final documentsFuture = _api.getDocuments();
+    final complianceFuture = _api.getComplianceForms(status: 'Due');
+    final notificationsFuture = _api.getNotifications();
+    final scheduleFuture = _api.getSchedule(upcoming: true);
+    final visitsFuture = _api.getVisits(perPage: 50);
     final historyFuture = _api.getComplianceHistory();
 
     final payroll = await payFuture;
-    final visitResponse = await visitFuture;
     final complianceResponse = await complianceFuture;
-    final documentsResponse = await documentsFuture;
+    final notificationsResponse = await notificationsFuture;
+    final scheduleResponse = await scheduleFuture;
+    final visitResponse = await visitsFuture;
     final history = await historyFuture;
 
-    final visitTasks = visitResponse.data.map(visitToTaskItem).toList();
-    final complianceTasks =
-        complianceResponse.data.map(complianceFormToTaskItem).toList();
-    final documentTasks =
-        documentsResponse.data.map(documentToTaskItem).toList();
+    final complianceTasks = complianceResponse.data
+        .where((form) => !form.submitted)
+        .map(complianceFormToTaskItem)
+        .toList();
 
-    final allTasks = [...complianceTasks, ...documentTasks, ...visitTasks];
+    final documentTasks = notificationsResponse.data
+        .where(isDocumentUploadNotification)
+        .where((notification) => !notification.read)
+        .map(notificationToDocumentTaskItem)
+        .toList();
+
+    final signatureTasks = visitResponse.data
+        .where((visit) => visit.status == 'Completed')
+        .take(5)
+        .map(visitToSignatureTaskItem)
+        .toList();
+
+    final visitTasks = scheduleResponse.data
+        .map(scheduleItemToVisitTaskItem)
+        .toList();
+
+    final allTasks = [
+      ...complianceTasks,
+      ...documentTasks,
+      ...signatureTasks,
+    ];
+
     final pendingCompliance = complianceResponse.data
         .where((form) => !form.submitted)
         .toList();
@@ -63,14 +84,23 @@ class TaskRepositoryImpl implements TaskRepository {
             .toList()
         : <ComplianceQuestion>[];
 
+    final pendingCount = allTasks
+            .where(
+              (task) =>
+                  task.status == TaskItemStatus.pending ||
+                  task.status == TaskItemStatus.overdue,
+            )
+            .length +
+        visitTasks
+            .where(
+              (task) =>
+                  task.status == TaskItemStatus.pending ||
+                  task.status == TaskItemStatus.overdue,
+            )
+            .length;
+
     return TaskPageData(
-      pendingCount: allTasks
-          .where(
-            (task) =>
-                task.status == TaskItemStatus.pending ||
-                task.status == TaskItemStatus.overdue,
-          )
-          .length,
+      pendingCount: pendingCount,
       allTasks: allTasks,
       visitTasks: visitTasks,
       clientTasks: const ClientTasksData(

@@ -4,6 +4,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_config.dart';
 import '../../core/network/api_exception.dart';
 import '../models/api/assignment_model.dart';
+import '../models/api/call_model.dart';
 import '../models/api/caregiver_profile_model.dart';
 import '../models/api/compliance_form_model.dart';
 import '../models/api/conversation_model.dart';
@@ -113,6 +114,25 @@ class CaregiverApi {
         throw ApiException('Invalid profile response');
       }
       return CaregiverProfileModel.fromJson(data);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  Future<CallResultModel> placeCall({required int clientId}) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '/calls',
+        data: {'client_id': clientId},
+      );
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw ApiException('Invalid call response');
+      }
+      return CallResultModel.fromJson(
+        data,
+        message: response.data?['message'] as String?,
+      );
     } catch (error) {
       ApiClient.rethrowAsApiException(error);
     }

@@ -4,6 +4,7 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
+import '../../../core/utils/helpers/client_call_helper.dart';
 import '../../../core/utils/helpers/phone_launch_helper.dart';
 import '../../../data/models/client_model.dart';
 import '../../home/widgets/home_svg_icon.dart';
@@ -99,7 +100,11 @@ class ClientListSection extends StatelessWidget {
           width: double.infinity,
           height: 42,
           child: OutlinedButton(
-            onPressed: () => launchPhoneCall(client.clientPhone),
+            onPressed: () => initiateClientCall(
+              context,
+              clientId: client.id,
+              fallbackPhone: client.clientPhone,
+            ),
             style: OutlinedButton.styleFrom(
               backgroundColor: AppColors.surface,
               side: const BorderSide(color: _callBorder),
@@ -182,11 +187,13 @@ class ClientContactRow extends StatelessWidget {
     super.key,
     required this.label,
     required this.phone,
+    this.clientId,
     this.showDivider = true,
   });
 
   final String label;
   final String phone;
+  final String? clientId;
   final bool showDivider;
 
   @override
@@ -240,7 +247,17 @@ class ClientContactRow extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => launchPhoneCall(phone),
+              onPressed: () {
+                if (clientId != null) {
+                  initiateClientCall(
+                    context,
+                    clientId: clientId!,
+                    fallbackPhone: phone,
+                  );
+                } else {
+                  launchPhoneCall(phone);
+                }
+              },
               style: TextButton.styleFrom(
                 minimumSize: const Size(56, 32),
                 padding: const EdgeInsets.symmetric(horizontal: 12),

@@ -51,6 +51,13 @@
 	<string>Camera access is needed to photograph documents for upload.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photo library access is needed to upload your documents.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>https</string>
+		<string>http</string>
+		<string>comgooglemaps</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

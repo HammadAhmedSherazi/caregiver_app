@@ -213,6 +213,7 @@ class _ClientProfileCard extends StatelessWidget {
           ClientContactRow(
             label: 'Client',
             phone: client.clientPhone,
+            clientId: client.id,
           ),
           ClientContactRow(
             label: client.emergencyContact.label,

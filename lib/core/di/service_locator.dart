@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../../core/network/api_client.dart';
+import '../../core/network/chat_realtime_service.dart';
 import '../../core/network/session_expired_notifier.dart';
 import '../../core/network/token_refresh_handler.dart';
 import '../../data/local/remember_me_storage.dart';
@@ -76,6 +77,12 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerLazySingleton<InboxRepository>(
     () => InboxRepositoryImpl(api: sl<CaregiverApi>()),
+  );
+  sl.registerLazySingleton<ChatRealtimeService>(
+    () => ChatRealtimeService(
+      tokenStorage: sl<TokenStorage>(),
+      sessionStorage: sl<SessionStorage>(),
+    ),
   );
   sl.registerLazySingleton<ClientRepository>(
     () => ClientRepositoryImpl(api: sl<CaregiverApi>()),

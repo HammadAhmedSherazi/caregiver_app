@@ -55,6 +55,9 @@ class ChatInputBar extends StatelessWidget {
                   decoration: InputDecoration(
                     isDense: true,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
                     hintText: 'Write your message',
                     hintStyle: context.responsiveStyle(
                       AppTextStyles.bodyMedium.copyWith(

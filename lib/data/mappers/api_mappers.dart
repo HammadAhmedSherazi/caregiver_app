@@ -28,9 +28,10 @@ String initialsFromName(String name) {
 }
 
 String formatTimeLabel(DateTime dateTime) {
-  final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
-  final minute = dateTime.minute.toString().padLeft(2, '0');
-  final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+  final local = dateTime.toLocal();
+  final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+  final minute = local.minute.toString().padLeft(2, '0');
+  final period = local.hour >= 12 ? 'PM' : 'AM';
   return '$hour:$minute $period';
 }
 
@@ -299,7 +300,32 @@ ChatMessage conversationMessageToChatMessage(ConversationMessageModel message) {
     direction: message.isMine
         ? ChatMessageDirection.outgoing
         : ChatMessageDirection.incoming,
-    timestampLabel: message.time,
+    // Always derive from created_at in the device timezone — server `time`
+    // is often formatted in UTC / server TZ and shows wrong locally.
+    timestampLabel: formatTimeLabel(message.createdAt),
+  );
+}
+
+ChatMessage realtimeMessageToChatMessage({
+  required Map<String, dynamic> json,
+  required String? currentUserId,
+}) {
+  final senderId = (json['sender_id'] as num?)?.toInt();
+  final createdAtRaw = json['created_at'] as String?;
+  final createdAt = createdAtRaw != null
+      ? DateTime.tryParse(createdAtRaw) ?? DateTime.now()
+      : DateTime.now();
+  final isMine = currentUserId != null &&
+      senderId != null &&
+      senderId.toString() == currentUserId;
+
+  return ChatMessage(
+    id: (json['id'] as num?)?.toInt().toString() ??
+        DateTime.now().millisecondsSinceEpoch.toString(),
+    text: json['body'] as String? ?? '',
+    direction:
+        isMine ? ChatMessageDirection.outgoing : ChatMessageDirection.incoming,
+    timestampLabel: formatTimeLabel(createdAt),
   );
 }
 

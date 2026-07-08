@@ -12,6 +12,40 @@ class ApiConfig {
     defaultValue: defaultBaseUrl,
   );
 
+  /// Origin without trailing `/api` — used for broadcasting auth.
+  static String get originUrl {
+    final normalized = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    if (normalized.endsWith('/api')) {
+      return normalized.substring(0, normalized.length - 4);
+    }
+    return normalized;
+  }
+
+  static String get broadcastingAuthUrl => '$originUrl/broadcasting/auth';
+
+  /// Laravel Reverb (Pusher protocol). Override with dart-defines when ready.
+  static const String reverbAppKey = String.fromEnvironment(
+    'REVERB_APP_KEY',
+    defaultValue: 'local-key',
+  );
+
+  static const String reverbHost = String.fromEnvironment(
+    'REVERB_HOST',
+    defaultValue: 'www.beydountech.com',
+  );
+
+  static const int reverbPort = int.fromEnvironment(
+    'REVERB_PORT',
+    defaultValue: 443,
+  );
+
+  static const String reverbScheme = String.fromEnvironment(
+    'REVERB_SCHEME',
+    defaultValue: 'wss',
+  );
+
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 

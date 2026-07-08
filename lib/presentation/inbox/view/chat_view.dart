@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../../../core/network/chat_realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/chat_message_model.dart';
 import '../../../data/models/inbox_thread_model.dart';
@@ -26,7 +29,10 @@ class ChatView extends StatefulWidget {
 
 class _ChatViewState extends State<ChatView> {
   final _repository = sl<InboxRepository>();
+  final _realtime = sl<ChatRealtimeService>();
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
+  StreamSubscription<ChatMessage>? _socketSub;
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
   bool _hasError = false;
@@ -36,12 +42,35 @@ class _ChatViewState extends State<ChatView> {
   void initState() {
     super.initState();
     _load();
+    _initSocket();
   }
 
   @override
   void dispose() {
+    _socketSub?.cancel();
+    _realtime.unsubscribeConversation();
     _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initSocket() async {
+    try {
+      await _realtime.subscribeToConversation(widget.thread.id);
+      _socketSub = _realtime.messages.listen(_onSocketMessage);
+    } catch (_) {
+      // REST remains source of truth if the socket is unavailable.
+    }
+  }
+
+  void _onSocketMessage(ChatMessage message) {
+    if (!mounted) return;
+    if (_messages.any((m) => m.id == message.id)) return;
+
+    setState(() {
+      _messages = [..._messages, message];
+    });
+    _scrollToBottom();
   }
 
   Future<void> _load() async {
@@ -57,6 +86,7 @@ class _ChatViewState extends State<ChatView> {
         _messages = items;
         _isLoading = false;
       });
+      _scrollToBottom();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -64,6 +94,17 @@ class _ChatViewState extends State<ChatView> {
         _hasError = true;
       });
     }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _sendMessage() async {
@@ -78,10 +119,13 @@ class _ChatViewState extends State<ChatView> {
       );
       if (!mounted) return;
       setState(() {
-        _messages = [..._messages, message];
+        if (!_messages.any((m) => m.id == message.id)) {
+          _messages = [..._messages, message];
+        }
         _isSending = false;
       });
       _messageController.clear();
+      _scrollToBottom();
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSending = false);
@@ -141,6 +185,7 @@ class _ChatViewState extends State<ChatView> {
     return Stack(
       children: [
         ListView.builder(
+          controller: _scrollController,
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 120),
           itemCount: _messages.length,
           itemBuilder: (context, index) {

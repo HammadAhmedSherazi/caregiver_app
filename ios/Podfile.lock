@@ -1,21 +1,42 @@
 PODS:
   - Flutter (1.0.0)
+  - NWWebSocket (0.5.10)
   - open_filex (0.0.2):
     - Flutter
+  - pusher_channels_flutter (0.0.1):
+    - Flutter
+    - PusherSwift (~> 10.1.9)
+  - PusherSwift (10.1.10):
+    - NWWebSocket (~> 0.5.10)
+    - PusherTweetNacl (~> 1.2.0)
+  - PusherTweetNacl (1.2.0)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - open_filex (from `.symlinks/plugins/open_filex/ios`)
+  - pusher_channels_flutter (from `.symlinks/plugins/pusher_channels_flutter/ios`)
+
+SPEC REPOS:
+  trunk:
+    - NWWebSocket
+    - PusherSwift
+    - PusherTweetNacl
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
   open_filex:
     :path: ".symlinks/plugins/open_filex/ios"
+  pusher_channels_flutter:
+    :path: ".symlinks/plugins/pusher_channels_flutter/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  NWWebSocket: 873eb4b18acd0317da70cdba388d792a3187ce00
   open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
+  pusher_channels_flutter: 2723222f2686852dd91d13780938d11cca114a39
+  PusherSwift: 6022fe6584b4317dc5c177091292b2a4d80a8c35
+  PusherTweetNacl: 015f56f2cf010e718703f2bd9bca66fdcc91b208
 
 PODFILE CHECKSUM: f79e1872da79a29354b04cf03619f8f3d69fe58e
 

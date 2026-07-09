@@ -1,40 +1,61 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:dart_pusher_channels/dart_pusher_channels.dart';
+import 'package:dio/dio.dart';
+import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 import '../network/api_config.dart';
 import '../../data/local/token_storage.dart';
 import '../../data/mappers/api_mappers.dart';
 import '../../data/models/chat_message_model.dart';
 import '../../data/local/session_storage.dart';
+import '../../data/repositories/inbox_repository.dart';
 
-/// Real-time chat over Laravel Reverb (Pusher protocol).
+/// Real-time chat over Laravel Reverb via [pusher_channels_flutter].
 class ChatRealtimeService {
   ChatRealtimeService({
     required TokenStorage tokenStorage,
     required SessionStorage sessionStorage,
+    required InboxRepository inboxRepository,
   })  : _tokenStorage = tokenStorage,
-        _sessionStorage = sessionStorage;
+        _sessionStorage = sessionStorage,
+        _inboxRepository = inboxRepository;
 
   final TokenStorage _tokenStorage;
   final SessionStorage _sessionStorage;
+  final InboxRepository _inboxRepository;
 
-  PusherChannelsClient? _client;
-  PrivateChannel? _channel;
-  StreamSubscription<void>? _connectionSub;
-  StreamSubscription<ChannelReadEvent>? _eventSub;
+  final PusherChannelsFlutter _pusher = PusherChannelsFlutter.getInstance();
+  final _authDio = Dio(
+    BaseOptions(
+      connectTimeout: ApiConfig.connectTimeout,
+      receiveTimeout: ApiConfig.receiveTimeout,
+      headers: ApiConfig.defaultHeaders,
+    ),
+  );
+
   Completer<void>? _connectCompleter;
+  Completer<void>? _socketReadyCompleter;
   bool _isConnecting = false;
+  bool _isInitialized = false;
+  String? _activeConversationChannel;
+  String? _activeThreadId;
+  String? _userChannelName;
+  String? _currentUserId;
+  Timer? _unreadPollTimer;
 
   final _messagesController = StreamController<ChatMessage>.broadcast();
+  final _inboxUpdatesController = StreamController<void>.broadcast();
 
   Stream<ChatMessage> get messages => _messagesController.stream;
 
-  bool get isConnected => _client != null;
+  Stream<void> get inboxUpdates => _inboxUpdatesController.stream;
+
+  bool get isConnected => _pusher.connectionState == 'CONNECTED';
 
   Future<void> connect() async {
-    if (_client != null) return;
+    if (ApiConfig.reverbAppKey.isEmpty) return;
+    if (isConnected) return;
     if (_isConnecting) {
       await _connectCompleter?.future;
       return;
@@ -44,46 +65,50 @@ class ChatRealtimeService {
     _connectCompleter = Completer<void>();
 
     try {
-      // Defaults are placeholders. If these are still present, it's almost
-      // guaranteed that the websocket server won't match and handshake fails.
-      if (ApiConfig.reverbAppKey == 'local-key') {
-        throw StateError(
-          'Missing REVERB_APP_KEY (set via --dart-define=REVERB_APP_KEY=...).',
-        );
-      }
-      if (ApiConfig.reverbHost == 'www.beydountech.com') {
-        throw StateError(
-          'Missing/incorrect REVERB_HOST (set via --dart-define=REVERB_HOST=...).',
-        );
-      }
-
       final token = await _tokenStorage.getToken();
       if (token == null || token.isEmpty) {
         throw StateError('Missing auth token for chat socket.');
       }
 
-      final options = PusherChannelsOptions.fromHost(
-        scheme: ApiConfig.reverbScheme,
-        host: ApiConfig.reverbHost,
-        port: ApiConfig.reverbPort,
-        key: ApiConfig.reverbAppKey,
-        shouldSupplyMetadataQueries: true,
-        metadata: PusherChannelsOptionsMetadata.byDefault(),
-      );
+      final user = await _sessionStorage.loadUser();
+      _currentUserId = user?.id;
 
-      final client = PusherChannelsClient.websocket(
-        options: options,
-        connectionErrorHandler: (exception, trace, refresh) {
-          refresh();
-        },
-      );
+      if (!_isInitialized) {
+        await _pusher.init(
+          apiKey: ApiConfig.reverbAppKey,
+          cluster: 'mt1',
+          useTLS: ApiConfig.reverbUseTls,
+          host: ApiConfig.reverbHost,
+          wssPort: ApiConfig.reverbPort,
+          onConnectionStateChange: _onConnectionStateChange,
+          onEvent: _onEvent,
+          onAuthorizer: _onAuthorizer,
+          onSubscriptionError: (_, __) {},
+          onError: (_, __, ___) {},
+        );
+        _isInitialized = true;
+      }
 
-      _client = client;
-      await client.connect();
+      if (_pusher.connectionState == 'CONNECTED') {
+        // Already connected — state change callback won't fire again.
+      } else {
+        _socketReadyCompleter = Completer<void>();
+        await _pusher.connect();
+        await _socketReadyCompleter!.future.timeout(
+          ApiConfig.connectTimeout,
+          onTimeout: () => throw StateError('Socket connection timed out.'),
+        );
+      }
+
       _connectCompleter?.complete();
+      await _ensureUserChannel();
+      await _resubscribeActiveConversation();
     } catch (error, stackTrace) {
-      _connectCompleter?.completeError(error, stackTrace);
-      await disconnect();
+      _socketReadyCompleter = null;
+      if (_connectCompleter?.isCompleted == false) {
+        _connectCompleter?.completeError(error, stackTrace);
+      }
+      _startUnreadPolling();
       rethrow;
     } finally {
       _isConnecting = false;
@@ -91,88 +116,233 @@ class ChatRealtimeService {
   }
 
   Future<void> subscribeToConversation(String threadId) async {
-    await connect();
+    _activeThreadId = threadId;
 
-    final client = _client;
-    if (client == null) return;
+    try {
+      await connect();
+    } catch (_) {
+      _startUnreadPolling();
+      return;
+    }
 
-    await unsubscribeConversation();
+    final channelName = 'private-conversation.$threadId';
+    if (_activeConversationChannel == channelName && isConnected) return;
 
+    await unsubscribeConversation(clearThread: false);
+
+    await _pusher.subscribe(
+      channelName: channelName,
+      onEvent: _onEvent,
+    );
+    _activeConversationChannel = channelName;
+  }
+
+  Future<void> unsubscribeConversation({bool clearThread = true}) async {
+    final channelName = _activeConversationChannel;
+    if (channelName == null) {
+      if (clearThread) _activeThreadId = null;
+      return;
+    }
+
+    try {
+      await _pusher.unsubscribe(channelName: channelName);
+    } catch (_) {}
+    _activeConversationChannel = null;
+    if (clearThread) _activeThreadId = null;
+  }
+
+  Future<void> _ensureUserChannel() async {
+    final userId = _currentUserId;
+    if (userId == null || userId.isEmpty) return;
+
+    final channelName = 'private-user.$userId';
+    if (_userChannelName == channelName) return;
+
+    if (_userChannelName != null) {
+      try {
+        await _pusher.unsubscribe(channelName: _userChannelName!);
+      } catch (_) {}
+    }
+
+    await _pusher.subscribe(
+      channelName: channelName,
+      onEvent: _onEvent,
+    );
+    _userChannelName = channelName;
+  }
+
+  Future<void> _resubscribeActiveConversation() async {
+    final threadId = _activeThreadId;
+    if (threadId == null || threadId.isEmpty) return;
+
+    _activeConversationChannel = null;
+    await subscribeToConversation(threadId);
+  }
+
+  Future<dynamic> _onAuthorizer(
+    String channelName,
+    String socketId,
+    dynamic options,
+  ) async {
     final token = await _tokenStorage.getToken();
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      throw StateError('Missing auth token for channel authorization.');
+    }
 
-    final user = await _sessionStorage.loadUser();
-    final currentUserId = user?.id;
-
-    final channel = client.privateChannel(
-      'private-conversation.$threadId',
-      authorizationDelegate:
-          EndpointAuthorizableChannelTokenAuthorizationDelegate
-              .forPrivateChannel(
-        authorizationEndpoint: Uri.parse(ApiConfig.broadcastingAuthUrl),
+    final response = await _authDio.post<dynamic>(
+      ApiConfig.broadcastingAuthUrl,
+      data: {
+        'channel_name': channelName,
+        'socket_id': socketId,
+      },
+      options: Options(
+        contentType: Headers.formUrlEncodedContentType,
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
+        responseType: ResponseType.json,
       ),
     );
 
-    _channel = channel;
-    _connectionSub = client.onConnectionEstablished.listen((_) {
-      channel.subscribeIfNotUnsubscribed();
-    });
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String && data.isNotEmpty) {
+      final decoded = jsonDecode(data);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    }
 
-    // Laravel Echo listens as `.message.sent` → event name `message.sent`.
-    _eventSub = channel.bind('message.sent').listen((event) {
-      try {
-        final raw = event.data;
-        final Map<String, dynamic> json;
-        if (raw is Map<String, dynamic>) {
-          json = raw;
-        } else if (raw is String) {
-          final decoded = jsonDecode(raw);
-          if (decoded is! Map<String, dynamic>) return;
-          json = decoded;
-        } else {
-          return;
-        }
-
-        final message = realtimeMessageToChatMessage(
-          json: json,
-          currentUserId: currentUserId,
-        );
-        if (!_messagesController.isClosed) {
-          _messagesController.add(message);
-        }
-      } catch (_) {
-        // Ignore malformed socket payloads; REST remains source of truth.
-      }
-    });
-
-    channel.subscribeIfNotUnsubscribed();
+    throw StateError('Invalid broadcasting auth response.');
   }
 
-  Future<void> unsubscribeConversation() async {
-    await _eventSub?.cancel();
-    _eventSub = null;
-    await _connectionSub?.cancel();
-    _connectionSub = null;
+  void _onConnectionStateChange(String currentState, String previousState) {
+    final current = currentState.toUpperCase();
+
+    if (current == 'CONNECTED') {
+      _socketReadyCompleter?.complete();
+      _socketReadyCompleter = null;
+      _stopUnreadPolling();
+      return;
+    }
+
+    if (current == 'DISCONNECTED' ||
+        current == 'FAILED' ||
+        current == 'UNAVAILABLE') {
+      _socketReadyCompleter = null;
+      _startUnreadPolling();
+    }
+  }
+
+  void _onEvent(PusherEvent event) {
+    if (!_isMessageSentEvent(event.eventName)) return;
+
     try {
-      _channel?.unsubscribe();
-    } catch (_) {}
-    _channel = null;
+      final json = _parseEventPayload(event.data);
+      if (json == null) return;
+
+      final channelName = event.channelName;
+      final threadId = _activeThreadId;
+
+      if (channelName.startsWith('private-conversation.')) {
+        _emitConversationMessage(json);
+        return;
+      }
+
+      if (channelName.startsWith('private-user.')) {
+        if (threadId != null) {
+          final eventThreadId = json['thread_id']?.toString();
+          if (eventThreadId == threadId) {
+            _emitConversationMessage(json);
+          }
+        }
+        if (!_inboxUpdatesController.isClosed) {
+          _inboxUpdatesController.add(null);
+        }
+      }
+    } catch (_) {
+      // Ignore malformed socket payloads; REST remains source of truth.
+    }
+  }
+
+  void _emitConversationMessage(Map<String, dynamic> json) {
+    final message = realtimeMessageToChatMessage(
+      json: json,
+      currentUserId: _currentUserId,
+    );
+    if (!_messagesController.isClosed) {
+      _messagesController.add(message);
+    }
+  }
+
+  bool _isMessageSentEvent(String eventName) {
+    if (eventName == 'message.sent') return true;
+    return eventName.endsWith('.message.sent') ||
+        eventName.endsWith('MessageSent');
+  }
+
+  Map<String, dynamic>? _parseEventPayload(dynamic raw) {
+    dynamic decoded = raw;
+    if (decoded is String && decoded.isNotEmpty) {
+      decoded = jsonDecode(decoded);
+    }
+    if (decoded is! Map) return null;
+
+    final map = Map<String, dynamic>.from(decoded);
+    final message = map['message'];
+    if (message is Map) {
+      return Map<String, dynamic>.from(message);
+    }
+    final data = map['data'];
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    if (map.containsKey('body') || map.containsKey('id')) {
+      return map;
+    }
+    return null;
+  }
+
+  void _startUnreadPolling() {
+    if (_unreadPollTimer != null) return;
+    _unreadPollTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+      try {
+        await _inboxRepository.getUnreadCount();
+        if (!_inboxUpdatesController.isClosed) {
+          _inboxUpdatesController.add(null);
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _stopUnreadPolling() {
+    _unreadPollTimer?.cancel();
+    _unreadPollTimer = null;
   }
 
   Future<void> disconnect() async {
-    await unsubscribeConversation();
+    _stopUnreadPolling();
+    _activeThreadId = null;
+    await unsubscribeConversation(clearThread: false);
+
+    if (_userChannelName != null) {
+      try {
+        await _pusher.unsubscribe(channelName: _userChannelName!);
+      } catch (_) {}
+      _userChannelName = null;
+    }
+
     try {
-      _client?.dispose();
+      await _pusher.disconnect();
     } catch (_) {}
-    _client = null;
+    _isInitialized = false;
+    _socketReadyCompleter = null;
   }
 
   Future<void> dispose() async {
     await disconnect();
     await _messagesController.close();
+    await _inboxUpdatesController.close();
   }
 }

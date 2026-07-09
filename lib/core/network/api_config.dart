@@ -5,35 +5,28 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String defaultBaseUrl = 'https://www.beydountech.com/api';
+  static const String defaultBaseUrl = 'https://beydountech.com/api';
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: defaultBaseUrl,
   );
 
-  /// Origin without trailing `/api` — used for broadcasting auth.
-  static String get originUrl {
-    final normalized = baseUrl.endsWith('/')
-        ? baseUrl.substring(0, baseUrl.length - 1)
-        : baseUrl;
-    if (normalized.endsWith('/api')) {
-      return normalized.substring(0, normalized.length - 4);
-    }
-    return normalized;
-  }
+  /// Broadcasting auth is **not** under `/api`.
+  static const String broadcastingAuthUrl = String.fromEnvironment(
+    'BROADCASTING_AUTH_URL',
+    defaultValue: 'https://beydountech.com/broadcasting/auth',
+  );
 
-  static String get broadcastingAuthUrl => '$originUrl/broadcasting/auth';
-
-  /// Laravel Reverb (Pusher protocol). Override with dart-defines when ready.
+  /// Laravel Reverb app key. Override via `--dart-define=REVERB_APP_KEY=...`.
   static const String reverbAppKey = String.fromEnvironment(
     'REVERB_APP_KEY',
-    defaultValue: 'local-key',
+    defaultValue: '0f8d5707fa17de4e15ce',
   );
 
   static const String reverbHost = String.fromEnvironment(
     'REVERB_HOST',
-    defaultValue: 'www.beydountech.com',
+    defaultValue: 'beydountech.com',
   );
 
   static const int reverbPort = int.fromEnvironment(
@@ -41,10 +34,23 @@ class ApiConfig {
     defaultValue: 443,
   );
 
-  static const String reverbScheme = String.fromEnvironment(
+  /// Laravel `.env` uses `https`/`http`; [reverbUseTls] maps that for the client.
+  static const String _reverbSchemeEnv = String.fromEnvironment(
     'REVERB_SCHEME',
-    defaultValue: 'wss',
+    defaultValue: 'https',
   );
+
+  static bool get reverbUseTls {
+    switch (_reverbSchemeEnv.toLowerCase()) {
+      case 'http':
+      case 'ws':
+        return false;
+      case 'https':
+      case 'wss':
+      default:
+        return true;
+    }
+  }
 
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

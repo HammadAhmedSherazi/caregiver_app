@@ -82,6 +82,7 @@ Future<void> setupServiceLocator() async {
     () => ChatRealtimeService(
       tokenStorage: sl<TokenStorage>(),
       sessionStorage: sl<SessionStorage>(),
+      inboxRepository: sl<InboxRepository>(),
     ),
   );
   sl.registerLazySingleton<ClientRepository>(

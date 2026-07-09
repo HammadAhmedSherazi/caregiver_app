@@ -55,9 +55,9 @@ class _ChatViewState extends State<ChatView> {
   }
 
   Future<void> _initSocket() async {
+    _socketSub = _realtime.messages.listen(_onSocketMessage);
     try {
       await _realtime.subscribeToConversation(widget.thread.id);
-      _socketSub = _realtime.messages.listen(_onSocketMessage);
     } catch (_) {
       // REST remains source of truth if the socket is unavailable.
     }

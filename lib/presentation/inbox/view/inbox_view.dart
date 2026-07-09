@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../../../core/network/chat_realtime_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/inbox_thread_model.dart';
 import '../../../data/repositories/inbox_repository.dart';
@@ -20,6 +23,8 @@ class InboxView extends StatefulWidget {
 
 class _InboxViewState extends State<InboxView> {
   final _repository = sl<InboxRepository>();
+  final _realtime = sl<ChatRealtimeService>();
+  StreamSubscription<void>? _inboxUpdatesSub;
   List<InboxThread>? _threads;
   bool _isLoading = true;
   bool _hasError = false;
@@ -28,6 +33,25 @@ class _InboxViewState extends State<InboxView> {
   void initState() {
     super.initState();
     _load();
+    _initRealtime();
+  }
+
+  @override
+  void dispose() {
+    _inboxUpdatesSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initRealtime() async {
+    try {
+      await _realtime.connect();
+      _inboxUpdatesSub = _realtime.inboxUpdates.listen((_) {
+        if (!mounted) return;
+        _load();
+      });
+    } catch (_) {
+      // REST + periodic unread polling remain the fallback.
+    }
   }
 
   Future<void> _load() async {

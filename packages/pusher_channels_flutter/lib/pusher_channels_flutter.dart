@@ -166,10 +166,18 @@ class PusherChannelsFlutter {
         onConnectionStateChange?.call(
             call.arguments['currentState'].toUpperCase(),
             call.arguments['previousState'].toUpperCase());
+        // Debug log: surface connection state transitions in Flutter logs
+        try {
+          print('Pusher debug: connection ${call.arguments['previousState']} -> ${call.arguments['currentState']}');
+        } catch (_) {}
         return Future.value(null);
       case 'onError':
         onError?.call(call.arguments['message'], call.arguments['code'],
             call.arguments['error']);
+        // Debug log: surface native errors
+        try {
+          print('Pusher debug: onError message=${call.arguments['message']} code=${call.arguments['code']} error=${call.arguments['error']}');
+        } catch (_) {}
         return Future.value(null);
       case 'onEvent':
         switch (eventName) {
@@ -197,6 +205,10 @@ class PusherChannelsFlutter {
             channels[channelName]?.onSubscriptionCount?.call(subscriptionCount);
             break;
         }
+        // Debug log: surface incoming events
+        try {
+          print('Pusher debug: onEvent channel=$channelName event=$eventName data=${data ?? "null"} userId=${call.arguments['userId']}');
+        } catch (_) {}
         final event = PusherEvent(
             channelName: channelName!,
             eventName: eventName!.replaceFirst("pusher_internal", "pusher"),
@@ -208,22 +220,35 @@ class PusherChannelsFlutter {
       case 'onSubscriptionError':
         onSubscriptionError?.call(
             call.arguments['message'], call.arguments['error']);
+        // Debug log: subscription / auth errors
+        try {
+          print('Pusher debug: onSubscriptionError message=${call.arguments['message']} error=${call.arguments['error']}');
+        } catch (_) {}
         return Future.value(null);
       case 'onDecryptionFailure':
         onDecryptionFailure?.call(
             call.arguments['event'], call.arguments['reason']);
+        try {
+          print('Pusher debug: onDecryptionFailure event=${call.arguments['event']} reason=${call.arguments['reason']}');
+        } catch (_) {}
         return Future.value(null);
       case 'onMemberAdded':
         var member = PusherMember(user["userId"], user["userInfo"]);
         channels[channelName]?.members[member.userId] = member;
         onMemberAdded?.call(channelName!, member);
         channels[channelName]?.onMemberAdded?.call(member);
+        try {
+          print('Pusher debug: onMemberAdded channel=$channelName user=${user["userId"]}');
+        } catch (_) {}
         return Future.value(null);
       case 'onMemberRemoved':
         var member = PusherMember(user["userId"], user["userInfo"]);
         channels[channelName]?.members.remove(member.userId);
         onMemberRemoved?.call(channelName!, member);
         channels[channelName]?.onMemberRemoved?.call(member);
+        try {
+          print('Pusher debug: onMemberRemoved channel=$channelName user=${user["userId"]}');
+        } catch (_) {}
         return Future.value(null);
       case 'onAuthorizer':
         return await onAuthorizer?.call(channelName!,

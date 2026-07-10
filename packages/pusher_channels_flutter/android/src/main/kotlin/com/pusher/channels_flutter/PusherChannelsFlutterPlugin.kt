@@ -124,7 +124,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
                 call.argument("maxReconnectGapInSeconds")!!
             if (call.argument<String>("authEndpoint") != null) options.channelAuthorizer =
                 HttpChannelAuthorizer(call.argument("authEndpoint"))
-            if (call.argument<String>("authorizer") != null) options.channelAuthorizer = this
+            if (call.argument<Boolean>("authorizer") == true) options.channelAuthorizer = this
             if (call.argument<String>("proxy") != null) {
                 val (host, port) = call.argument<String>("proxy")!!.split(':')
                 options.proxy = Proxy(Proxy.Type.HTTP, InetSocketAddress(host, port.toInt()))
@@ -224,6 +224,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
 
     // Event handlers
     override fun onConnectionStateChange(change: ConnectionStateChange) {
+        Log.i(TAG, "Pusher native: connection ${change.previousState} -> ${change.currentState}")
         callback(
             "onConnectionStateChange", mapOf(
                 "previousState" to change.previousState.toString(),
@@ -233,6 +234,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
     }
 
     override fun onSubscriptionSucceeded(channelName: String) {
+        Log.i(TAG, "Pusher native: subscription succeeded: $channelName")
         if (!channelName.startsWith("presence-")) {
             callback(
                 "onEvent", mapOf(
@@ -245,6 +247,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
     }
 
     override fun onEvent(event: PusherEvent) {
+        Log.i(TAG, "Pusher native: onEvent channel=${event.channelName} event=${event.eventName} userId=${event.userId} data=${event.data}")
         callback(
             "onEvent", mapOf(
                 "channelName" to event.channelName,
@@ -256,6 +259,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
     }
 
     override fun onAuthenticationFailure(message: String, e: Exception) {
+        Log.i(TAG, "Pusher native: authentication failure message=$message error=${e}")
         callback(
             "onSubscriptionError", mapOf(
                 "message" to message,
@@ -280,6 +284,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
                 "hash" to hash
             )
         )
+        Log.i(TAG, "Pusher native: presence subscription succeeded channel=$channelName me=${channel.me.id} count=${users.size}")
         callback(
             "onEvent", mapOf(
                 "channelName" to channelName,
@@ -300,6 +305,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
     }
 
     override fun userSubscribed(channelName: String, user: User) {
+        Log.i(TAG, "Pusher native: userSubscribed channel=$channelName user=${user.id}")
         callback(
             "onMemberAdded", mapOf(
                 "channelName" to channelName,
@@ -312,6 +318,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
     }
 
     override fun userUnsubscribed(channelName: String, user: User) {
+        Log.i(TAG, "Pusher native: userUnsubscribed channel=$channelName user=${user.id}")
         callback(
             "onMemberRemoved", mapOf(
                 "channelName" to channelName,
@@ -324,6 +331,7 @@ class PusherChannelsFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAw
     } // Other ChannelEventListener methods
 
     override fun onError(message: String, code: String?, e: Exception?) {
+        Log.i(TAG, "Pusher native: onError message=$message code=$code error=${e}")
         callback(
             "onError", mapOf(
                 "message" to message,

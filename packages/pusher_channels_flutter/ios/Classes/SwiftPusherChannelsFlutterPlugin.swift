@@ -118,6 +118,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   public func changedConnectionState(from old: ConnectionState, to new: ConnectionState) {
+    print("Pusher native (iOS): connection \(old.stringValue()) -> \(new.stringValue())")
     methodChannel.invokeMethod("onConnectionStateChange", arguments: [
       "previousState": old.stringValue(),
       "currentState": new.stringValue(),
@@ -133,6 +134,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   public func failedToSubscribeToChannel(name _: String, response _: URLResponse?, data _: String?, error: NSError?) {
+    print("Pusher native (iOS): subscription error \(error?.localizedDescription ?? "")")
     methodChannel.invokeMethod(
       "onSubscriptionError", arguments: [
         "message": (error != nil) ? error!.localizedDescription : "",
@@ -142,6 +144,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   public func receivedError(error: PusherError) {
+    print("Pusher native (iOS): receivedError message=\(error.message) code=\(error.code ?? -1) debug=\(error.debugDescription)")
     methodChannel.invokeMethod(
       "onError", arguments: [
         "message": error.message,
@@ -152,6 +155,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   public func failedToDecryptEvent(eventName: String, channelName _: String, data: String?) {
+    print("Pusher native (iOS): decryption failure event=\(eventName) reason=\(data ?? "")")
     methodChannel.invokeMethod(
       "onDecryptionFailure", arguments: [
         "eventName": eventName,
@@ -181,6 +185,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
         userId = channel.myId
       }
     }
+    print("Pusher native (iOS): onEvent channel=\(event.channelName ?? "") event=\(event.eventName ?? "") userId=\(event.userId ?? userId ?? "") data=\(event.data ?? "")")
     methodChannel.invokeMethod(
       "onEvent", arguments: [
         "channelName": event.channelName,
@@ -202,6 +207,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
         ])
       }
       let onMemberRemoved: (PusherPresenceChannelMember) -> Void = { user in
+        print("Pusher native (iOS): member removed channel=\(channelName) user=\(user.userId)")
         self.methodChannel.invokeMethod("onMemberRemoved", arguments: [
           "channelName": channelName,
           "user": ["userId": user.userId, "userInfo": user.userInfo],

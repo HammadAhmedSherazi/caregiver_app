@@ -7,7 +7,7 @@ abstract class HomeRepository {
 }
 
 class HomeRepositoryImpl implements HomeRepository {
-  HomeRepositoryImpl({required CaregiverApi api}) : _api = api;
+  HomeRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

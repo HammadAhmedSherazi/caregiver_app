@@ -11,7 +11,7 @@ abstract class ClientRepository {
 }
 
 class ClientRepositoryImpl implements ClientRepository {
-  ClientRepositoryImpl({required CaregiverApi api}) : _api = api;
+  ClientRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

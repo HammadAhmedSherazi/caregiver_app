@@ -11,11 +11,10 @@ import 'token_refresh_handler.dart';
 class ApiClient {
   ApiClient({
     required this._tokenStorage,
-    required SessionStorage sessionStorage,
+    required this._sessionStorage,
     required this._sessionExpiredNotifier,
     required this._tokenRefreshHandler,
-  })  : _sessionStorage = sessionStorage,
-        _dio = Dio(
+  })  : _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,
             connectTimeout: ApiConfig.connectTimeout,

@@ -14,12 +14,10 @@ import '../../data/repositories/inbox_repository.dart';
 /// Real-time chat over Laravel Reverb via [pusher_channels_flutter].
 class ChatRealtimeService {
   ChatRealtimeService({
-    required TokenStorage tokenStorage,
+    required this._tokenStorage,
     required SessionStorage sessionStorage,
-    required InboxRepository inboxRepository,
-  })  : _tokenStorage = tokenStorage,
-        _sessionStorage = sessionStorage,
-        _inboxRepository = inboxRepository;
+    required this._inboxRepository,
+  })  : _sessionStorage = sessionStorage;
 
   final TokenStorage _tokenStorage;
   final SessionStorage _sessionStorage;
@@ -74,17 +72,20 @@ class ChatRealtimeService {
       _currentUserId = user?.id;
 
       if (!_isInitialized) {
+        // Laravel Reverb (Pusher protocol). Official pub.dev Dart API omits
+        // host/wssPort; this path package forwards them to native (required).
         await _pusher.init(
           apiKey: ApiConfig.reverbAppKey,
-          cluster: 'mt1',
+          cluster: 'mt1', // required by package; ignored by Reverb
           useTLS: ApiConfig.reverbUseTls,
           host: ApiConfig.reverbHost,
-          wssPort: ApiConfig.reverbPort,
+          wssPort: ApiConfig.reverbUseTls ? ApiConfig.reverbPort : null,
+          wsPort: ApiConfig.reverbUseTls ? null : ApiConfig.reverbPort,
           onConnectionStateChange: _onConnectionStateChange,
           onEvent: _onEvent,
           onAuthorizer: _onAuthorizer,
-          onSubscriptionError: (_, __) {},
-          onError: (_, __, ___) {},
+          onSubscriptionError: (_, _) {},
+          onError: (_, _, _) {},
         );
         _isInitialized = true;
       }

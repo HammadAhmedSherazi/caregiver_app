@@ -6,7 +6,6 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/validators/form_validators.dart';
-import '../../widgets/auth/auth_page_footer.dart';
 import '../../widgets/auth/auth_page_header.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_screen_shell.dart';

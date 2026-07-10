@@ -27,7 +27,7 @@ abstract class TaskRepository {
 }
 
 class TaskRepositoryImpl implements TaskRepository {
-  TaskRepositoryImpl({required CaregiverApi api}) : _api = api;
+  TaskRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

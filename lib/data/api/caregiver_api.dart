@@ -34,10 +34,9 @@ class LoginResult {
 
 class CaregiverApi {
   CaregiverApi({
-    required ApiClient apiClient,
+    required this._apiClient,
     required TokenStorage tokenStorage,
-  })  : _apiClient = apiClient,
-        _tokenStorage = tokenStorage;
+  })  : _tokenStorage = tokenStorage;
 
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
@@ -250,9 +249,9 @@ class CaregiverApi {
       final query = <String, dynamic>{
         'per_page': perPage,
         if (upcoming) 'upcoming': 1,
-        if (from != null) 'from': from,
-        if (to != null) 'to': to,
-        if (status != null) 'status': status,
+        'from': ?from,
+        'to': ?to,
+        'status': ?status,
       };
 
       final response = await _apiClient.get<Map<String, dynamic>>(
@@ -274,7 +273,7 @@ class CaregiverApi {
         '/pay',
         queryParameters: {
           'per_page': perPage,
-          if (periodKey != null) 'period_key': periodKey,
+          'period_key': ?periodKey,
         },
       );
       return _parsePaginated(response.data, PayItemModel.fromJson);
@@ -454,7 +453,7 @@ class CaregiverApi {
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/schedule/week',
-        queryParameters: {if (date != null) 'date': date},
+        queryParameters: {'date': ?date},
       );
       final data = response.data?['data'] as Map<String, dynamic>?;
       if (data == null) {
@@ -488,7 +487,7 @@ class CaregiverApi {
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/earnings/summary',
         queryParameters: {
-          if (year != null) 'year': year,
+          'year': ?year,
           'periods': periods,
           'weeks': weeks,
         },
@@ -512,7 +511,7 @@ class CaregiverApi {
         '/compliance-forms',
         queryParameters: {
           'per_page': perPage,
-          if (status != null) 'status': status,
+          'status': ?status,
         },
       );
       return _parsePaginated(response.data, ComplianceFormListItemModel.fromJson);
@@ -604,7 +603,7 @@ class CaregiverApi {
           filename: fileName,
         ),
         'type': type,
-        if (clientId != null) 'client_id': clientId,
+        'client_id': ?clientId,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
       });
 

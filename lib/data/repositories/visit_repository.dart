@@ -26,7 +26,7 @@ abstract class VisitRepository {
 }
 
 class VisitRepositoryImpl implements VisitRepository {
-  VisitRepositoryImpl({required CaregiverApi api}) : _api = api;
+  VisitRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

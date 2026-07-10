@@ -14,7 +14,7 @@ abstract class InboxRepository {
 }
 
 class InboxRepositoryImpl implements InboxRepository {
-  InboxRepositoryImpl({required CaregiverApi api}) : _api = api;
+  InboxRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

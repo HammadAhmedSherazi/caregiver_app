@@ -11,7 +11,7 @@ abstract class NotificationRepository {
 }
 
 class NotificationRepositoryImpl implements NotificationRepository {
-  NotificationRepositoryImpl({required CaregiverApi api}) : _api = api;
+  NotificationRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

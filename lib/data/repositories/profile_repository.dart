@@ -7,7 +7,7 @@ abstract class ProfileRepository {
 }
 
 class ProfileRepositoryImpl implements ProfileRepository {
-  ProfileRepositoryImpl({required CaregiverApi api}) : _api = api;
+  ProfileRepositoryImpl({required this._api});
 
   final CaregiverApi _api;
 

@@ -39,12 +39,10 @@ abstract class AuthRepository {
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
-    required CaregiverApi api,
+    required this._api,
     required TokenStorage tokenStorage,
-    required SessionStorage sessionStorage,
-  })  : _api = api,
-        _tokenStorage = tokenStorage,
-        _sessionStorage = sessionStorage;
+    required this._sessionStorage,
+  })  : _tokenStorage = tokenStorage;
 
   static const _keyOnboardingCompleted = 'onboarding_completed';
 

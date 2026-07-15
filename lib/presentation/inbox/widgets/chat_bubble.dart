@@ -10,9 +10,11 @@ class ChatBubble extends StatelessWidget {
   const ChatBubble({
     super.key,
     required this.message,
+    this.onRetry,
   });
 
   final ChatMessage message;
+  final VoidCallback? onRetry;
 
   static const _incomingFill = Color(0x125297FF);
   static const _bubbleTextColor = Color(0xFF333333);
@@ -72,20 +74,80 @@ class ChatBubble extends StatelessWidget {
               ),
             ),
           ),
-          if (message.timestampLabel != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              message.timestampLabel!,
-              style: context.responsiveStyle(
-                AppTextStyles.homeNavLabel.copyWith(
-                  fontSize: 12,
-                  color: AppColors.homeDarkText,
-                ),
-              ),
-            ),
-          ],
+          const SizedBox(height: 4),
+          _StatusRow(
+            message: message,
+            isOutgoing: isOutgoing,
+            onRetry: onRetry,
+          ),
         ],
       ),
     );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({
+    required this.message,
+    required this.isOutgoing,
+    this.onRetry,
+  });
+
+  final ChatMessage message;
+  final bool isOutgoing;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (message.sendStatus) {
+      case ChatMessageSendStatus.sending:
+        return Align(
+          alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+          child: SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: AppColors.homeMutedText,
+            ),
+          ),
+        );
+      case ChatMessageSendStatus.failed:
+        return Align(
+          alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+          child: GestureDetector(
+            onTap: onRetry,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                'Tap to send again',
+                style: context.responsiveStyle(
+                  AppTextStyles.homeNavLabel.copyWith(
+                    fontSize: 12,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      case ChatMessageSendStatus.sent:
+        if (message.timestampLabel == null) {
+          return const SizedBox.shrink();
+        }
+        return Align(
+          alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+          child: Text(
+            message.timestampLabel!,
+            style: context.responsiveStyle(
+              AppTextStyles.homeNavLabel.copyWith(
+                fontSize: 12,
+                color: AppColors.homeDarkText,
+              ),
+            ),
+          ),
+        );
+    }
   }
 }

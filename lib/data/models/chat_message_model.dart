@@ -2,6 +2,8 @@ import 'base_model.dart';
 
 enum ChatMessageDirection { incoming, outgoing }
 
+enum ChatMessageSendStatus { sent, sending, failed }
+
 class ChatMessage extends BaseModel {
   const ChatMessage({
     required this.id,
@@ -9,6 +11,7 @@ class ChatMessage extends BaseModel {
     required this.direction,
     this.timestampLabel,
     this.isNumberedList = false,
+    this.sendStatus = ChatMessageSendStatus.sent,
   });
 
   final String id;
@@ -16,6 +19,25 @@ class ChatMessage extends BaseModel {
   final ChatMessageDirection direction;
   final String? timestampLabel;
   final bool isNumberedList;
+  final ChatMessageSendStatus sendStatus;
+
+  ChatMessage copyWith({
+    String? id,
+    String? text,
+    ChatMessageDirection? direction,
+    String? timestampLabel,
+    bool? isNumberedList,
+    ChatMessageSendStatus? sendStatus,
+  }) {
+    return ChatMessage(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      direction: direction ?? this.direction,
+      timestampLabel: timestampLabel ?? this.timestampLabel,
+      isNumberedList: isNumberedList ?? this.isNumberedList,
+      sendStatus: sendStatus ?? this.sendStatus,
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() => {
@@ -24,8 +46,10 @@ class ChatMessage extends BaseModel {
         'direction': direction.name,
         'timestampLabel': timestampLabel,
         'isNumberedList': isNumberedList,
+        'sendStatus': sendStatus.name,
       };
 
   @override
-  List<Object?> get props => [id, text, direction, timestampLabel, isNumberedList];
+  List<Object?> get props =>
+      [id, text, direction, timestampLabel, isNumberedList, sendStatus];
 }

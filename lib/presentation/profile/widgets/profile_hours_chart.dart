@@ -31,7 +31,10 @@ class ProfileHoursChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = _ChartMetrics.of(context);
-    final yLabels = List.generate(7, (index) => maxHours - (index * 5));
+    final axisMax = maxHours <= 0 ? 30.0 : maxHours;
+    final yLabels = <double>[
+      for (var value = axisMax; value >= 0; value -= 5) value,
+    ];
 
     return SizedBox(
       height: metrics.totalHeight,
@@ -47,36 +50,50 @@ class ProfileHoursChart extends StatelessWidget {
                         (weeklyHours.length + 1);
 
                 double hoursToHeight(double hours) {
-                  if (maxHours <= 0) return 0;
-                  return (hours / maxHours) * metrics.plotHeight;
+                  if (axisMax <= 0) return 0;
+                  return (hours.clamp(0.0, axisMax) / axisMax) *
+                      metrics.plotHeight;
                 }
+
+                // Fraction of plot height from the bottom (always 0–1).
+                final targetFraction =
+                    (targetLineHours / axisMax).clamp(0.0, 1.0);
+                final targetTop = (metrics.plotHeight * (1 - targetFraction) -
+                        metrics.trophySize / 2)
+                    .clamp(0.0, metrics.plotHeight - metrics.trophySize);
 
                 return Column(
                   children: [
                     SizedBox(
                       height: metrics.plotHeight,
                       width: chartWidth,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
+                      child: ClipRect(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
                           CustomPaint(
                             size: Size(chartWidth, metrics.plotHeight),
                             painter: _ProfileChartGridPainter(
-                              maxHours: maxHours,
+                              maxHours: axisMax,
                               chartHeight: metrics.plotHeight,
                             ),
                           ),
                           Positioned(
                             left: 0,
                             right: 0,
-                            bottom: hoursToHeight(targetLineHours),
+                            top: targetTop,
+                            height: metrics.trophySize,
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Expanded(
                                   child: CustomPaint(
-                                    size: const Size(double.infinity, 1),
                                     painter: _DashedLinePainter(
                                       color: AppColors.homePrimary,
+                                    ),
+                                    child: const SizedBox(
+                                      height: 1,
+                                      width: double.infinity,
                                     ),
                                   ),
                                 ),
@@ -111,6 +128,7 @@ class ProfileHoursChart extends StatelessWidget {
                             ),
                           ),
                         ],
+                        ),
                       ),
                     ),
                     SizedBox(

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../api/caregiver_api.dart';
 import '../models/profile_page_model.dart';
 import '../models/user_model.dart';
@@ -35,6 +37,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
         )
         .toList();
 
+    const targetLineHours = 20.0;
+    final maxBarHours = weeklyHours.isEmpty
+        ? 0.0
+        : weeklyHours.map((e) => e.hours).reduce(math.max);
+    // Keep target line inside the plot; design axis is 0–30 in steps of 5.
+    final rawMax = math.max(maxBarHours + 5, math.max(targetLineHours, 30.0));
+    final chartMaxHours = (rawMax / 5).ceil() * 5.0;
+
     return ProfilePageData(
       headerTitle: firstName,
       name: displayName,
@@ -45,10 +55,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
       hoursThisWeek: weeklyHours.isNotEmpty ? weeklyHours.last.hours : 0,
       targetHours: 40,
       weekChangePercent: 0,
-      targetLineHours: 20,
-      chartMaxHours: weeklyHours.isEmpty
-          ? 30
-          : weeklyHours.map((e) => e.hours).reduce((a, b) => a > b ? a : b) + 5,
+      targetLineHours: targetLineHours,
+      chartMaxHours: chartMaxHours,
       weeklyHours: weeklyHours,
     );
   }

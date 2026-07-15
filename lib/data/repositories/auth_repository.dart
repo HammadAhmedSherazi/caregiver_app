@@ -40,9 +40,9 @@ abstract class AuthRepository {
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required this._api,
-    required TokenStorage tokenStorage,
+    required this._tokenStorage,
     required this._sessionStorage,
-  })  : _tokenStorage = tokenStorage;
+  });
 
   static const _keyOnboardingCompleted = 'onboarding_completed';
 
@@ -81,10 +81,20 @@ class AuthRepositoryImpl implements AuthRepository {
 
     try {
       final profile = await _api.getMe();
+      // /me returns caregiver profile id, which can differ from the
+      // Sanctum auth user id used by private-user.{id} broadcasting.
+      // Never replace a known auth user id with the profile id.
+      final authUserId = _cachedUser?.id;
+      final resolvedId =
+          (authUserId != null && authUserId.isNotEmpty && authUserId != '0')
+              ? authUserId
+              : profile.id.toString();
+
       _cachedUser = UserModel(
-        id: profile.id.toString(),
+        id: resolvedId,
         name: profile.name,
         email: profile.email,
+        avatarUrl: profile.avatarUrl,
       );
       await _sessionStorage.saveUser(_cachedUser!);
       return _cachedUser;

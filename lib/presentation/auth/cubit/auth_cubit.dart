@@ -1,4 +1,6 @@
 import '../../../core/base/base_cubit.dart';
+import '../../../core/di/service_locator.dart';
+import '../../../core/network/chat_realtime_service.dart';
 import '../../../data/local/remember_me_storage.dart';
 import '../../../data/repositories/auth_repository.dart';
 import 'auth_state.dart';
@@ -18,6 +20,10 @@ class AuthCubit extends BaseCubit<AuthState> {
     try {
       final hasSession = await repository.hasStoredSession();
       if (hasSession) {
+        // Refresh restores the authenticatable user id (needed for Pusher
+        // private-user.{id}). Local session may previously have stored /me
+        // caregiver profile id by mistake.
+        await repository.refreshSession();
         final user = await repository.getCurrentUser();
         if (user != null && await repository.hasStoredSession()) {
           await repository.setOnboardingCompleted();
@@ -44,6 +50,7 @@ class AuthCubit extends BaseCubit<AuthState> {
 
       final hasSession = await repository.hasStoredSession();
       if (hasSession) {
+        await repository.refreshSession();
         final user = await repository.getCurrentUser();
         if (user != null && await repository.hasStoredSession()) {
           await repository.setOnboardingCompleted();
@@ -325,6 +332,7 @@ class AuthCubit extends BaseCubit<AuthState> {
   }
 
   Future<void> handleSessionExpired() async {
+    await sl<ChatRealtimeService>().disconnect();
     await repository.clearLocalSession();
     emit(
       state.copyWith(
@@ -340,6 +348,7 @@ class AuthCubit extends BaseCubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
     try {
+      await sl<ChatRealtimeService>().disconnect();
       await repository.logout();
       emit(
         state.copyWith(

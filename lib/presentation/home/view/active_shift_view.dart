@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/constants/app_assets.dart';
+import '../../../core/responsive/responsive_font.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
@@ -370,8 +371,11 @@ class _ActiveShiftStatusButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = ResponsiveFont.factor(context) *
+        MediaQuery.textScalerOf(context).scale(1);
+
     return Container(
-      height: 62,
+      constraints: BoxConstraints(minHeight: 62 * scale),
       decoration: BoxDecoration(
         color: AppColors.homePrimary,
         borderRadius: BorderRadius.circular(10),
@@ -384,10 +388,14 @@ class _ActiveShiftStatusButton extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 10 * scale,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             title,
@@ -400,23 +408,25 @@ class _ActiveShiftStatusButton extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4 * scale),
           Row(
             children: [
-              const HomeSvgIcon(
+              HomeSvgIcon(
                 asset: AppAssets.icHomeVerifiedWhite,
-                width: 10,
-                height: 10,
+                width: 10 * scale,
+                height: 10 * scale,
               ),
-              const SizedBox(width: 6),
-              Text(
-                status,
-                style: context.responsiveStyle(
-                  AppTextStyles.labelSmall.copyWith(
-                    fontSize: 11.6,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.authOnGradient,
-                    letterSpacing: -0.23,
+              SizedBox(width: 6 * scale),
+              Flexible(
+                child: Text(
+                  status,
+                  style: context.responsiveStyle(
+                    AppTextStyles.labelSmall.copyWith(
+                      fontSize: 11.6,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.authOnGradient,
+                      letterSpacing: -0.23,
+                    ),
                   ),
                 ),
               ),

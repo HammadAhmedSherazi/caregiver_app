@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../../../core/network/chat_realtime_service.dart';
 import '../../../core/network/session_expired_notifier.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -39,12 +42,27 @@ class _AppSessionHandlerState extends State<AppSessionHandler>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      final auth = context.read<AuthCubit>().state;
-      if (auth.status == AuthStatus.authenticated) {
-        sl<AuthRepository>().refreshSession();
-      }
+    switch (state) {
+      case AppLifecycleState.resumed:
+        unawaited(_onAppResumed());
+      case AppLifecycleState.inactive:
+        break;
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        // Close without logout — drop socket so reopen gets a clean subscribe.
+        unawaited(sl<ChatRealtimeService>().suspend());
     }
+  }
+
+  Future<void> _onAppResumed() async {
+    if (!mounted) return;
+    final auth = context.read<AuthCubit>().state;
+    if (auth.status != AuthStatus.authenticated) return;
+
+    await sl<AuthRepository>().refreshSession();
+    if (!mounted) return;
+    await sl<ChatRealtimeService>().resume();
   }
 
   void _onSessionExpired() {

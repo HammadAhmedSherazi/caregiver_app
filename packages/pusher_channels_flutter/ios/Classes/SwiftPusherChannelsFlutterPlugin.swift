@@ -4,7 +4,7 @@ import PusherSwift
 import UIKit
 
 public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDelegate, Authorizer {
-  private var pusher: Pusher!
+  private var pusher: Pusher?
   public var methodChannel: FlutterMethodChannel!
 
   public static func register(with registrar: FlutterPluginRegistrar) {
@@ -35,9 +35,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   func initChannels(call: FlutterMethodCall, result: @escaping FlutterResult) {
-    if pusher != nil {
-        pusher.disconnect()
-    }
+    pusher?.disconnect()
     let args = call.arguments as! [String: Any]
     var authMethod: AuthMethod = .noMethod
     if args["authEndpoint"] is String {
@@ -83,18 +81,19 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
       useTLS: useTLS,
       activityTimeout: activityTimeout
     )
-    pusher = Pusher(key: args["apiKey"] as! String, options: options)
+    let client = Pusher(key: args["apiKey"] as! String, options: options)
     if args["maxReconnectionAttempts"] is Int {
-      pusher.connection.reconnectAttemptsMax = (args["maxReconnectionAttempts"] as! Int)
+      client.connection.reconnectAttemptsMax = (args["maxReconnectionAttempts"] as! Int)
     }
     if args["maxReconnectGapInSeconds"] is TimeInterval {
-      pusher.connection.maxReconnectGapInSeconds = (args["maxReconnectGapInSeconds"] as! TimeInterval)
+      client.connection.maxReconnectGapInSeconds = (args["maxReconnectGapInSeconds"] as! TimeInterval)
     }
     if args["pongTimeout"] is Int {
-      pusher.connection.pongResponseTimeoutInterval = args["pongTimeout"] as! TimeInterval / 1000.0
+      client.connection.pongResponseTimeoutInterval = args["pongTimeout"] as! TimeInterval / 1000.0
     }
-    pusher.connection.delegate = self
-    pusher.bind(eventCallback: onEvent)
+    client.connection.delegate = self
+    client.bind(eventCallback: onEvent)
+    pusher = client
     result(nil)
   }
 
@@ -165,23 +164,29 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   func connect(result: @escaping FlutterResult) {
+    guard let pusher = pusher else {
+      result(FlutterError(code: "NOT_INITIALIZED", message: "Pusher not initialized", details: nil))
+      return
+    }
     pusher.connect()
     result(nil)
   }
 
   func disconnect(result: @escaping FlutterResult) {
-    pusher.disconnect()
+    // Safe if chat was never opened — logout still calls disconnect.
+    pusher?.disconnect()
     result(nil)
   }
 
   func getSocketId(result: @escaping FlutterResult) {
-    result(pusher.connection.socketId)
+    result(pusher?.connection.socketId)
   }
 
   func onEvent(event: PusherEvent) {
     var userId: String?
     if event.eventName == "pusher:subscription_succeeded" {
-      if let channel = pusher.connection.channels.findPresence(name: event.channelName!) {
+      if let channelName = event.channelName,
+         let channel = pusher?.connection.channels.findPresence(name: channelName) {
         userId = channel.myId
       }
     }
@@ -197,6 +202,10 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   func subscribe(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard let pusher = pusher else {
+      result(FlutterError(code: "NOT_INITIALIZED", message: "Pusher not initialized", details: nil))
+      return
+    }
     let args = call.arguments as! [String: String]
     let channelName: String = args["channelName"]!
     if channelName.hasPrefix("presence-") {
@@ -238,6 +247,10 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   func unsubscribe(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard let pusher = pusher else {
+      result(nil)
+      return
+    }
     let args = call.arguments as! [String: String]
     let channelName: String = args["channelName"]!
     pusher.unsubscribe(channelName)
@@ -245,6 +258,7 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
   }
 
   func trigger(call: FlutterMethodCall, result _: @escaping FlutterResult) {
+    guard let pusher = pusher else { return }
     let args = call.arguments as! [String: String]
     let channelName: String = args["channelName"]!
     let eventName: String = args["eventName"]!

@@ -35,8 +35,8 @@ class LoginResult {
 class CaregiverApi {
   CaregiverApi({
     required this._apiClient,
-    required TokenStorage tokenStorage,
-  })  : _tokenStorage = tokenStorage;
+    required this._tokenStorage,
+  });
 
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;

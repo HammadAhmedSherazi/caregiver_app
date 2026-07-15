@@ -47,18 +47,24 @@ class _InboxViewState extends State<InboxView> {
       await _realtime.connect();
       _inboxUpdatesSub = _realtime.inboxUpdates.listen((_) {
         if (!mounted) return;
-        _load();
+        // Silent refresh — no skeleton/loading flash on listen.
+        _load(showLoading: false);
       });
     } catch (_) {
       // REST + periodic unread polling remain the fallback.
     }
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
+  Future<void> _load({bool showLoading = true}) async {
+    final isInitialLoad = _threads == null;
+    if (showLoading && isInitialLoad) {
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
+    } else if (showLoading) {
+      setState(() => _hasError = false);
+    }
 
     try {
       final items = await _repository.fetchThreads();
@@ -66,22 +72,41 @@ class _InboxViewState extends State<InboxView> {
       setState(() {
         _threads = items;
         _isLoading = false;
+        _hasError = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _hasError = true;
+        // Keep existing list visible on background refresh failures.
+        if (_threads == null) {
+          _hasError = true;
+        }
       });
     }
   }
 
-  void _openThread(InboxThread thread) {
-    Navigator.of(context).push(
+  Future<void> _openThread(InboxThread thread) async {
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ChatView(thread: thread),
       ),
     );
+    if (!mounted) return;
+    // Opening the chat marks it read — clear bold preview on return.
+    _markThreadRead(thread.id);
+  }
+
+  void _markThreadRead(String id) {
+    final threads = _threads;
+    if (threads == null) return;
+
+    setState(() {
+      _threads = [
+        for (final thread in threads)
+          if (thread.id == id) thread.copyWith(isUnread: false) else thread,
+      ];
+    });
   }
 
   void _removeThread(String id) {

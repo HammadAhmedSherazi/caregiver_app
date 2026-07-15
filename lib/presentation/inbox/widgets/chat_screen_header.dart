@@ -88,19 +88,19 @@ class ChatScreenHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (onCall != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: GestureDetector(
-                            onTap: onCall,
-                            behavior: HitTestBehavior.opaque,
-                            child: const HomeSvgIcon(
-                              asset: AppAssets.icCallBulkWhite,
-                              width: 24,
-                              height: 24,
-                            ),
-                          ),
-                        ),
+                      // if (onCall != null)
+                      //   Padding(
+                      //     padding: const EdgeInsets.only(top: 8),
+                      //     child: GestureDetector(
+                      //       onTap: onCall,
+                      //       behavior: HitTestBehavior.opaque,
+                      //       child: const HomeSvgIcon(
+                      //         asset: AppAssets.icCallBulkWhite,
+                      //         width: 24,
+                      //         height: 24,
+                      //       ),
+                      //     ),
+                      //   ),
                     ],
                   ),
                 ),

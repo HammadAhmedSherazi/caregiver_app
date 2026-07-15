@@ -21,7 +21,7 @@ class ApiConfig {
   /// Laravel Reverb app key. Override via `--dart-define=REVERB_APP_KEY=...`.
   static const String reverbAppKey = String.fromEnvironment(
     'REVERB_APP_KEY',
-    defaultValue: '0f8d5707fa17de4e15ce',
+    defaultValue: 'a48ba23a9fe72910b0eb',
   );
 
   static const String reverbHost = String.fromEnvironment(

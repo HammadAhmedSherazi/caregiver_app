@@ -95,46 +95,47 @@ class ClientListSection extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          height: 42,
-          child: OutlinedButton(
-            onPressed: () => initiateClientCall(
-              context,
-              clientId: client.id,
-              fallbackPhone: client.clientPhone,
-            ),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: AppColors.surface,
-              side: const BorderSide(color: _callBorder),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: EdgeInsets.zero,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const HomeSvgIcon(
-                  asset: AppAssets.icCallBulk,
-                  width: 24,
-                  height: 24,
-                ),
-                const SizedBox(width: 13),
-                Text(
-                  'Call Now',
-                  style: context.responsiveStyle(
-                    AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.homeMutedText,
-                      letterSpacing: -0.28,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // const SizedBox(height: 12),
+        // SizedBox(
+        //   width: double.infinity,
+        //   height: 42,
+        //   child: OutlinedButton(
+        //     onPressed: () => initiateClientCall(
+        //       context,
+        //       clientId: client.id,
+        //       fallbackPhone: client.clientPhone,
+        //     ),
+        //     style: OutlinedButton.styleFrom(
+        //       backgroundColor: AppColors.surface,
+        //       side: const BorderSide(color: _callBorder),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(8),
+        //       ),
+        //       padding: EdgeInsets.zero,
+        //     ),
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.center,
+        //       children: [
+        //         const HomeSvgIcon(
+        //           asset: AppAssets.icCallBulk,
+        //           width: 24,
+        //           height: 24,
+        //         ),
+        //         const SizedBox(width: 13),
+        //         Text(
+        //           'Call Now',
+        //           style: context.responsiveStyle(
+        //             AppTextStyles.bodyMedium.copyWith(
+        //               color: AppColors.homeMutedText,
+        //               letterSpacing: -0.28,
+        //             ),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
+        
         if (showDivider) ...[
           const SizedBox(height: 20),
           Divider(
@@ -246,37 +247,38 @@ class ClientContactRow extends StatelessWidget {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: () {
-                if (clientId != null) {
-                  initiateClientCall(
-                    context,
-                    clientId: clientId!,
-                    fallbackPhone: phone,
-                  );
-                } else {
-                  launchPhoneCall(phone);
-                }
-              },
-              style: TextButton.styleFrom(
-                minimumSize: const Size(56, 32),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                backgroundColor: AppColors.homeIconTint,
-                foregroundColor: AppColors.homeAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Call',
-                style: context.responsiveStyle(
-                  AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.homeAccent,
-                    letterSpacing: -0.28,
-                  ),
-                ),
-              ),
-            ),
+            // TextButton(
+            //   onPressed: () {
+            //     if (clientId != null) {
+            //       initiateClientCall(
+            //         context,
+            //         clientId: clientId!,
+            //         fallbackPhone: phone,
+            //       );
+            //     } else {
+            //       launchPhoneCall(phone);
+            //     }
+            //   },
+            //   style: TextButton.styleFrom(
+            //     minimumSize: const Size(56, 32),
+            //     padding: const EdgeInsets.symmetric(horizontal: 12),
+            //     backgroundColor: AppColors.homeIconTint,
+            //     foregroundColor: AppColors.homeAccent,
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(8),
+            //     ),
+            //   ),
+            //   child: Text(
+            //     'Call',
+            //     style: context.responsiveStyle(
+            //       AppTextStyles.bodyMedium.copyWith(
+            //         color: AppColors.homeAccent,
+            //         letterSpacing: -0.28,
+            //       ),
+            //     ),
+            //   ),
+            // ),
+          
           ],
         ),
         if (showDivider) ...[

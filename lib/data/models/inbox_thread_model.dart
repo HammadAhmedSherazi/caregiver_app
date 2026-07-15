@@ -7,6 +7,7 @@ class InboxThread extends BaseModel {
     required this.preview,
     required this.timestampLabel,
     this.avatarUrl,
+    this.isUnread = false,
   });
 
   final String id;
@@ -14,6 +15,25 @@ class InboxThread extends BaseModel {
   final String preview;
   final String timestampLabel;
   final String? avatarUrl;
+  final bool isUnread;
+
+  InboxThread copyWith({
+    String? id,
+    String? contactName,
+    String? preview,
+    String? timestampLabel,
+    String? avatarUrl,
+    bool? isUnread,
+  }) {
+    return InboxThread(
+      id: id ?? this.id,
+      contactName: contactName ?? this.contactName,
+      preview: preview ?? this.preview,
+      timestampLabel: timestampLabel ?? this.timestampLabel,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      isUnread: isUnread ?? this.isUnread,
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() => {
@@ -22,9 +42,10 @@ class InboxThread extends BaseModel {
         'preview': preview,
         'timestampLabel': timestampLabel,
         if (avatarUrl != null) 'avatarUrl': avatarUrl,
+        'isUnread': isUnread,
       };
 
   @override
   List<Object?> get props =>
-      [id, contactName, preview, timestampLabel, avatarUrl];
+      [id, contactName, preview, timestampLabel, avatarUrl, isUnread];
 }

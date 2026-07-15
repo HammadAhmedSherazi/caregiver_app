@@ -290,6 +290,7 @@ InboxThread conversationToInboxThread(ConversationSummaryModel conversation) {
     preview: conversation.lastMessage,
     timestampLabel: conversation.timeAgo,
     avatarUrl: conversation.counterpart.avatarUrl,
+    isUnread: conversation.unread,
   );
 }
 

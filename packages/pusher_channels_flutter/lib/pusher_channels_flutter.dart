@@ -281,8 +281,9 @@ class PusherChannelsFlutter {
         onMemberRemoved: onMemberRemoved,
         onSubscriptionCount: onSubscriptionCount,
         onEvent: onEvent);
-    await methodChannel.invokeMethod("subscribe", {"channelName": channelName});
+    // Register before native subscribe — auth/success can fire during invokeMethod.
     channels[channelName] = channel;
+    await methodChannel.invokeMethod("subscribe", {"channelName": channelName});
     return channel;
   }
 

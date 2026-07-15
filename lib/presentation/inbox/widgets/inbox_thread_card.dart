@@ -91,7 +91,12 @@ class InboxThreadCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: context.responsiveStyle(
                                     AppTextStyles.bodyMedium.copyWith(
-                                      color: AppColors.homeMutedText,
+                                      color: thread.isUnread
+                                          ? AppColors.homeDarkText
+                                          : AppColors.homeMutedText,
+                                      fontWeight: thread.isUnread
+                                          ? FontWeight.w700
+                                          : FontWeight.w400,
                                       letterSpacing: -0.28,
                                     ),
                                   ),

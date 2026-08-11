@@ -136,6 +136,7 @@ class ClientListSection extends StatelessWidget {
         //   ),
         // ),
         
+       
         if (showDivider) ...[
           const SizedBox(height: 20),
           Divider(

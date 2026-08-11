@@ -146,21 +146,21 @@ class _MainShellViewState extends State<MainShellView> {
               const ProfileTabView(),
             ],
           ),
-          floatingActionButton: !homeState.showActiveShiftScreen &&
-                  _selectedTab == MainTab.home
-              ? FloatingActionButton(
-                  onPressed: _openInbox,
-                  backgroundColor: AppColors.homeAccent,
-                  elevation: 8,
-                  shape: const CircleBorder(),
-                  child: const HomeSvgIcon(
-                    asset: AppAssets.icHomeMessage,
-                    width: 24,
-                    height: 24,
-                  ),
-                )
-              : null,
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          // floatingActionButton: !homeState.showActiveShiftScreen &&
+          //         _selectedTab == MainTab.home
+          //     ? FloatingActionButton(
+          //         onPressed: _openInbox,
+          //         backgroundColor: AppColors.homeAccent,
+          //         elevation: 8,
+          //         shape: const CircleBorder(),
+          //         child: const HomeSvgIcon(
+          //           asset: AppAssets.icHomeMessage,
+          //           width: 24,
+          //           height: 24,
+          //         ),
+          //       )
+          //     : null,
+          // floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           bottomNavigationBar: hideBottomNav
               ? null
               : MainBottomNavBar(

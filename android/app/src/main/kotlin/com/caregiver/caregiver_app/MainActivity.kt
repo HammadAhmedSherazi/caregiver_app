@@ -1,4 +1,4 @@
-package com.caregiver.caregiver_app
+package com.homecare.android
 
 import io.flutter.embedding.android.FlutterActivity
 

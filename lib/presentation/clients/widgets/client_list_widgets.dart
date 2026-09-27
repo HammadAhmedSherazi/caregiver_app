@@ -4,8 +4,6 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
-import '../../../core/utils/helpers/client_call_helper.dart';
-import '../../../core/utils/helpers/phone_launch_helper.dart';
 import '../../../data/models/client_model.dart';
 import '../../home/widgets/home_svg_icon.dart';
 import '../../widgets/user_avatar.dart';
@@ -23,9 +21,9 @@ class ClientListSection extends StatelessWidget {
   final VoidCallback onOpenProfile;
   final bool showDivider;
 
-  static const _callBorder = Color(0xFFCBCFD9);
-  static const _badgeBg = Color(0xFFDFEAFF);
-  static const _badgeText = Color(0xFF1A4DB4);
+  static const _callBorder = Color(0xFFD3DED8);
+  static const _badgeBg = Color(0xFFDFEEE9);
+  static const _badgeText = Color(0xFF0F4A41);
 
   @override
   Widget build(BuildContext context) {
@@ -156,8 +154,8 @@ class ClientScheduleBadge extends StatelessWidget {
 
   final String label;
 
-  static const _badgeBg = Color(0xFFDFEAFF);
-  static const _badgeText = Color(0xFF1A4DB4);
+  static const _badgeBg = Color(0xFFDFEEE9);
+  static const _badgeText = Color(0xFF0F4A41);
 
   @override
   Widget build(BuildContext context) {

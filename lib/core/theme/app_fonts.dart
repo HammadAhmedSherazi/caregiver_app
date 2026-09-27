@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Central place for Figma DM Sans font configuration.
+/// Central place for font configuration.
+///
+/// Body text uses Hanken Grotesk (VELORA redesign). DM Sans remains bundled
+/// for any screen that still references it explicitly.
 class AppFonts {
   AppFonts._();
 
   /// Must match the `family` value in [pubspec.yaml].
-  static const String fontFamily = 'DM Sans';
+  static const String fontFamily = 'Hanken Grotesk';
 
   static const FontWeight light = FontWeight.w300;
   static const FontWeight regular = FontWeight.w400;

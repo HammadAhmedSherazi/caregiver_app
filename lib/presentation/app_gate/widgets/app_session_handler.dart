@@ -4,13 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/di/service_locator.dart';
+import '../../../core/navigation/root_navigator.dart';
 import '../../../core/network/chat_realtime_service.dart';
 import '../../../core/network/session_expired_notifier.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
+import '../../checkin/cubit/checkin_cubit.dart';
+import '../../documents/cubit/documents_cubit.dart';
 import '../../home/cubit/home_cubit.dart';
+import '../../task/cubit/task_cubit.dart';
+import '../../time/cubit/time_cubit.dart';
 
 class AppSessionHandler extends StatefulWidget {
   const AppSessionHandler({
@@ -77,7 +82,12 @@ class _AppSessionHandlerState extends State<AppSessionHandler>
           previous.status == AuthStatus.authenticated &&
           current.status == AuthStatus.unauthenticated,
       listener: (context, state) {
+        rootNavigatorKey.currentState?.popUntil((route) => route.isFirst);
         context.read<HomeCubit>().reset();
+        context.read<TaskCubit>().reset();
+        context.read<TimeCubit>().reset();
+        context.read<DocumentsCubit>().reset();
+        context.read<CheckInCubit>().reset();
       },
       child: BlocListener<AuthCubit, AuthState>(
         listenWhen: (previous, current) =>

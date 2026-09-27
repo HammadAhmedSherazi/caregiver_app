@@ -11,22 +11,48 @@ class TaskCubit extends BaseCubit<TaskState> {
 
   final TaskRepository repository;
 
-  Future<void> loadTasks() async {
-    emit(state.copyWith(status: TaskStatus.loading, clearError: true));
+  /// Clears cached data (called on sign-out).
+  void reset() {
+    _generation++;
+    _inFlight = null;
+    emit(const TaskState());
+  }
+
+  int _generation = 0;
+
+  Future<void>? _inFlight;
+
+  /// Loads the task page (compliance forms, payroll, history, …).
+  ///
+  /// Several tabs (Home, Check-in, Pay) read this data, so concurrent calls
+  /// share one request and a refresh keeps the previous data on screen.
+  Future<void> loadTasks() {
+    return _inFlight ??= _loadTasks().whenComplete(() => _inFlight = null);
+  }
+
+  Future<void> _loadTasks() async {
+    final generation = _generation;
+    final hasData = state.data != null;
+    if (!hasData) {
+      emit(state.copyWith(status: TaskStatus.loading, clearError: true));
+    }
 
     try {
       final data = await repository.getTaskPage();
+      if (generation != _generation) return;
       emit(
         state.copyWith(
           status: TaskStatus.success,
           data: data,
+          clearError: true,
         ),
       );
     } catch (error, stackTrace) {
       logError('Failed to load tasks', error: error, stackTrace: stackTrace);
+      if (generation != _generation) return;
       emit(
         state.copyWith(
-          status: TaskStatus.failure,
+          status: hasData ? TaskStatus.success : TaskStatus.failure,
           errorMessage: 'Failed to load tasks. Please try again.',
         ),
       );

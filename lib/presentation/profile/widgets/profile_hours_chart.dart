@@ -234,7 +234,7 @@ class _ProfileBar extends StatelessWidget {
 
   Color get barColor => switch (style) {
         ProfileBarStyle.accent => AppColors.homeAccent,
-        ProfileBarStyle.light => const Color(0xFFDCE5F9),
+        ProfileBarStyle.light => const Color(0xFFDFEEE9),
         ProfileBarStyle.primary => AppColors.homeHeader,
       };
 
@@ -263,7 +263,7 @@ class _ProfileChartGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFDADADA)
+      ..color = const Color(0xFFE3EAE6)
       ..strokeWidth = 1;
 
     for (var value = 0.0; value <= maxHours; value += 5) {

@@ -4,7 +4,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/client_model.dart';
 import '../../../data/repositories/client_repository.dart';
-import '../../task/widgets/task_screen_header.dart';
+import '../../widgets/velora/velora.dart';
 import '../../widgets/get_request_view.dart';
 import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../widgets/client_list_widgets.dart';
@@ -84,31 +84,23 @@ class _ClientsListViewState extends State<ClientsListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.homeBackground,
+      backgroundColor: VeloraColors.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              TaskScreenHeader(
-                title: 'My Clients',
-                subtitle: 'Assigned to you',
-                height: 171,
-                onBack: () => Navigator.of(context).pop(),
+          VeloraHeader(
+            title: 'My clients',
+            subtitle: 'Assigned to you',
+            onBack: () => Navigator.of(context).pop(),
+            bottom: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: ClientsSearchBar(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
               ),
-              Positioned(
-                left: 24,
-                right: 24,
-                bottom: -30,
-                child: ClientsSearchBar(
-                  controller: _searchController,
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 38),
+          const SizedBox(height: 12),
           Expanded(
             child: GetRequestView(
               isLoading: _isLoading,

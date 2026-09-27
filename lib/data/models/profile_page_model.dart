@@ -42,6 +42,11 @@ class ProfilePageData extends Equatable {
     required this.weeklyHours,
     required this.targetLineHours,
     required this.chartMaxHours,
+    this.email,
+    this.phone,
+    this.address,
+    this.initials,
+    this.isLiveIn = false,
   });
 
   final String headerTitle;
@@ -57,6 +62,13 @@ class ProfilePageData extends Equatable {
   final double targetLineHours;
   final double chartMaxHours;
 
+  /// Contact details from `GET /me`.
+  final String? email;
+  final String? phone;
+  final String? address;
+  final String? initials;
+  final bool isLiveIn;
+
   @override
   List<Object?> get props => [
         headerTitle,
@@ -71,5 +83,10 @@ class ProfilePageData extends Equatable {
         weeklyHours,
         targetLineHours,
         chartMaxHours,
+        email,
+        phone,
+        address,
+        initials,
+        isLiveIn,
       ];
 }

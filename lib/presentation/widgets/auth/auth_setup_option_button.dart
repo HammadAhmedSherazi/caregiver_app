@@ -17,8 +17,8 @@ class AuthSetupOptionButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isActive;
 
-  static const _activeDotColor = Color(0xFF00BA00);
-  static const _inactiveDotColor = Color(0xFFBDBDBD);
+  static const _activeDotColor = Color(0xFF16685B);
+  static const _inactiveDotColor = Color(0xFFD3DED8);
 
   @override
   Widget build(BuildContext context) {

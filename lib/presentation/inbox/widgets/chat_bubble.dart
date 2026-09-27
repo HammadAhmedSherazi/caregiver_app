@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/chat_message_model.dart';
+import '../../widgets/velora/velora.dart';
 
 /// Figma node `1:2779` — chat message bubble.
 class ChatBubble extends StatelessWidget {
@@ -16,8 +17,8 @@ class ChatBubble extends StatelessWidget {
   final ChatMessage message;
   final VoidCallback? onRetry;
 
-  static const _incomingFill = Color(0x125297FF);
-  static const _bubbleTextColor = Color(0xFF333333);
+  static const _incomingFill = VeloraColors.card;
+  static const _bubbleTextColor = VeloraColors.ink;
 
   @override
   Widget build(BuildContext context) {
@@ -38,19 +39,20 @@ class ChatBubble extends StatelessWidget {
               ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: isOutgoing ? AppColors.homePrimary : _incomingFill,
+                  color: isOutgoing ? VeloraColors.brand : _incomingFill,
+                  border: isOutgoing ? null : Border.all(color: VeloraColors.line),
                   borderRadius: isOutgoing
                       ? const BorderRadius.only(
-                          topLeft: Radius.circular(32),
-                          topRight: Radius.circular(22),
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                           bottomRight: Radius.circular(4),
-                          bottomLeft: Radius.circular(32),
+                          bottomLeft: Radius.circular(16),
                         )
                       : const BorderRadius.only(
-                          topLeft: Radius.circular(31.135),
-                          topRight: Radius.circular(31.135),
-                          bottomRight: Radius.circular(31.135),
-                          bottomLeft: Radius.circular(3.892),
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                          bottomRight: Radius.circular(16),
+                          bottomLeft: Radius.circular(4),
                         ),
                 ),
                 child: Padding(
@@ -62,8 +64,8 @@ class ChatBubble extends StatelessWidget {
                     message.text,
                     style: context.responsiveStyle(
                       AppTextStyles.bodyLarge.copyWith(
-                        fontSize: 16,
-                        height: 24 / 16,
+                        fontSize: 14,
+                        height: 1.45,
                         color: isOutgoing
                             ? AppColors.authOnGradient
                             : _bubbleTextColor,

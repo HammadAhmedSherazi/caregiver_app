@@ -49,8 +49,27 @@ flutter:
     - assets/images/profile/icons/
     - assets/images/task/
     - assets/images/task/icons/
+    - assets/images/brand/
 
   fonts:
+    - family: Bricolage Grotesque
+      fonts:
+        - asset: assets/fonts/BricolageGrotesque-600.ttf
+          weight: 600
+        - asset: assets/fonts/BricolageGrotesque-700.ttf
+          weight: 700
+        - asset: assets/fonts/BricolageGrotesque-800.ttf
+          weight: 800
+    - family: Hanken Grotesk
+      fonts:
+        - asset: assets/fonts/HankenGrotesk-400.ttf
+          weight: 400
+        - asset: assets/fonts/HankenGrotesk-500.ttf
+          weight: 500
+        - asset: assets/fonts/HankenGrotesk-600.ttf
+          weight: 600
+        - asset: assets/fonts/HankenGrotesk-700.ttf
+          weight: 700
     - family: DM Sans
       fonts:
         - asset: assets/fonts/DMSans-Light.ttf

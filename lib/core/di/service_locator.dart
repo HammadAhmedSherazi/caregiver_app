@@ -21,10 +21,13 @@ import '../../data/repositories/notification_repository.dart';
 import '../../data/repositories/task_repository.dart';
 import '../../data/repositories/visit_repository.dart';
 import '../../presentation/auth/cubit/auth_cubit.dart';
+import '../../presentation/checkin/cubit/checkin_cubit.dart';
+import '../../presentation/documents/cubit/documents_cubit.dart';
 import '../../presentation/home/cubit/home_cubit.dart';
 import '../../presentation/profile/cubit/profile_cubit.dart';
 import '../../presentation/schedule/cubit/schedule_cubit.dart';
 import '../../presentation/task/cubit/task_cubit.dart';
+import '../../presentation/time/cubit/time_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -104,6 +107,15 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerFactory(
     () => TaskCubit(repository: sl<TaskRepository>()),
+  );
+  sl.registerFactory(
+    () => TimeCubit(repository: sl<VisitRepository>()),
+  );
+  sl.registerFactory(
+    () => DocumentsCubit(repository: sl<TaskRepository>()),
+  );
+  sl.registerFactory(
+    () => CheckInCubit(repository: sl<TaskRepository>()),
   );
   sl.registerFactory(
     () => AuthCubit(

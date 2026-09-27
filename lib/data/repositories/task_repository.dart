@@ -1,6 +1,7 @@
 import '../api/caregiver_api.dart';
 import '../mappers/api_mappers.dart';
 import '../models/api/compliance_form_model.dart';
+import '../models/api/document_model.dart';
 import '../models/selected_document.dart';
 import '../models/task_page_model.dart';
 
@@ -24,6 +25,12 @@ abstract class TaskRepository {
     int? clientId,
     String? notes,
   });
+
+  /// Documents on file for the caregiver (`GET /documents`).
+  Future<List<DocumentModel>> getDocuments();
+
+  /// Compliance forms (monthly check-ins), optionally filtered by status.
+  Future<List<ComplianceFormListItemModel>> getComplianceForms({String? status});
 }
 
 class TaskRepositoryImpl implements TaskRepository {
@@ -215,5 +222,19 @@ class TaskRepositoryImpl implements TaskRepository {
       notes: notes,
       mimeType: document.mimeType,
     );
+  }
+
+  @override
+  Future<List<DocumentModel>> getDocuments() async {
+    final response = await _api.getDocuments(perPage: 50);
+    return response.data;
+  }
+
+  @override
+  Future<List<ComplianceFormListItemModel>> getComplianceForms({
+    String? status,
+  }) async {
+    final response = await _api.getComplianceForms(status: status);
+    return response.data;
   }
 }

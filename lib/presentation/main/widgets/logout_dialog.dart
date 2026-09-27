@@ -35,7 +35,12 @@ class LogoutDialog extends StatelessWidget {
   static const _iconOverlap = 34.0;
 
   void _pop(BuildContext context) {
-    Navigator.of(context, rootNavigator: true).pop();
+    // The session handler may already have cleared the stack on sign-out, so
+    // only remove this sheet's own route, and only if it is still there.
+    final route = ModalRoute.of(context);
+    if (route != null && route.isActive) {
+      Navigator.of(context, rootNavigator: true).removeRoute(route);
+    }
   }
 
   @override
@@ -105,14 +110,16 @@ class LogoutDialog extends StatelessWidget {
                                   height: 56,
                                   child: FilledButton(
                                     onPressed:
-                                        isLoading ? null : () => _pop(context),
+                                        isLoading
+                                            ? null
+                                            : () => Navigator.of(context, rootNavigator: true).pop(),
                                     style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFFF1F4FE),
-                                      foregroundColor: const Color(0xFF333333),
+                                      backgroundColor: const Color(0xFFF5F8F6),
+                                      foregroundColor: const Color(0xFF122420),
                                       disabledBackgroundColor:
-                                          const Color(0xFFF1F4FE),
+                                          const Color(0xFFF5F8F6),
                                       disabledForegroundColor:
-                                          const Color(0xFF333333)
+                                          const Color(0xFF122420)
                                               .withValues(alpha: 0.5),
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
@@ -121,7 +128,7 @@ class LogoutDialog extends StatelessWidget {
                                       textStyle: context.responsiveStyle(
                                         AppTextStyles.authLoginButtonLabel
                                             .copyWith(
-                                          color: const Color(0xFF333333),
+                                          color: const Color(0xFF122420),
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),

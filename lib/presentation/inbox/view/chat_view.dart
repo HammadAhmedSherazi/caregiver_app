@@ -13,7 +13,7 @@ import '../cubit/chat_cubit.dart';
 import '../cubit/chat_state.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
-import '../widgets/chat_screen_header.dart';
+import '../../widgets/velora/velora.dart';
 
 /// Figma node `1:2779` — one-to-one chat conversation.
 class ChatView extends StatelessWidget {
@@ -78,7 +78,7 @@ class _ChatViewBodyState extends State<_ChatViewBody> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.homeBackground,
+      backgroundColor: VeloraColors.background,
       body: BlocListener<ChatCubit, ChatState>(
         listenWhen: (previous, current) =>
             previous.messages.length != current.messages.length ||
@@ -87,12 +87,10 @@ class _ChatViewBodyState extends State<_ChatViewBody> {
         listener: (context, state) => _scrollToBottom(),
         child: Column(
           children: [
-            ChatScreenHeader(
+            VeloraHeader(
               title: widget.thread.contactName,
-              avatarUrl: widget.thread.avatarUrl,
-              avatarName: widget.thread.contactName,
+              subtitle: 'Messages with the office',
               onBack: () => Navigator.of(context).pop(),
-              onCall: () {},
             ),
             Expanded(
               child: BlocSelector<ChatCubit, ChatState,

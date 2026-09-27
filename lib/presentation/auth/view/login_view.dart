@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../core/constants/app_assets.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/validators/form_validators.dart';
-import '../../widgets/auth/auth_page_header.dart';
-import '../../widgets/auth/auth_primary_button.dart';
-import '../../widgets/auth/auth_screen_shell.dart';
-import '../../widgets/auth/auth_text_field.dart';
+import '../../../core/utils/velora_format.dart';
+import '../../widgets/auth/auth_gradient_background.dart';
 import '../../widgets/get_request_view.dart';
+import '../../widgets/velora/velora.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'forgot_password_view.dart';
@@ -28,6 +23,7 @@ class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -99,116 +95,203 @@ class _LoginViewState extends State<LoginView> {
           (previous.isSubmitting || current.isSubmitting),
       errorMessage: (state) => state.errorMessage,
       onClearError: () => context.read<AuthCubit>().clearActionError(),
-      child: AuthScreenShell(
-        maxContentWidth: 430,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return BlocBuilder<AuthCubit, AuthState>(
-              builder: (context, state) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            children: [
-                              const AuthPageHeader(),
-                              const SizedBox(height: 39),
-                              AuthTextField(
-                                hint: 'Enter Email',
-                                prefixIconAsset: AppAssets.icEmail,
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                autofillHints: const [AutofillHints.email],
-                                validator: FormValidators.email,
-                              ),
-                              const SizedBox(height: 14),
-                              AuthTextField(
-                                hint: 'Password',
-                                prefixIconAsset: AppAssets.icPassword,
-                                controller: _passwordController,
-                                obscureText: true,
-                                textInputAction: TextInputAction.done,
-                                autofillHints: const [AutofillHints.password],
-                                onFieldSubmitted: (_) => _onSubmit(),
-                                validator: (value) => FormValidators.required(
-                                  value,
-                                  fieldName: 'Password',
-                                ),
-                              ),
-                              const SizedBox(height: 17),
-                              Row(
-                                children: [
-                                  _RememberMeTile(
-                                    value: _rememberMe,
-                                    onChanged: (value) {
-                                      setState(() => _rememberMe = value);
-                                    },
-                                  ),
-                                  // const Spacer(),
-                                  // GestureDetector(
-                                  //   onTap: _goToForgotPassword,
-                                  //   child: Text(
-                                  //     'Forget Password?',
-                                  //     style: AppTextStyles.authLink,
-                                  //   ),
-                                  // ),
-                                ],
-                              ),
-                              const SizedBox(height: 32),
-                              AuthPrimaryButton(
-                                label: 'Login Now',
-                                height: 60,
-                                borderRadius: 14,
-                                horizontalPadding: 32,
-                                labelStyle: AppTextStyles.authLoginButtonLabel,
-                                isLoading: state.isSubmitting,
-                                onPressed: _onSubmit,
-                              ),
-                              // const SizedBox(height: 40),
-                              // const AuthOrDivider(),
-                              // const SizedBox(height: 34),
-                              // AuthSocialButton(
-                              //   label: 'Sign in with Apple',
-                              //   iconAsset: AppAssets.icApple,
-                              //   variant: AuthSocialButtonVariant.apple,
-                              //   onPressed: () {},
-                              // ),
-                              // const SizedBox(height: 12),
-                              // AuthSocialButton(
-                              //   label: 'Sign in with Google',
-                              //   iconAsset: AppAssets.icGoogle,
-                              //   variant: AuthSocialButtonVariant.google,
-                              //   onPressed: () {},
-                              // ),
-                              // const SizedBox(height: 12),
-                              // AuthSocialButton(
-                              //   label: 'Sign in with Facebook',
-                              //   iconAsset: AppAssets.icFacebook,
-                              //   variant: AuthSocialButtonVariant.facebook,
-                              //   onPressed: () {},
-                              // ),
-                            ],
+      child: Scaffold(
+        backgroundColor: VeloraColors.brandDeepest,
+        resizeToAvoidBottomInset: true,
+        body: AuthGradientBackground(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: ConstrainedBox(
+                  constraints:
+                      BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Expanded(child: _LoginHero()),
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 520),
+                            child: _buildSheet(context),
                           ),
-                          // AuthPageFooter(
-                          //   title: 'Haven’t signed up yet?',
-                          //   actionLabel: 'Create an account',
-                          //   onActionTap: _goToSignup,
-                          //   topSpacing: 32,
-                          // ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheet(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x140A1E1A),
+            blurRadius: 40,
+            offset: Offset(0, -12),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(
+        22,
+        24,
+        22,
+        26 + MediaQuery.paddingOf(context).bottom,
+      ),
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          return Form(
+            key: _formKey,
+            child: AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: VeloraColors.mint,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: const [
+                            BoxShadow(color: VeloraColors.amber, spreadRadius: 2),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: const VeloraIcon(
+                          VeloraIcons.user,
+                          size: 28,
+                          color: VeloraColors.teal,
+                          strokeWidth: 1.8,
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              VeloraFormat.greeting(),
+                              style: VeloraText.body(
+                                13,
+                                weight: FontWeight.w600,
+                                color: VeloraColors.muted,
+                              ),
+                            ),
+                            Text('Welcome back', style: VeloraText.display(23)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  VeloraTextField(
+                    hint: 'Email',
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    validator: FormValidators.email,
+                  ),
+                  const SizedBox(height: 12),
+                  VeloraTextField(
+                    hint: 'Password',
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    onSubmitted: (_) => _onSubmit(),
+                    validator: (value) => FormValidators.required(
+                      value,
+                      fieldName: 'Password',
+                    ),
+                    suffix: IconButton(
+                      tooltip:
+                          _obscurePassword ? 'Show password' : 'Hide password',
+                      onPressed: () => setState(
+                        () => _obscurePassword = !_obscurePassword,
+                      ),
+                      icon: VeloraIcon(
+                        _obscurePassword ? VeloraIcons.eye : VeloraIcons.eyeOff,
+                        size: 20,
+                        color: VeloraColors.muted,
                       ),
                     ),
                   ),
-                );
-              },
-            );
-          },
+                  const SizedBox(height: 6),
+                  _RememberMeTile(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() => _rememberMe = value);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  VeloraButton(
+                    label: 'Sign in',
+                    icon: VeloraIcons.lock,
+                    isLoading: state.isSubmitting,
+                    onPressed: _onSubmit,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LoginHero extends StatelessWidget {
+  const _LoginHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 250),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const HeaderRings(size: 360, opacity: 0.12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/brand/velora_logo_light.png',
+                    width: 250,
+                    semanticLabel: 'VELORA',
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Caregiver app',
+                    textAlign: TextAlign.center,
+                    style: VeloraText.body(
+                      13,
+                      weight: FontWeight.w600,
+                      color: const Color(0xFFCFE2DC),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -226,33 +309,38 @@ class _RememberMeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: value
-                ? SvgPicture.asset(AppAssets.icRememberMe)
-                : Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: AppColors.authOnGradient,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
+    return Semantics(
+      checked: value,
+      label: 'Remember me',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        borderRadius: BorderRadius.circular(10),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: value,
+                  activeColor: VeloraColors.brand,
+                  onChanged: (v) => onChanged(v ?? false),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Remember me',
+                style: VeloraText.body(
+                  13.5,
+                  weight: FontWeight.w600,
+                  color: VeloraColors.body,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 7),
-          Text(
-            'Remember Me',
-            style: AppTextStyles.authLink,
-          ),
-        ],
+        ),
       ),
     );
   }

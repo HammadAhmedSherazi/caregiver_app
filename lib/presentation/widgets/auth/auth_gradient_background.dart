@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// Reusable auth/onboarding gradient background from Figma.
+/// Reusable auth/onboarding gradient background (VELORA green).
 /// Fills the screen and layers decorative glow blobs.
 /// The dashed curve line is optional and shown only on onboarding.
 class AuthGradientBackground extends StatelessWidget {
@@ -26,7 +26,16 @@ class AuthGradientBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const ColoredBox(color: AppColors.authBackground),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment(-0.4, -1),
+              end: Alignment(0.4, 1),
+              colors: [Color(0xFF12564C), Color(0xFF0F4A41), AppColors.authBackground],
+              stops: [0, 0.45, 1],
+            ),
+          ),
+        ),
         _AuthGradientDecorations(showCurveLine: showCurveLine),
         ?child,
       ],

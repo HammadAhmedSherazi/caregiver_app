@@ -58,6 +58,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
       targetLineHours: targetLineHours,
       chartMaxHours: chartMaxHours,
       weeklyHours: weeklyHours,
+      email: profile.email.isEmpty ? user?.email : profile.email,
+      phone: profile.phone.isEmpty ? null : profile.phone,
+      address: profile.address,
+      initials: profile.initials,
+      isLiveIn: profile.liveIn,
     );
   }
 }

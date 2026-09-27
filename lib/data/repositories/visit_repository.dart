@@ -1,9 +1,16 @@
 import '../api/caregiver_api.dart';
+import '../models/api/schedule_item_model.dart';
 import '../models/api/visit_model.dart';
 import '../models/api/visit_task_model.dart';
 
 abstract class VisitRepository {
   Future<VisitModel?> getActiveVisit();
+
+  /// Recent visits (`GET /visits`), newest first as returned by the API.
+  Future<List<VisitModel>> getVisitHistory({int perPage = 50});
+
+  /// Upcoming scheduled visits (`GET /schedule?upcoming=1`).
+  Future<List<ScheduleItemModel>> getUpcomingSchedule({int perPage = 20});
   Future<VisitModel> clockIn({
     int? clientId,
     int? scheduleId,
@@ -31,6 +38,18 @@ class VisitRepositoryImpl implements VisitRepository {
 
   @override
   Future<VisitModel?> getActiveVisit() => _api.getActiveVisit();
+
+  @override
+  Future<List<VisitModel>> getVisitHistory({int perPage = 50}) async {
+    final response = await _api.getVisits(perPage: perPage);
+    return response.data;
+  }
+
+  @override
+  Future<List<ScheduleItemModel>> getUpcomingSchedule({int perPage = 20}) async {
+    final response = await _api.getSchedule(upcoming: true, perPage: perPage);
+    return response.data;
+  }
 
   @override
   Future<VisitModel> clockIn({

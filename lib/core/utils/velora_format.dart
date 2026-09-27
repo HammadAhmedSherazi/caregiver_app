@@ -1,3 +1,5 @@
+import '../i18n/tr.dart';
+
 /// Small date/time formatters used by the redesigned screens
 /// (the project does not depend on `intl`).
 class VeloraFormat {
@@ -11,10 +13,16 @@ class VeloraFormat {
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
   ];
 
-  static String monthName(int month) => _months[month - 1];
-  static String monthShort(int month) => _months[month - 1].substring(0, 3);
-  static String weekday(DateTime d) => _weekdays[d.weekday - 1];
-  static String weekdayShort(DateTime d) => _weekdays[d.weekday - 1].substring(0, 3);
+  // Names go through tr(); Arabic has no three-letter abbreviations, so the
+  // short forms use the full Arabic name.
+  static String monthName(int month) => tr(_months[month - 1]);
+  static String monthShort(int month) => isArabic
+      ? monthName(month)
+      : _months[month - 1].substring(0, 3);
+  static String weekday(DateTime d) => tr(_weekdays[d.weekday - 1]);
+  static String weekdayShort(DateTime d) => isArabic
+      ? weekday(d)
+      : _weekdays[d.weekday - 1].substring(0, 3);
 
   /// `Friday, September 25`
   static String longDate(DateTime d) =>
@@ -32,14 +40,14 @@ class VeloraFormat {
     final local = d.toLocal();
     final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
     final minute = local.minute.toString().padLeft(2, '0');
-    return '$hour:$minute ${local.hour < 12 ? 'AM' : 'PM'}';
+    return '$hour:$minute ${local.hour < 12 ? tr('AM') : tr('PM')}';
   }
 
   /// `6h 08m`
   static String duration(Duration d) {
     final hours = d.inHours;
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    return '${hours}h ${minutes}m';
+    return tr('{0}h {1}m', [hours, minutes]);
   }
 
   /// `1:18:32` timer text.
@@ -54,9 +62,9 @@ class VeloraFormat {
   /// Greeting for the current hour.
   static String greeting([DateTime? now]) {
     final hour = (now ?? DateTime.now()).hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return tr('Good morning');
+    if (hour < 17) return tr('Good afternoon');
+    return tr('Good evening');
   }
 
   static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);

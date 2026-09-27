@@ -11,6 +11,7 @@ import '../../home/widgets/vertical_overlap.dart';
 import '../../widgets/header_back_button.dart';
 import '../../widgets/user_avatar.dart';
 import '../widgets/client_list_widgets.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2356` — client profile detail.
 class ClientProfileView extends StatelessWidget {
@@ -102,13 +103,13 @@ class _ClientProfileHeader extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Client',
+                            tr('Client'),
                             style: context.responsiveStyle(
                               AppTextStyles.homeWelcome,
                             ),
                           ),
                           Text(
-                            'Profile',
+                            tr('Profile'),
                             style: context.responsiveStyle(
                               AppTextStyles.homeDate,
                             ),
@@ -181,7 +182,7 @@ class _ClientProfileCard extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Open in Map',
+              tr('Open in Map'),
               style: context.responsiveStyle(
                 AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.homeAccent,
@@ -200,7 +201,7 @@ class _ClientProfileCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Contact',
+              tr('Contact'),
               style: context.responsiveStyle(
                 AppTextStyles.titleMedium.copyWith(
                   fontWeight: FontWeight.w700,
@@ -211,7 +212,7 @@ class _ClientProfileCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ClientContactRow(
-            label: 'Client',
+            label: tr('Client'),
             phone: client.clientPhone,
             clientId: client.id,
           ),

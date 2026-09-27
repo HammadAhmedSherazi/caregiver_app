@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 class _Faq {
   const _Faq(this.question, this.answer, this.action, this.onGo);
@@ -69,8 +70,8 @@ class _HelpViewState extends State<HelpView> {
       body: VeloraPage(
         gap: 12,
         header: VeloraHeader(
-          title: 'Help & questions',
-          subtitle: 'We\'re here to help',
+          title: tr('Help & questions'),
+          subtitle: tr('We\'re here to help'),
           onBack: () => Navigator.of(context).pop(),
         ),
         children: [
@@ -87,7 +88,7 @@ class _HelpViewState extends State<HelpView> {
                     const VeloraIcon(VeloraIcons.message, size: 22, color: VeloraColors.amber, strokeWidth: 2),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text('Message the office',
+                      child: Text(tr('Message the office'),
                           style: VeloraText.body(15, weight: FontWeight.w700, color: Colors.white)),
                     ),
                     const VeloraIcon(VeloraIcons.chevronRight, size: 16, color: Colors.white, strokeWidth: 2.2),
@@ -101,7 +102,7 @@ class _HelpViewState extends State<HelpView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SectionCaption('Common questions', padding: EdgeInsets.only(top: 8, bottom: 6)),
+                SectionCaption(tr('Common questions'), padding: EdgeInsets.only(top: 8, bottom: 6)),
                 for (var i = 0; i < _faqs.length; i++) _item(i),
               ],
             ),
@@ -111,12 +112,12 @@ class _HelpViewState extends State<HelpView> {
             child: Column(
               children: [
                 Text(
-                  'Emergency with your client? Call 911 first, then tell us in',
+                  tr('Emergency with your client? Call 911 first, then tell us in'),
                   textAlign: TextAlign.center,
                   style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.5),
                 ),
                 VeloraTextLink(
-                  label: 'Report a change',
+                  label: tr('Report a change'),
                   onTap: () => AppNavigator.openReportChange(context),
                 ),
               ],
@@ -149,7 +150,7 @@ class _HelpViewState extends State<HelpView> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(faq.question, style: VeloraText.body(14.5, weight: FontWeight.w600)),
+                        child: Text(tr(faq.question), style: VeloraText.body(14.5, weight: FontWeight.w600)),
                       ),
                       AnimatedRotation(
                         turns: open ? 0.25 : 0,
@@ -173,7 +174,7 @@ class _HelpViewState extends State<HelpView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(faq.answer, style: VeloraText.body(13.5, color: VeloraColors.body, height: 1.5)),
+                  Text(tr(faq.answer), style: VeloraText.body(13.5, color: VeloraColors.body, height: 1.5)),
                   const SizedBox(height: 8),
                   Material(
                     color: VeloraColors.mint,
@@ -183,7 +184,7 @@ class _HelpViewState extends State<HelpView> {
                       borderRadius: BorderRadius.circular(11),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-                        child: Text(faq.action,
+                        child: Text(tr(faq.action),
                             style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.brandDark)),
                       ),
                     ),

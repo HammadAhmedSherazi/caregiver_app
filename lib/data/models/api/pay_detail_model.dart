@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class PayBreakdownModel extends BaseModel {
   const PayBreakdownModel({
@@ -85,6 +86,7 @@ class PayDetailModel extends BaseModel {
     this.payDate,
     required this.breakdown,
     required this.visitSummary,
+    this.velora,
   });
 
   final int id;
@@ -97,6 +99,9 @@ class PayDetailModel extends BaseModel {
   final String? payDate;
   final PayBreakdownModel breakdown;
   final List<PayVisitSummaryItemModel> visitSummary;
+
+  /// VELORA Paystub fields (net, deposit, work period, earnings, taxes, YTD). 🚧 Planned.
+  final PayDetailExtensionModel? velora;
 
   factory PayDetailModel.fromJson(Map<String, dynamic> json) {
     final summaryRaw = json['visit_summary'] as List<dynamic>? ?? const [];
@@ -116,6 +121,7 @@ class PayDetailModel extends BaseModel {
           .whereType<Map<String, dynamic>>()
           .map(PayVisitSummaryItemModel.fromJson)
           .toList(),
+      velora: PayDetailExtensionModel.maybeFromJson(json),
     );
   }
 
@@ -134,7 +140,7 @@ class PayDetailModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [
+  List<Object?> get props => [velora, 
         id,
         period,
         periodKey,

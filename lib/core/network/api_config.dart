@@ -61,6 +61,21 @@ class ApiConfig {
   /// Pay endpoint returns more rows per page by default.
   static const int payPerPage = 50;
 
+  /// Enables the VELORA contract endpoints from `MOBILE_API_VELORA.md`.
+  ///
+  /// Those endpoints are **PLANNED — NOT LIVE**. Keep this `false` (default)
+  /// until the backend ships them; enable per build with
+  /// `--dart-define=VELORA_API=true`. While disabled, every planned
+  /// repository call throws [ApiNotLiveException] instead of hitting a URL
+  /// that does not exist, and screens keep using the live API only.
+  static const bool veloraApiEnabled = bool.fromEnvironment(
+    'VELORA_API',
+    defaultValue: false,
+  );
+
+  /// Languages the server localizes `*_label` strings and pushes into.
+  static const List<String> supportedLanguages = ['en', 'ar'];
+
   static const Map<String, String> defaultHeaders = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',

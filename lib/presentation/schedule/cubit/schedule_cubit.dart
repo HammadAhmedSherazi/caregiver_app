@@ -2,6 +2,7 @@ import '../../../core/base/base_cubit.dart';
 import '../../../data/models/schedule_page_model.dart';
 import '../../../data/repositories/schedule_repository.dart';
 import 'schedule_state.dart';
+import '../../../core/i18n/tr.dart';
 
 class ScheduleCubit extends BaseCubit<ScheduleState> {
   ScheduleCubit({required this.repository}) : super(const ScheduleState());
@@ -41,7 +42,7 @@ class ScheduleCubit extends BaseCubit<ScheduleState> {
       emit(
         state.copyWith(
           status: ScheduleStatus.failure,
-          errorMessage: 'Failed to load schedule. Please try again.',
+          errorMessage: tr('Failed to load schedule. Please try again.'),
         ),
       );
     }

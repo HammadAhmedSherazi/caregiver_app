@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
+import '../../data/local/language_store.dart';
 import '../../data/local/session_storage.dart';
 import '../../data/local/token_storage.dart';
 import '../utils/helpers/logger.dart';
@@ -14,6 +17,7 @@ class ApiClient {
     required this._sessionStorage,
     required this._sessionExpiredNotifier,
     required this._tokenRefreshHandler,
+    required this._languageStore,
   })  : _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,
@@ -30,6 +34,8 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          // Server strings (`*_label`, messages, pushes) follow this language.
+          options.headers['Accept-Language'] = _languageStore.current;
           handler.next(options);
         },
         onError: (error, handler) async {
@@ -47,6 +53,7 @@ class ApiClient {
   final SessionStorage _sessionStorage;
   final SessionExpiredNotifier _sessionExpiredNotifier;
   final TokenRefreshHandler _tokenRefreshHandler;
+  final LanguageStore _languageStore;
   final Dio _dio;
   bool _isHandlingUnauthorized = false;
 
@@ -76,9 +83,7 @@ class ApiClient {
     }
   }
 
-  bool _shouldSkipAuthRecovery(String path) {
-    return path.endsWith('/login') || path.endsWith('/refresh');
-  }
+  bool _shouldSkipAuthRecovery(String path) => _isPublicAuthRequest(path);
 
   Future<void> _handleUnauthorizedIfNeeded(DioException error) async {
     if (error.response?.statusCode != 401) return;
@@ -95,8 +100,13 @@ class ApiClient {
     }
   }
 
+  /// Unauthenticated sign-in endpoints: a 401/422 there is a wrong code or
+  /// password, not an expired session.
   bool _isPublicAuthRequest(String path) {
-    return path.endsWith('/login') || path.endsWith('/refresh');
+    return path.endsWith('/login') ||
+        path.endsWith('/refresh') ||
+        path.contains('/auth/phone/') ||
+        path.contains('/auth/invite/');
   }
 
   Dio get dio => _dio;
@@ -120,6 +130,20 @@ class ApiClient {
     Options? options,
   }) {
     return _dio.post<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  Future<Response<T>> put<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) {
+    return _dio.put<T>(
       path,
       data: data,
       queryParameters: queryParameters,
@@ -152,75 +176,46 @@ class ApiClient {
     );
   }
 
-  Future<Response<List<int>>> downloadBytes(String path) async {
+  Future<Response<List<int>>> downloadBytes(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     final response = await _dio.get<List<int>>(
       path,
-      options: Options(responseType: ResponseType.bytes),
+      queryParameters: queryParameters,
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: {'Accept': 'application/pdf, application/json'},
+      ),
     );
     return response;
   }
 
   DioException _wrapError(DioException error) {
     final response = error.response;
-    final statusCode = response?.statusCode;
-    final message = _extractMessage(response?.data) ??
-        error.message ??
-        'Request failed';
-
-    switch (statusCode) {
-      case 401:
-        return DioException(
-          requestOptions: error.requestOptions,
-          response: response,
-          type: error.type,
-          error: UnauthorizedException(message),
-        );
-      case 409:
-        return DioException(
-          requestOptions: error.requestOptions,
-          response: response,
-          type: error.type,
-          error: ConflictException(message),
-        );
-      case 403:
-        return DioException(
-          requestOptions: error.requestOptions,
-          response: response,
-          type: error.type,
-          error: ForbiddenException(message),
-        );
-      case 404:
-        return DioException(
-          requestOptions: error.requestOptions,
-          response: response,
-          type: error.type,
-          error: NotFoundException(message),
-        );
-      case 422:
-        return DioException(
-          requestOptions: error.requestOptions,
-          response: response,
-          type: error.type,
-          error: ValidationException(message),
-        );
-      default:
-        return DioException(
-          requestOptions: error.requestOptions,
-          response: response,
-          type: error.type,
-          error: ApiException(message, statusCode: statusCode),
-        );
-    }
+    return DioException(
+      requestOptions: error.requestOptions,
+      response: response,
+      type: error.type,
+      error: mapApiError(
+        statusCode: response?.statusCode,
+        data: _decodeBody(response?.data),
+        headers: response?.headers.map,
+        fallbackMessage: error.message ?? 'Request failed',
+      ),
+    );
   }
 
-  String? _extractMessage(Object? data) {
-    if (data is Map<String, dynamic>) {
-      final message = data['message'];
-      if (message is String && message.isNotEmpty) {
-        return message;
+  /// Error bodies of byte downloads arrive as raw bytes; decode JSON if so.
+  static Object? _decodeBody(Object? data) {
+    if (data is List<int>) {
+      try {
+        return jsonDecode(utf8.decode(data));
+      } catch (_) {
+        return null;
       }
     }
-    return null;
+    return data;
   }
 
   static Never rethrowAsApiException(Object error) {

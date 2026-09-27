@@ -1,13 +1,37 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
+import '../../../core/network/api_config.dart';
+import '../../../core/network/api_error_message.dart';
+import '../../../data/repositories/profile_repository.dart';
 import '../../main/app_navigator.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Privacy: static explanation of what the app keeps.
 ///
-/// "Get a copy of my information" has no endpoint (API REQUIRED).
+/// "Get a copy of my information" → `POST /privacy/data-request`
+/// (🚧 PLANNED — NOT LIVE) when `ApiConfig.veloraApiEnabled`; otherwise it
+/// explains the request can't be sent from the app yet.
 class PrivacyView extends StatelessWidget {
   const PrivacyView({super.key});
+
+  Future<void> _requestCopy(BuildContext context) async {
+    if (!ApiConfig.veloraApiEnabled) {
+      await showApiRequiredSheet(
+        context,
+        feature: tr('Information requests'),
+        onContactOffice: () => AppNavigator.openInbox(context),
+      );
+      return;
+    }
+    try {
+      final result = await sl<ProfileRepository>().requestDataCopy();
+      if (context.mounted) showVeloraToast(context, result.message);
+    } catch (error) {
+      if (context.mounted) showVeloraToast(context, apiErrorMessage(error));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +56,8 @@ class PrivacyView extends StatelessWidget {
     return VeloraScaffold(
       body: VeloraPage(
         header: VeloraHeader(
-          title: 'Privacy',
-          subtitle: 'What the app keeps, and who sees it',
+          title: tr('Privacy'),
+          subtitle: tr('What the app keeps, and who sees it'),
           onBack: () => Navigator.of(context).pop(),
         ),
         children: [
@@ -42,7 +66,7 @@ class PrivacyView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SectionCaption('What the app collects', padding: EdgeInsets.only(bottom: 6)),
+                SectionCaption(tr('What the app collects'), padding: EdgeInsets.only(bottom: 6)),
                 for (var i = 0; i < rows.length; i++)
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -58,9 +82,9 @@ class PrivacyView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(rows[i].$2, style: VeloraText.body(14, weight: FontWeight.w700)),
+                              Text(tr(rows[i].$2), style: VeloraText.body(14, weight: FontWeight.w700)),
                               const SizedBox(height: 2),
-                              Text(rows[i].$3,
+                              Text(tr(rows[i].$3),
                                   style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.45)),
                             ],
                           ),
@@ -76,29 +100,24 @@ class PrivacyView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SectionCaption('Who sees it'),
+                SectionCaption(tr('Who sees it')),
                 const SizedBox(height: 8),
                 Text(
-                  'The office you work for, and the state or insurance programs that pay for your '
-                  'client\'s care. Your information is not sold or shared with advertisers.',
+                  tr('The office you work for, and the state or insurance programs that pay for your client\'s care. Your information is not sold or shared with advertisers.'),
                   style: VeloraText.body(13.5, color: VeloraColors.body, height: 1.5),
                 ),
               ],
             ),
           ),
           VeloraButton(
-            label: 'Get a copy of my information',
+            label: tr('Get a copy of my information'),
             icon: VeloraIcons.download,
             variant: VeloraButtonVariant.ghost,
-            onPressed: () => showApiRequiredSheet(
-              context,
-              feature: 'Information requests',
-              onContactOffice: () => AppNavigator.openInbox(context),
-            ),
+            onPressed: () => _requestCopy(context),
           ),
           Center(
             child: VeloraTextLink(
-              label: 'Question about privacy? Message the office',
+              label: tr('Question about privacy? Message the office'),
               size: 13.5,
               onTap: () => AppNavigator.openInbox(context),
             ),

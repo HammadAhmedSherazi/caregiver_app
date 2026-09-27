@@ -10,6 +10,7 @@ import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Monthly sign-off: questions → review & sign → sent.
 ///
@@ -115,7 +116,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      showVeloraToast(context, 'We couldn\'t send your check-in. Please try again.');
+      showVeloraToast(context, tr('We couldn\'t send your check-in. Please try again.'));
     }
   }
 
@@ -151,9 +152,9 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
   Widget build(BuildContext context) {
     final inFlow = _step < 2;
     final title = switch (_step) {
-      0 => 'A few questions',
-      1 => 'Review & sign',
-      _ => 'All done',
+      0 => tr('A few questions'),
+      1 => tr('Review & sign'),
+      _ => tr('All done'),
     };
 
     return PopScope(
@@ -174,8 +175,8 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
           header: VeloraHeader(
             title: title,
             subtitle: _step == 2
-                ? '${widget.periodLabel} · sent to the office'
-                : '${widget.periodLabel} check-in',
+                ? tr('{0} · sent to the office', [widget.periodLabel])
+                : tr('{0} check-in', [widget.periodLabel]),
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
             leading: inFlow
                 ? Column(
@@ -185,7 +186,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
                         children: [
                           Expanded(
                             child: Text(
-                              'STEP ${_step + 1} OF $_stepCount',
+                              tr('STEP {0} OF {1}', [_step + 1, _stepCount]),
                               style: VeloraText.body(
                                 12.5,
                                 weight: FontWeight.w700,
@@ -203,7 +204,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                                 child: Text(
-                                  'Exit',
+                                  tr('Exit'),
                                   style: VeloraText.body(13, weight: FontWeight.w700, color: Colors.white),
                                 ),
                               ),
@@ -232,15 +233,15 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
   Widget _footer() {
     final blocked = _step == 0 ? !_allAnswered : !_canSubmit;
     final nextLabel = _step == 0
-        ? (blocked ? 'Answer all ${_questions.length} to continue' : 'Continue')
-        : (blocked ? 'Confirm and sign to submit' : 'Submit check-in');
+        ? (blocked ? tr('Answer all {0} to continue', [_questions.length]) : tr('Continue'))
+        : (blocked ? tr('Confirm and sign to submit') : tr('Submit check-in'));
 
     return Row(
       children: [
         SizedBox(
           width: 110,
           child: VeloraButton(
-            label: 'Back',
+            label: tr('Back'),
             variant: VeloraButtonVariant.ghost,
             onPressed: _submitting
                 ? null
@@ -262,11 +263,11 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
   }
 
   List<Widget> _body() {
-    if (_loading) return const [VeloraLoadingState(message: 'Loading your check-in…')];
+    if (_loading) return [VeloraLoadingState(message: tr('Loading your check-in…'))];
     if (_loadFailed) {
       return [
         VeloraErrorState(
-          message: 'We couldn\'t load this check-in.',
+          message: tr('We couldn\'t load this check-in.'),
           onRetry: _load,
         ),
       ];
@@ -276,9 +277,9 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
       case 0:
         return [
           if (_questions.isEmpty)
-            const VeloraEmptyState(
-              title: 'No questions this time',
-              message: 'Continue to review and sign.',
+            VeloraEmptyState(
+              title: tr('No questions this time'),
+              message: tr('Continue to review and sign.'),
               icon: VeloraIcons.clipboardCheck,
             ),
           for (final question in _questions)
@@ -298,8 +299,8 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
           VeloraCard(
             child: VeloraTextField(
               controller: _notesController,
-              label: 'Anything else the office should know?',
-              hint: 'Optional',
+              label: tr('Anything else the office should know?'),
+              hint: tr('Optional'),
               maxLines: 4,
               minLines: 3,
             ),
@@ -312,14 +313,14 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Column(
               children: [
-                KeyValueRow(showDivider: false, label: 'Period', value: widget.periodLabel),
-                KeyValueRow(label: 'Questions answered', value: '${_questions.length}'),
+                KeyValueRow(showDivider: false, label: tr('Period'), value: widget.periodLabel),
+                KeyValueRow(label: tr('Questions answered'), value: '${_questions.length}'),
                 KeyValueRow(
-                  label: 'Answers',
-                  value: yes == 0 ? 'All no' : '$yes yes',
+                  label: tr('Answers'),
+                  value: yes == 0 ? tr('All no') : tr('{0} yes', [yes]),
                 ),
                 if (_notesController.text.trim().isNotEmpty)
-                  const KeyValueRow(label: 'Notes', value: 'Added'),
+                  KeyValueRow(label: tr('Notes'), value: tr('Added')),
               ],
             ),
           ),
@@ -345,7 +346,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'I confirm the care I\'ve reported for ${widget.periodLabel} is true and accurate.',
+                          tr('I confirm the care I\'ve reported for {0} is true and accurate.', [widget.periodLabel]),
                           style: VeloraText.body(14, height: 1.45),
                         ),
                       ),
@@ -354,7 +355,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Type your full name to sign',
+                  tr('Type your full name to sign'),
                   style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.body),
                 ),
                 const SizedBox(height: 7),
@@ -363,7 +364,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
                   onChanged: (_) => setState(() {}),
                   textCapitalization: TextCapitalization.words,
                   style: VeloraText.display(20, weight: FontWeight.w600, color: VeloraColors.brand),
-                  decoration: VeloraTextField.decoration(hint: 'Your full name'),
+                  decoration: VeloraTextField.decoration(hint: tr('Your full name')),
                 ),
               ],
             ),
@@ -372,18 +373,18 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
       default:
         return [
           VeloraDoneCard(
-            title: 'Check-in sent',
-            message: 'Thanks. The office has your ${widget.periodLabel} check-in.',
+            title: tr('Check-in sent'),
+            message: tr('Thanks. The office has your {0} check-in.', [widget.periodLabel]),
           ),
           VeloraButton(
-            label: 'See my pay',
+            label: tr('See my pay'),
             onPressed: () {
               _close(true);
               AppNavigator.selectTab(MainTab.pay);
             },
           ),
           VeloraButton(
-            label: 'Done',
+            label: tr('Done'),
             variant: VeloraButtonVariant.ghost,
             onPressed: () => _close(true),
           ),

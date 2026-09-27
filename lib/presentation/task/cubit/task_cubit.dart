@@ -1,10 +1,12 @@
 import '../../../core/base/base_cubit.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/utils/pay_stub_file_helper.dart';
+import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/selected_document.dart';
 import '../../../data/models/task_page_model.dart';
 import '../../../data/repositories/task_repository.dart';
 import 'task_state.dart';
+import '../../../core/i18n/tr.dart';
 
 class TaskCubit extends BaseCubit<TaskState> {
   TaskCubit({required this.repository}) : super(const TaskState());
@@ -53,7 +55,7 @@ class TaskCubit extends BaseCubit<TaskState> {
       emit(
         state.copyWith(
           status: hasData ? TaskStatus.success : TaskStatus.failure,
-          errorMessage: 'Failed to load tasks. Please try again.',
+          errorMessage: tr('Failed to load tasks. Please try again.'),
         ),
       );
     }
@@ -105,12 +107,14 @@ class TaskCubit extends BaseCubit<TaskState> {
     required String type,
     int? clientId,
     String? notes,
+    DocumentUploadExtras? extras,
   }) async {
     await repository.uploadDocument(
       document: document,
       type: type,
       clientId: clientId,
       notes: notes,
+      extras: extras,
     );
   }
 
@@ -122,14 +126,14 @@ class TaskCubit extends BaseCubit<TaskState> {
         fileName: 'paystub_$id.pdf',
       );
     } on NotFoundException {
-      throw PayStubDownloadException('Pay stub is not available.');
+      throw PayStubDownloadException(tr('Pay stub is not available.'));
     } on ForbiddenException {
-      throw PayStubDownloadException('You do not have access to this pay stub.');
+      throw PayStubDownloadException(tr('You do not have access to this pay stub.'));
     } on ApiException catch (error) {
       throw PayStubDownloadException(
         error.message.isNotEmpty
             ? error.message
-            : 'Unable to download pay stub.',
+            : tr('Unable to download pay stub.'),
       );
     }
   }

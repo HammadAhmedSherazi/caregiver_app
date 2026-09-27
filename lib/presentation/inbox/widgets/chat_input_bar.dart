@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2779` — message composer bar.
 class ChatInputBar extends StatelessWidget {
@@ -37,13 +38,13 @@ class ChatInputBar extends StatelessWidget {
                   style: VeloraText.body(15),
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => onSend(),
-                  decoration: VeloraTextField.decoration(hint: 'Message the office…'),
+                  decoration: VeloraTextField.decoration(hint: tr('Message the office…')),
                 ),
               ),
               const SizedBox(width: 8),
               Semantics(
                 button: true,
-                label: 'Send',
+                label: tr('Send'),
                 child: Material(
                   color: enabled ? VeloraColors.brand : VeloraColors.disabled,
                   borderRadius: BorderRadius.circular(14),

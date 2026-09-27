@@ -18,6 +18,7 @@ import '../models/api/pay_item_model.dart';
 import '../models/api/schedule_item_model.dart';
 import '../models/api/schedule_week_model.dart';
 import '../models/api/visit_model.dart';
+import '../models/api/velora/velora_models.dart';
 import '../models/api/visit_task_model.dart';
 import '../models/user_model.dart';
 import '../local/token_storage.dart';
@@ -196,14 +197,24 @@ class CaregiverApi {
     }
   }
 
+  /// `POST /visits/clock-out`.
+  ///
+  /// [answers] adds the VELORA "Before you go" fields (`hospital`,
+  /// `care_not_given`, `services`) — 🚧 PLANNED, only sent when
+  /// `ApiConfig.veloraApiEnabled`. Without it the request is unchanged.
   Future<VisitModel> clockOut({
     int? scheduleId,
     double? latitude,
     double? longitude,
     String? notes,
+    ClockOutAnswers? answers,
   }) async {
     try {
       final payload = <String, dynamic>{};
+      if (answers != null && ApiConfig.veloraApiEnabled) {
+        answers.validate();
+        payload.addAll(answers.toJson());
+      }
       if (scheduleId != null) payload['schedule_id'] = scheduleId;
       if (latitude != null) payload['latitude'] = latitude;
       if (longitude != null) payload['longitude'] = longitude;
@@ -595,8 +606,16 @@ class CaregiverApi {
     int? clientId,
     String? notes,
     String? mimeType,
+    DocumentUploadExtras? extras,
   }) async {
     try {
+      // New fields (`expires_on`, `back_file`, `replaces_document_id`, `purpose`) are
+      // 🚧 PLANNED and only sent when `ApiConfig.veloraApiEnabled`.
+      final sendExtras = extras != null && !extras.isEmpty && ApiConfig.veloraApiEnabled;
+      if (sendExtras) {
+        final uploadType = DocumentUploadType.values.where((t) => t.value == type).firstOrNull;
+        if (uploadType != null) extras.validate(uploadType);
+      }
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           filePath,
@@ -605,6 +624,17 @@ class CaregiverApi {
         'type': type,
         'client_id': ?clientId,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (sendExtras && extras.expiresOn != null)
+          'expires_on': formatDate(extras.expiresOn!),
+        if (sendExtras && extras.replacesDocumentId != null)
+          'replaces_document_id': extras.replacesDocumentId,
+        if (sendExtras && extras.purpose != null)
+          'purpose': extras.purpose!.value,
+        if (sendExtras && extras.backFilePath != null)
+          'back_file': await MultipartFile.fromFile(
+            extras.backFilePath!,
+            filename: extras.backFileName,
+          ),
       });
 
       final response = await _apiClient.postMultipart<Map<String, dynamic>>(

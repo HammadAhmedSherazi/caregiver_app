@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class CaregiverProfileModel extends BaseModel {
   const CaregiverProfileModel({
@@ -16,6 +17,7 @@ class CaregiverProfileModel extends BaseModel {
     this.avatarUrl,
     this.address,
     this.payEligibilityStart,
+    this.velora,
   });
 
   final int id;
@@ -33,6 +35,9 @@ class CaregiverProfileModel extends BaseModel {
   final String? address;
   final String? payEligibilityStart;
 
+  /// VELORA additive `/me` fields (client, deposit, emergency contact, settings, pending changes, office). 🚧 Planned.
+  final MeExtensionModel? velora;
+
   factory CaregiverProfileModel.fromJson(Map<String, dynamic> json) {
     return CaregiverProfileModel(
       id: json['id'] as int,
@@ -49,6 +54,7 @@ class CaregiverProfileModel extends BaseModel {
       avatarUrl: json['avatar_url'] as String?,
       address: json['address'] as String?,
       payEligibilityStart: json['pay_eligibility_start'] as String?,
+      velora: MeExtensionModel.maybeFromJson(json),
     );
   }
 
@@ -72,7 +78,7 @@ class CaregiverProfileModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [
+  List<Object?> get props => [velora, 
         id,
         name,
         email,

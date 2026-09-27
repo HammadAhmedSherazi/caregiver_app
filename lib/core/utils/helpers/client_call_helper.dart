@@ -5,6 +5,7 @@ import '../../di/service_locator.dart';
 import '../../network/api_exception.dart';
 import '../../../data/repositories/client_repository.dart';
 import 'phone_launch_helper.dart';
+import '../../i18n/tr.dart';
 
 Future<void> initiateClientCall(
   BuildContext context, {
@@ -23,7 +24,7 @@ Future<void> initiateClientCall(
         SnackBar(
           content: Text(
             result.message ??
-                'Connecting… your phone will ring, then connect to the client.',
+                tr('Connecting… your phone will ring, then connect to the client.'),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -49,8 +50,8 @@ Future<void> initiateClientCall(
       SnackBar(
         content: Text(
           error.message.isNotEmpty
-              ? error.message
-              : 'Unable to place call. Please try again.',
+              ? tr(error.message)
+              : tr('Unable to place call. Please try again.'),
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -62,8 +63,8 @@ Future<void> initiateClientCall(
     }
     if (!context.mounted) return;
     messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Unable to place call. Please try again.'),
+      SnackBar(
+        content: Text(tr('Unable to place call. Please try again.')),
         behavior: SnackBarBehavior.floating,
       ),
     );

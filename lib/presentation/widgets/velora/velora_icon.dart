@@ -29,6 +29,10 @@ enum VeloraIcons {
       '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.3 3.5 5.2 3.5 8.5s-1 6.2-3.5 8.5c-2.5-2.3-3.5-5.2-3.5-8.5s1-6.2 3.5-8.5z"/>'),
   faceId(
       '<path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"/><path d="M9 10v1M15 10v1M9.5 16c1.5 1 3.5 1 5 0"/>'),
+  /// Face ID with the nose line, as on the sign-in buttons.
+  faceIdScan(
+      '<path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"/><path d="M9 10v1M15 10v1M12 10v3.5h-1M9.5 16c1.5 1 3.5 1 5 0"/>'),
+  mobile('<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/>'),
   question('<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17v.3"/>'),
   shield('<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/>'),
   logout('<path d="M14 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4M10 16l-4-4 4-4M6 12h10"/>'),
@@ -77,11 +81,22 @@ class VeloraIcon extends StatelessWidget {
     final svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
         'fill="none" stroke="#000000" stroke-width="$strokeWidth" '
         'stroke-linecap="round" stroke-linejoin="round">${icon.paths}</svg>';
-    return SvgPicture.string(
+    final picture = SvgPicture.string(
       svg,
       width: size,
       height: size,
       colorFilter: ColorFilter.mode(resolved, BlendMode.srcIn),
     );
+    // Arrows and "back/next" chevrons point the other way in Arabic (RTL).
+    final mirror = _directional.contains(icon) &&
+        Directionality.maybeOf(context) == TextDirection.rtl;
+    return mirror ? Transform.flip(flipX: true, child: picture) : picture;
   }
+
+  static const _directional = {
+    VeloraIcons.chevronRight,
+    VeloraIcons.chevronLeft,
+    VeloraIcons.send,
+    VeloraIcons.logout,
+  };
 }

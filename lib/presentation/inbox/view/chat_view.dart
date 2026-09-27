@@ -14,6 +14,7 @@ import '../cubit/chat_state.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2779` — one-to-one chat conversation.
 class ChatView extends StatelessWidget {
@@ -89,7 +90,7 @@ class _ChatViewBodyState extends State<_ChatViewBody> {
           children: [
             VeloraHeader(
               title: widget.thread.contactName,
-              subtitle: 'Messages with the office',
+              subtitle: tr('Messages with the office'),
               onBack: () => Navigator.of(context).pop(),
             ),
             Expanded(
@@ -145,9 +146,9 @@ class _ChatMessagesPane extends StatelessWidget {
             color: AppColors.homePrimary,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
+              children: [
                 SizedBox(height: 120),
-                Center(child: Text('No messages yet')),
+                Center(child: Text(tr('No messages yet'))),
               ],
             ),
           );

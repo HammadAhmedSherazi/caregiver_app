@@ -5,6 +5,7 @@ import '../../../data/models/task_page_model.dart';
 import '../../main/app_navigator.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Paystub detail (`GET /pay/{id}`) with the PDF download (`GET /pay/{id}/stub`).
 ///
@@ -42,7 +43,7 @@ class _PaystubViewState extends State<PaystubView> {
     } on PayStubDownloadException catch (error) {
       if (mounted) showVeloraToast(context, error.message);
     } catch (_) {
-      if (mounted) showVeloraToast(context, 'Unable to open the paystub PDF.');
+      if (mounted) showVeloraToast(context, tr('Unable to open the paystub PDF.'));
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -59,29 +60,29 @@ class _PaystubViewState extends State<PaystubView> {
 
           if (snapshot.hasError) {
             return VeloraPage(
-              header: VeloraHeader(title: 'Paystub', onBack: back),
+              header: VeloraHeader(title: tr('Paystub'), onBack: back),
               children: [
-                VeloraErrorState(message: 'We couldn\'t load this paystub.', onRetry: _retry),
+                VeloraErrorState(message: tr('We couldn\'t load this paystub.'), onRetry: _retry),
               ],
             );
           }
           if (detail == null) {
             return VeloraPage(
-              header: VeloraHeader(title: 'Paystub', onBack: back),
+              header: VeloraHeader(title: tr('Paystub'), onBack: back),
               children: const [VeloraLoadingState()],
             );
           }
 
           final taxes = <(String, String)>[
-            if (detail.federalTax != null) ('Federal income tax', detail.federalTax!),
-            if (detail.stateTax != null) ('State income tax', detail.stateTax!),
-            if (detail.fica != null) ('Social Security & Medicare', detail.fica!),
+            if (detail.federalTax != null) (tr('Federal income tax'), detail.federalTax!),
+            if (detail.stateTax != null) (tr('State income tax'), detail.stateTax!),
+            if (detail.fica != null) (tr('Social Security & Medicare'), detail.fica!),
           ];
 
           return VeloraPage(
             header: VeloraHeader(
-              title: 'Paystub',
-              subtitle: detail.payDate.isEmpty ? detail.status : 'Paid ${detail.payDate}',
+              title: tr('Paystub'),
+              subtitle: detail.payDate.isEmpty ? detail.status : tr('Paid {0}', [detail.payDate]),
               onBack: back,
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               bottom: Padding(
@@ -90,7 +91,7 @@ class _PaystubViewState extends State<PaystubView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      detail.netPay != null ? 'NET PAY' : 'GROSS PAY',
+                      detail.netPay != null ? tr('NET PAY') : tr('GROSS PAY'),
                       style: VeloraText.body(12,
                           weight: FontWeight.w700, color: VeloraColors.onHeaderMuted, letterSpacing: 1.2),
                     ),
@@ -114,8 +115,8 @@ class _PaystubViewState extends State<PaystubView> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Column(
                   children: [
-                    KeyValueRow(showDivider: false, label: 'Work period', value: detail.periodLabel),
-                    if (detail.program.isNotEmpty) KeyValueRow(label: 'Program', value: detail.program),
+                    KeyValueRow(showDivider: false, label: tr('Work period'), value: detail.periodLabel),
+                    if (detail.program.isNotEmpty) KeyValueRow(label: tr('Program'), value: detail.program),
                   ],
                 ),
               ),
@@ -124,10 +125,10 @@ class _PaystubViewState extends State<PaystubView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SectionCaption('Earnings', padding: EdgeInsets.only(top: 8, bottom: 2)),
-                    KeyValueRow(showDivider: false, label: 'Hours worked', value: detail.hoursWorked),
-                    KeyValueRow(label: 'Hourly rate', value: detail.rate),
-                    KeyValueRow(label: 'Gross pay', value: detail.grossPay, emphasize: true),
+                    SectionCaption(tr('Earnings'), padding: EdgeInsets.only(top: 8, bottom: 2)),
+                    KeyValueRow(showDivider: false, label: tr('Hours worked'), value: detail.hoursWorked),
+                    KeyValueRow(label: tr('Hourly rate'), value: detail.rate),
+                    KeyValueRow(label: tr('Gross pay'), value: detail.grossPay, emphasize: true),
                   ],
                 ),
               ),
@@ -137,14 +138,14 @@ class _PaystubViewState extends State<PaystubView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SectionCaption('Taxes withheld', padding: EdgeInsets.only(top: 8, bottom: 2)),
+                      SectionCaption(tr('Taxes withheld'), padding: EdgeInsets.only(top: 8, bottom: 2)),
                       for (var i = 0; i < taxes.length; i++)
                         KeyValueRow(showDivider: i > 0, label: taxes[i].$1, value: taxes[i].$2),
                       if (detail.estimatedBreakdown)
                         Padding(
                           padding: const EdgeInsets.only(top: 4, bottom: 8),
                           child: Text(
-                            'Estimated breakdown. Your PDF paystub has the exact amounts.',
+                            tr('Estimated breakdown. Your PDF paystub has the exact amounts.'),
                             style: VeloraText.body(12, color: VeloraColors.muted),
                           ),
                         ),
@@ -157,7 +158,7 @@ class _PaystubViewState extends State<PaystubView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SectionCaption('Visits', padding: EdgeInsets.only(top: 8, bottom: 2)),
+                      SectionCaption(tr('Visits'), padding: EdgeInsets.only(top: 8, bottom: 2)),
                       for (var i = 0; i < detail.visitSummary.length; i++)
                         KeyValueRow(
                           showDivider: i > 0,
@@ -169,7 +170,7 @@ class _PaystubViewState extends State<PaystubView> {
                 ),
               if (detail.stubAvailable)
                 VeloraButton(
-                  label: 'View or save PDF',
+                  label: tr('View or save PDF'),
                   icon: VeloraIcons.download,
                   variant: VeloraButtonVariant.ghost,
                   isLoading: _downloading,
@@ -177,7 +178,7 @@ class _PaystubViewState extends State<PaystubView> {
                 ),
               Center(
                 child: VeloraTextLink(
-                  label: 'Question about this paystub? Message the office',
+                  label: tr('Question about this paystub? Message the office'),
                   size: 13.5,
                   onTap: () => AppNavigator.openInbox(context),
                 ),

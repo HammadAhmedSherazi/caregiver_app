@@ -5,7 +5,6 @@ import '../../../data/models/user_model.dart';
 enum AuthStatus {
   initial,
   loading,
-  onboarding,
   unauthenticated,
   authenticated,
 }
@@ -16,12 +15,16 @@ class AuthState extends Equatable {
     this.user,
     this.errorMessage,
     this.isSubmitting = false,
+    this.faceLocked = false,
   });
 
   final AuthStatus status;
   final UserModel? user;
   final String? errorMessage;
   final bool isSubmitting;
+
+  /// A saved session exists but Face ID must unlock it before the app opens.
+  final bool faceLocked;
 
   bool get isLoading => status == AuthStatus.loading;
   bool get isAuthenticated => status == AuthStatus.authenticated;
@@ -31,6 +34,7 @@ class AuthState extends Equatable {
     UserModel? user,
     String? errorMessage,
     bool? isSubmitting,
+    bool? faceLocked,
     bool clearError = false,
     bool clearUser = false,
   }) {
@@ -39,9 +43,11 @@ class AuthState extends Equatable {
       user: clearUser ? null : (user ?? this.user),
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      faceLocked: faceLocked ?? this.faceLocked,
     );
   }
 
   @override
-  List<Object?> get props => [status, user, errorMessage, isSubmitting];
+  List<Object?> get props =>
+      [status, user, errorMessage, isSubmitting, faceLocked];
 }

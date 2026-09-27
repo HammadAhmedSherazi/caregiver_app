@@ -11,6 +11,7 @@ import '../../widgets/auth/auth_screen_shell.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
+import '../../../core/i18n/tr.dart';
 
 class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({super.key});
@@ -40,7 +41,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
     SnackbarHelper.showSuccess(
       context,
-      'Reset instructions sent to your email.',
+      tr('Reset instructions sent to your email.'),
     );
     Navigator.of(context).pop();
   }
@@ -63,15 +64,15 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    const AuthPageHeader(
+                    AuthPageHeader(
                       topSpacing: 100,
-                      title: 'Forgot Password?',
+                      title: tr('Forgot Password?'),
                       subtitle:
-                          'We’ll email you instructions to reset your password.',
+                          tr('We’ll email you instructions to reset your password.'),
                     ),
                     const SizedBox(height: 52),
                     AuthTextField(
-                      hint: 'Enter Email',
+                      hint: tr('Enter Email'),
                       prefixIconAsset: AppAssets.icEmail,
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -82,7 +83,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     ),
                     const SizedBox(height: 18),
                     AuthPrimaryButton(
-                      label: 'Continue',
+                      label: tr('Continue'),
                       height: 60,
                       borderRadius: 14,
                       horizontalPadding: 32,

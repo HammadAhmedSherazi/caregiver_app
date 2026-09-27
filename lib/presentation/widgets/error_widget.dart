@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/i18n/tr.dart';
 
 class ErrorDisplayWidget extends StatelessWidget {
   const ErrorDisplayWidget({
@@ -26,7 +27,7 @@ class ErrorDisplayWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Something went wrong',
+              tr('Something went wrong'),
               style: AppTextStyles.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -47,7 +48,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Try again'),
+                child: Text(tr('Try again')),
               ),
             ],
           ],

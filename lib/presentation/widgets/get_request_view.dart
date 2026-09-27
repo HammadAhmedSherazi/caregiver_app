@@ -4,6 +4,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../core/theme/app_colors.dart';
 import 'error_widget.dart';
+import '../../core/i18n/tr.dart';
 
 /// Wraps GET API screens: skeleton while loading, error + retry on failure.
 class GetRequestView extends StatelessWidget {
@@ -74,7 +75,7 @@ class PostActionListener<C extends StateStreamable<S>, S> extends StatelessWidge
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
-              content: Text(message),
+              content: Text(tr(message)),
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/velora_theme.dart';
 import 'velora_icon.dart';
+import '../../../core/i18n/tr.dart';
 
 /// White rounded card with the soft two-layer shadow (`.card`).
 class VeloraCard extends StatelessWidget {
@@ -498,9 +499,9 @@ class YesNoToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _option('No', value == false, () => onChanged(false))),
+        Expanded(child: _option(tr('No'), value == false, () => onChanged(false))),
         const SizedBox(width: 8),
-        Expanded(child: _option('Yes', value == true, () => onChanged(true))),
+        Expanded(child: _option(tr('Yes'), value == true, () => onChanged(true))),
       ],
     );
   }

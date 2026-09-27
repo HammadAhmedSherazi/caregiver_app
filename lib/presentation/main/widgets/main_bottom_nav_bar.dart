@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Bottom tabs from the VELORA design: Home · Time · Check-in · Pay · Docs.
 enum MainTab { home, time, checkIn, pay, docs }
@@ -15,12 +16,13 @@ class MainBottomNavBar extends StatelessWidget {
   final MainTab selectedTab;
   final ValueChanged<MainTab> onTabSelected;
 
-  static const _items = [
-    VeloraTabItem(icon: VeloraIcons.home, label: 'Home'),
-    VeloraTabItem(icon: VeloraIcons.clock, label: 'Time'),
-    VeloraTabItem(icon: VeloraIcons.clipboardCheck, label: 'Check-in'),
-    VeloraTabItem(icon: VeloraIcons.wallet, label: 'Pay'),
-    VeloraTabItem(icon: VeloraIcons.folder, label: 'Docs'),
+  // A getter, not a static list: tab labels follow the current language.
+  static List<VeloraTabItem> get _items => [
+    VeloraTabItem(icon: VeloraIcons.home, label: tr('Home')),
+    VeloraTabItem(icon: VeloraIcons.clock, label: tr('Time')),
+    VeloraTabItem(icon: VeloraIcons.clipboardCheck, label: tr('Check-in')),
+    VeloraTabItem(icon: VeloraIcons.wallet, label: tr('Pay')),
+    VeloraTabItem(icon: VeloraIcons.folder, label: tr('Docs')),
   ];
 
   @override

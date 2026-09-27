@@ -7,6 +7,7 @@ import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/client_model.dart';
 import '../../home/widgets/home_svg_icon.dart';
 import '../../widgets/user_avatar.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2202` — client row with call action inside list card.
 class ClientListSection extends StatelessWidget {
@@ -305,7 +306,7 @@ class ClientCarePlanList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Daily care plan',
+          tr('Daily care plan'),
           style: context.responsiveStyle(
             AppTextStyles.titleMedium.copyWith(
               fontWeight: FontWeight.w700,

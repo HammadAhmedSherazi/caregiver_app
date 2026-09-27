@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/di/service_locator.dart';
+import '../../../core/network/api_config.dart';
+import '../../../data/repositories/visit_repository.dart';
+import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/home_dashboard_model.dart';
 import '../../widgets/velora/velora.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
+import '../../../core/i18n/tr.dart';
 
 /// "Before you go" bottom sheet shown when the caregiver taps Clock out.
 ///
-/// Sends `POST /visits/clock-out` through [HomeCubit.endShift]. The API has no
-/// dedicated fields for the two check-in questions yet, so their answers are
-/// appended to the clock-out `notes` so the office still receives them.
-/// Care tasks toggle through the existing visit-task API.
+/// Sends `POST /visits/clock-out` through [HomeCubit.endShift].
+///
+/// * Planned API on (`ApiConfig.veloraApiEnabled`): the answers go in the
+///   contract fields `hospital` / `care_not_given` and `notes` stays the
+///   caregiver's own note.
+/// * Planned API off (today): those fields don't exist on the live API, so
+///   the answers are appended to `notes` so the office still receives them.
+///
+/// Services: with the planned API on, the 6 quick picks come from
+/// `GET /services/catalog` (`summary`) and are sent as `services[]`.
+/// Otherwise (or if the catalog can't load) care tasks toggle through the
+/// existing visit-task API.
 class ClockOutSheet extends StatefulWidget {
   const ClockOutSheet({super.key, required this.shift});
 
@@ -46,6 +59,23 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
   DateTime? _hospitalTo;
   final _careGapController = TextEditingController();
   final _notesController = TextEditingController();
+  ServiceCatalogModel? _catalog;
+  final _services = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    if (ApiConfig.veloraApiEnabled) _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    try {
+      final catalog = await sl<VisitRepository>().getServiceCatalog();
+      if (mounted && catalog.summary.isNotEmpty) setState(() => _catalog = catalog);
+    } catch (_) {
+      // Falls back to the visit care tasks.
+    }
+  }
 
   @override
   void dispose() {
@@ -78,6 +108,18 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
     setState(() => from ? _hospitalFrom = picked : _hospitalTo = picked);
   }
 
+  ClockOutAnswers _answers() => ClockOutAnswers(
+        hospital: _hospital == true
+            ? HospitalStayModel(
+                wasInHospital: true,
+                from: _hospitalFrom,
+                to: _hospitalTo,
+              )
+            : const HospitalStayModel.none(),
+        careNotGiven: _careGap == true,
+        services: _services.toList(),
+      );
+
   String _composeNotes() {
     final lines = <String>[];
     final note = _notesController.text.trim();
@@ -105,10 +147,17 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
 
   Future<void> _clockOut() async {
     final cubit = context.read<HomeCubit>();
+    final structured = ApiConfig.veloraApiEnabled;
+    final gap = _careGapController.text.trim();
+    final ownNote = [
+      _notesController.text.trim(),
+      if (_careGap == true && gap.isNotEmpty) 'Care not given: $gap',
+    ].where((l) => l.isNotEmpty).join('\n');
     await cubit.endShift(
       visitId: widget.shift.visitId,
       scheduleId: widget.shift.scheduleId,
-      notes: _composeNotes(),
+      notes: structured ? ownNote : _composeNotes(),
+      answers: structured ? _answers() : null,
     );
     if (!mounted) return;
     final failed = cubit.state.errorMessage != null;
@@ -135,9 +184,9 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Expanded(child: Text('Before you go', style: VeloraText.display(21))),
+                  Expanded(child: Text(tr('Before you go'), style: VeloraText.display(21))),
                   VeloraTextLink(
-                    label: 'Not yet',
+                    label: tr('Not yet'),
                     size: 13.5,
                     onTap: () => Navigator.of(context).pop(false),
                   ),
@@ -145,7 +194,7 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
               ),
               const SizedBox(height: 14),
               _Question(
-                text: 'Was $firstName in the hospital or a nursing home since your last visit?',
+                text: tr('Was {0} in the hospital or a nursing home since your last visit?', [firstName]),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -171,7 +220,7 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
               ),
               const SizedBox(height: 14),
               _Question(
-                text: 'Was there any care $firstName needed that you couldn\'t give?',
+                text: tr('Was there any care {0} needed that you couldn\'t give?', [firstName]),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -183,7 +232,7 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
                       const SizedBox(height: 10),
                       VeloraTextField(
                         controller: _careGapController,
-                        hint: 'What couldn\'t you do, and why?',
+                        hint: tr('What couldn\'t you do, and why?'),
                         maxLines: 3,
                         minLines: 3,
                       ),
@@ -191,20 +240,27 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
                   ],
                 ),
               ),
-              if (widget.shift.careTasks.isNotEmpty) ...[
+              if (_catalog case final catalog?) ...[
                 const SizedBox(height: 14),
-                Text.rich(
-                  TextSpan(
-                    text: 'What did you help with today? ',
-                    children: [
-                      TextSpan(
-                        text: '(tap any)',
-                        style: VeloraText.body(13, weight: FontWeight.w500, color: VeloraColors.muted),
+                _servicesPrompt(),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    for (final service in catalog.summary)
+                      VeloraChoiceChip(
+                        label: service.label,
+                        selected: _services.contains(service.id),
+                        onTap: () => setState(() {
+                          if (!_services.remove(service.id)) _services.add(service.id);
+                        }),
                       ),
-                    ],
-                  ),
-                  style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.body),
+                  ],
                 ),
+              ] else if (widget.shift.careTasks.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                _servicesPrompt(),
                 const SizedBox(height: 8),
                 BlocBuilder<HomeCubit, HomeState>(
                   buildWhen: (p, c) =>
@@ -232,8 +288,8 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
               const SizedBox(height: 14),
               VeloraTextField(
                 controller: _notesController,
-                label: 'Anything else the office should know? (optional)',
-                hint: 'e.g. $firstName seemed more tired than usual',
+                label: tr('Anything else the office should know? (optional)'),
+                hint: tr('e.g. {0} seemed more tired than usual', [firstName]),
                 maxLines: 3,
                 minLines: 2,
               ),
@@ -242,7 +298,7 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
                 buildWhen: (p, c) => p.isClockingOut != c.isClockingOut,
                 builder: (context, state) {
                   return VeloraButton(
-                    label: _ready ? 'Clock out' : 'Answer both questions',
+                    label: _ready ? tr('Clock out') : tr('Answer both questions'),
                     icon: _ready ? VeloraIcons.stop : null,
                     big: true,
                     isLoading: state.isClockingOut,
@@ -252,7 +308,7 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Clocking out confirms today\'s visit and answers are true.',
+                tr('Clocking out confirms today\'s visit and answers are true.'),
                 textAlign: TextAlign.center,
                 style: VeloraText.body(11.5, color: VeloraColors.muted),
               ),
@@ -263,6 +319,19 @@ class _ClockOutSheetState extends State<ClockOutSheet> {
     );
   }
 }
+
+Widget _servicesPrompt() => Text.rich(
+      TextSpan(
+        text: tr('What did you help with today? '),
+        children: [
+          TextSpan(
+            text: tr('(tap any)'),
+            style: VeloraText.body(13, weight: FontWeight.w500, color: VeloraColors.muted),
+          ),
+        ],
+      ),
+      style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.body),
+    );
 
 class _Question extends StatelessWidget {
   const _Question({required this.text, required this.child});
@@ -315,23 +384,25 @@ class _HospitalDates extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: DateField(label: 'From', value: from, onTap: onPickFrom)),
+              Expanded(child: DateField(label: tr('From'), value: from, onTap: onPickFrom)),
               const SizedBox(width: 8),
-              Expanded(child: DateField(label: 'To', value: to, onTap: onPickTo)),
+              Expanded(child: DateField(label: tr('To'), value: to, onTap: onPickTo)),
             ],
           ),
           if (days > 0) ...[
             const SizedBox(height: 10),
             VeloraNote(
               boxed: false,
-              text: '$days ${days == 1 ? 'day' : 'days'} will be reported to the office '
-                  'as hospital days with this clock-out.',
+              text: days == 1
+                  ? tr('1 day will be reported to the office as hospital days with this clock-out.')
+                  : tr('{0} days will be reported to the office as hospital days with this clock-out.',
+                      [days]),
             ),
           ],
           if (invalidRange) ...[
             const SizedBox(height: 10),
             Text(
-              'The "To" date needs to be on or after the "From" date.',
+              tr('The "To" date needs to be on or after the "From" date.'),
               style: VeloraText.body(12.5, color: VeloraColors.dangerText),
             ),
           ],
@@ -381,7 +452,7 @@ class DateField extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        v == null ? 'Select date' : '${v.month}/${v.day}/${v.year}',
+                        v == null ? tr('Select date') : '${v.month}/${v.day}/${v.year}',
                         style: VeloraText.body(
                           14,
                           color: v == null ? VeloraColors.faint : VeloraColors.ink,

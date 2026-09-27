@@ -2,6 +2,7 @@ import '../../../core/base/base_cubit.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/profile_repository.dart';
 import 'profile_state.dart';
+import '../../../core/i18n/tr.dart';
 
 class ProfileCubit extends BaseCubit<ProfileState> {
   ProfileCubit({required this.repository}) : super(const ProfileState());
@@ -24,7 +25,7 @@ class ProfileCubit extends BaseCubit<ProfileState> {
       emit(
         state.copyWith(
           status: ProfileStatus.failure,
-          errorMessage: 'Failed to load profile. Please try again.',
+          errorMessage: tr('Failed to load profile. Please try again.'),
         ),
       );
     }

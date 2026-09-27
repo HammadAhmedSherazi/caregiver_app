@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class PayItemModel extends BaseModel {
   const PayItemModel({
@@ -14,6 +15,9 @@ class PayItemModel extends BaseModel {
     this.clientName,
     required this.stubAvailable,
     this.stubUrl,
+    this.monthLabel,
+    this.net,
+    this.paidOnLabel,
   });
 
   final int id;
@@ -29,6 +33,15 @@ class PayItemModel extends BaseModel {
   final bool stubAvailable;
   final String? stubUrl;
 
+  /// e.g. "August". 🚧 Planned.
+  final String? monthLabel;
+
+  /// Server-provided net pay (nullable). 🚧 Planned.
+  final double? net;
+
+  /// 🚧 Planned.
+  final String? paidOnLabel;
+
   factory PayItemModel.fromJson(Map<String, dynamic> json) {
     return PayItemModel(
       id: (json['id'] as num).toInt(),
@@ -43,6 +56,9 @@ class PayItemModel extends BaseModel {
       clientName: json['client_name'] as String?,
       stubAvailable: json['stub_available'] as bool? ?? false,
       stubUrl: json['stub_url'] as String?,
+      monthLabel: str(json['month_label']),
+      net: dblOrNull(json['net']),
+      paidOnLabel: str(json['paid_on_label']),
     );
   }
 
@@ -63,7 +79,7 @@ class PayItemModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [
+  List<Object?> get props => [monthLabel, net, paidOnLabel, 
         id,
         period,
         periodKey,

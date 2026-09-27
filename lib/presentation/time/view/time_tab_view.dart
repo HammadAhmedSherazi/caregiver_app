@@ -10,6 +10,7 @@ import '../../widgets/velora/velora.dart';
 import '../cubit/time_cubit.dart';
 import '../visit_summary.dart';
 import 'fix_visit_view.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Time tab: this week's visits and the month calendar (`GET /visits`).
 class TimeTabView extends StatefulWidget {
@@ -32,15 +33,15 @@ class _TimeTabViewState extends State<TimeTabView> {
           underTabBar: true,
           onRefresh: () => context.read<TimeCubit>().load(),
           header: VeloraHeader(
-            title: 'Time',
+            title: tr('Time'),
             subtitle: clients.length == 1
-                ? 'Your visits with ${clients.first}'
-                : 'Your visits',
+                ? tr('Your visits with {0}', [clients.first])
+                : tr('Your visits'),
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
             bottom: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: _HeaderSegmented(
-                labels: ['This week', VeloraFormat.monthName(now.month)],
+                labels: [tr('This week'), VeloraFormat.monthName(now.month)],
                 selected: _month ? 1 : 0,
                 onChanged: (i) => setState(() => _month = i == 1),
               ),
@@ -49,11 +50,11 @@ class _TimeTabViewState extends State<TimeTabView> {
           children: [
             if (state.hasError)
               VeloraErrorState(
-                message: state.errorMessage ?? 'We couldn\'t load your visits.',
+                message: state.errorMessage ?? tr('We couldn\'t load your visits.'),
                 onRetry: () => context.read<TimeCubit>().load(),
               )
             else if (state.isLoading || state.status == TimeStatus.initial)
-              const VeloraLoadingState(message: 'Loading your visits…')
+              VeloraLoadingState(message: tr('Loading your visits…'))
             else if (_month)
               ..._monthChildren(context, VisitPeriodSummary.month(state.visits), now)
             else
@@ -76,12 +77,12 @@ class _TimeTabViewState extends State<TimeTabView> {
 
     return [
       _SummaryCard(
-        leftCaption: 'Days worked',
+        leftCaption: tr('Days worked'),
         left: '${week.daysWorked}',
-        rightCaption: 'Hours',
+        rightCaption: tr('Hours'),
         right: VeloraFormat.duration(week.total),
         note: '${VeloraFormat.monthDay(start)} – ${VeloraFormat.monthDay(end)}'
-            '${week.fixCount > 0 ? ' · Days missing a clock-out count once they\'re fixed.' : ''}',
+            '${week.fixCount > 0 ? ' · ${tr('Days missing a clock-out count once they\'re fixed.')}' : ''}',
       ),
       VeloraCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -107,9 +108,9 @@ class _TimeTabViewState extends State<TimeTabView> {
 
     return [
       _SummaryCard(
-        leftCaption: 'Days worked',
+        leftCaption: tr('Days worked'),
         left: '${month.daysWorked}',
-        rightCaption: 'Hours',
+        rightCaption: tr('Hours'),
         right: VeloraFormat.duration(month.total),
       ),
       VeloraCard(
@@ -117,9 +118,9 @@ class _TimeTabViewState extends State<TimeTabView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SectionCaption(
-              'Clock-ins completed',
+              tr('Clock-ins completed'),
               trailing: StatusPill(
-                '$completed of ${visits.length}',
+                tr('{0} of {1}', [completed, visits.length]),
                 tone: rate >= 0.85 || visits.isEmpty ? PillTone.good : PillTone.warn,
               ),
             ),
@@ -128,9 +129,8 @@ class _TimeTabViewState extends State<TimeTabView> {
             const SizedBox(height: 6),
             Text(
               visits.isEmpty
-                  ? 'No visits yet this month.'
-                  : '${(rate * 100).round()}% this month. Please keep every visit clocked in and out '
-                      '— the state checks that at least 85% are.',
+                  ? tr('No visits yet this month.')
+                  : tr('{0}% this month. Please keep every visit clocked in and out — the state checks that at least 85% are.', [(rate * 100).round()]),
               style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.45),
             ),
           ],
@@ -144,13 +144,13 @@ class _TimeTabViewState extends State<TimeTabView> {
             const SizedBox(height: 10),
             _MonthCalendar(month: month),
             const SizedBox(height: 12),
-            const Wrap(
+            Wrap(
               spacing: 14,
               runSpacing: 6,
               children: [
-                _Legend(color: VeloraColors.teal, label: 'Worked'),
-                _Legend(color: VeloraColors.amber, label: 'Needs a fix'),
-                _Legend(color: VeloraColors.muteBg, label: 'Not worked', bordered: true),
+                _Legend(color: VeloraColors.teal, label: tr('Worked')),
+                _Legend(color: VeloraColors.amber, label: tr('Needs a fix')),
+                _Legend(color: VeloraColors.muteBg, label: tr('Not worked'), bordered: true),
               ],
             ),
           ],
@@ -317,12 +317,12 @@ class _DayRow extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            day.isToday ? 'Not started' : 'Day off',
+                            day.isToday ? tr('Not started') : tr('Day off'),
                             style: VeloraText.body(14.5, weight: FontWeight.w700, color: VeloraColors.muted),
                           ),
                         ),
                         StatusPill(
-                          day.isToday ? 'Today' : 'Not worked',
+                          day.isToday ? tr('Today') : tr('Not worked'),
                           tone: day.isToday ? PillTone.info : PillTone.mute,
                         ),
                       ],
@@ -356,10 +356,10 @@ class _VisitLine extends StatelessWidget {
     final worked = visit.worked;
 
     final (label, tone) = visit.isMissingClockOut
-        ? ('No clock-out', PillTone.warn)
+        ? (tr('No clock-out'), PillTone.warn)
         : visit.isOpenToday
-            ? ('In progress', PillTone.info)
-            : ('Sent', PillTone.good);
+            ? (tr('In progress'), PillTone.info)
+            : (tr('Sent'), PillTone.good);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,7 +380,7 @@ class _VisitLine extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           visit.isMissingClockOut
-              ? 'The clock was never stopped for this visit.'
+              ? tr('The clock was never stopped for this visit.')
               : [
                   if (worked != null) VeloraFormat.duration(worked),
                   visit.clientName,
@@ -390,7 +390,7 @@ class _VisitLine extends StatelessWidget {
         if (visit.isMissingClockOut) ...[
           const SizedBox(height: 8),
           _SmallButton(
-            label: 'Add clock-out time',
+            label: tr('Add clock-out time'),
             onTap: () => AppNavigator.openFixVisit(
               context,
               args: FixVisitArgs.fromVisit(visit),
@@ -399,7 +399,7 @@ class _VisitLine extends StatelessWidget {
         ] else if (visit.isOpenToday) ...[
           const SizedBox(height: 8),
           _SmallButton(
-            label: 'Clock out from Home',
+            label: tr('Clock out from Home'),
             onTap: () => AppNavigator.goToTab(context, MainTab.home),
           ),
         ],
@@ -573,7 +573,7 @@ class _UpcomingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionCaption('Coming up', padding: EdgeInsets.only(top: 8, bottom: 2)),
+          SectionCaption(tr('Coming up'), padding: EdgeInsets.only(top: 8, bottom: 2)),
           for (var i = 0; i < sorted.length && i < 6; i++)
             Builder(
               builder: (context) {

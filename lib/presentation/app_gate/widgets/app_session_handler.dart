@@ -16,6 +16,7 @@ import '../../documents/cubit/documents_cubit.dart';
 import '../../home/cubit/home_cubit.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../time/cubit/time_cubit.dart';
+import '../../../core/i18n/tr.dart';
 
 class AppSessionHandler extends StatefulWidget {
   const AppSessionHandler({
@@ -103,7 +104,7 @@ class _AppSessionHandlerState extends State<AppSessionHandler>
             ..hideCurrentSnackBar()
             ..showSnackBar(
               SnackBar(
-                content: Text(message),
+                content: Text(tr(message)),
                 backgroundColor: AppColors.error,
                 behavior: SnackBarBehavior.floating,
               ),

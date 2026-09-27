@@ -13,6 +13,7 @@ import '../../widgets/auth/auth_text_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import 'email_verification_view.dart';
+import '../../../core/i18n/tr.dart';
 
 class SignupView extends StatefulWidget {
   const SignupView({super.key});
@@ -92,7 +93,7 @@ class _SignupViewState extends State<SignupView> {
                     // ),
                     const SizedBox(height: 14),
                     AuthTextField(
-                      hint: 'Enter Email',
+                      hint: tr('Enter Email'),
                       prefixIconAsset: AppAssets.icEmail,
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -102,7 +103,7 @@ class _SignupViewState extends State<SignupView> {
                     ),
                     const SizedBox(height: 14),
                     AuthTextField(
-                      hint: 'Password',
+                      hint: tr('Password'),
                       prefixIconAsset: AppAssets.icPassword,
                       controller: _passwordController,
                       obscureText: true,
@@ -111,12 +112,12 @@ class _SignupViewState extends State<SignupView> {
                       validator: (value) => FormValidators.minLength(
                         value,
                         8,
-                        fieldName: 'Password',
+                        fieldName: tr('Password'),
                       ),
                     ),
                     const SizedBox(height: 14),
                     AuthTextField(
-                      hint: 'Re - Enter Password',
+                      hint: tr('Re - Enter Password'),
                       prefixIconAsset: AppAssets.icPassword,
                       controller: _confirmPasswordController,
                       obscureText: true,
@@ -125,19 +126,19 @@ class _SignupViewState extends State<SignupView> {
                       validator: (value) {
                         final requiredError = FormValidators.required(
                           value,
-                          fieldName: 'Confirm password',
+                          fieldName: tr('Confirm password'),
                         );
                         if (requiredError != null) return requiredError;
 
                         if (value != _passwordController.text) {
-                          return 'Passwords do not match';
+                          return tr('Passwords do not match');
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 32),
                     AuthPrimaryButton(
-                      label: 'Signup',
+                      label: tr('Signup'),
                       height: 60,
                       borderRadius: 14,
                       horizontalPadding: 32,
@@ -146,8 +147,8 @@ class _SignupViewState extends State<SignupView> {
                       onPressed: _onSubmit,
                     ),
                     AuthPageFooter(
-                      title: 'Already have an account?',
-                      actionLabel: 'Sign in',
+                      title: tr('Already have an account?'),
+                      actionLabel: tr('Sign in'),
                       onActionTap: () => Navigator.of(context).pop(),
                     ),
                   ],

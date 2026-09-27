@@ -5,6 +5,8 @@ import '../api/caregiver_api.dart';
 import '../local/session_storage.dart';
 import '../local/token_storage.dart';
 import '../models/user_model.dart';
+import '../api/velora_api.dart';
+import '../models/api/velora/velora_models.dart';
 
 abstract class AuthRepository {
   Future<bool> isOnboardingCompleted();
@@ -35,6 +37,25 @@ abstract class AuthRepository {
   Future<void> logout();
   Future<void> clearLocalSession();
   Future<bool> refreshSession();
+
+  // 🚧 PLANNED — NOT LIVE (MOBILE_API_VELORA.md §1). Email + password keeps
+  // working alongside phone sign-in (Open decision D5).
+
+  /// `POST /auth/phone/send-code`.
+  Future<PhoneCodeSentModel> sendPhoneCode({required String phone});
+
+  /// `POST /auth/phone/verify` — signs in and stores the session like [login].
+  Future<PhoneVerifyResultModel> verifyPhoneCode({
+    required String phone,
+    required String code,
+    required String deviceName,
+  });
+
+  /// `POST /auth/invite/check`.
+  Future<InviteDetailsModel> checkInvite({required String code});
+
+  /// `POST /auth/invite/confirm` — then [verifyPhoneCode].
+  Future<PhoneCodeSentModel> confirmInvite({required String code, required String phone});
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -42,7 +63,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required this._api,
     required this._tokenStorage,
     required this._sessionStorage,
+    required this._velora,
   });
+
+  final VeloraApi _velora;
 
   static const _keyOnboardingCompleted = 'onboarding_completed';
 
@@ -201,6 +225,62 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (_) {
       return false;
     }
+  }
+
+  @override
+  Future<PhoneCodeSentModel> sendPhoneCode({required String phone}) {
+    final normalized = PhoneAuthRules.normalizeUsPhone(phone);
+    if (normalized == null) {
+      throw RequestValidationException({
+        'phone': ['Enter a 10-digit mobile number.'],
+      });
+    }
+    return _velora.sendPhoneCode(phone: normalized);
+  }
+
+  @override
+  Future<PhoneVerifyResultModel> verifyPhoneCode({
+    required String phone,
+    required String code,
+    required String deviceName,
+  }) async {
+    final normalized = PhoneAuthRules.normalizeUsPhone(phone);
+    if (normalized == null || !PhoneAuthRules.isValidCode(code)) {
+      throw RequestValidationException({
+        if (normalized == null) 'phone': ['Enter a 10-digit mobile number.'],
+        if (!PhoneAuthRules.isValidCode(code)) 'code': ['Enter the 6-digit code.'],
+      });
+    }
+    final result = await _velora.verifyPhoneCode(
+      phone: normalized,
+      code: code.trim(),
+      deviceName: deviceName,
+    );
+    _cachedUser = result.user;
+    await _sessionStorage.saveUser(result.user);
+    return result;
+  }
+
+  @override
+  Future<InviteDetailsModel> checkInvite({required String code}) {
+    final normalized = PhoneAuthRules.normalizeInvite(code);
+    if (normalized.isEmpty) {
+      throw RequestValidationException({
+        'code': ['Enter your invite code.'],
+      });
+    }
+    return _velora.checkInvite(code: normalized);
+  }
+
+  @override
+  Future<PhoneCodeSentModel> confirmInvite({required String code, required String phone}) {
+    final normalized = PhoneAuthRules.normalizeUsPhone(phone);
+    if (normalized == null) {
+      throw RequestValidationException({
+        'phone': ['Enter a 10-digit mobile number.'],
+      });
+    }
+    return _velora.confirmInvite(code: PhoneAuthRules.normalizeInvite(code), phone: normalized);
   }
 }
 

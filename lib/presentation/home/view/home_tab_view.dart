@@ -10,6 +10,8 @@ import '../../../data/models/home_dashboard_model.dart';
 import '../../../data/models/task_page_model.dart';
 import '../../../data/repositories/client_repository.dart';
 import '../../clients/view/client_profile_view.dart';
+import '../../../data/models/api/velora/velora_models.dart';
+import '../../main/app_action_router.dart';
 import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../task/cubit/task_cubit.dart';
@@ -22,6 +24,7 @@ import '../../widgets/velora/velora.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 import '../widgets/clock_out_sheet.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Home tab: greeting, the visit card (clock in / timer / clock out),
 /// this week, what needs attention, report a change and pay.
@@ -55,9 +58,8 @@ class _HomeTabViewState extends State<HomeTabView> {
     final end = DateTime.now();
     setState(() {
       _savedSummary = startedAt == null
-          ? 'Sent to the office'
-          : '${VeloraFormat.time(startedAt)} – ${VeloraFormat.time(end)} · '
-              '${VeloraFormat.duration(end.difference(startedAt))} · sent to the office';
+          ? tr('Sent to the office')
+          : tr('{0} – {1} · {2} · sent to the office', [VeloraFormat.time(startedAt), VeloraFormat.time(end), VeloraFormat.duration(end.difference(startedAt))]);
     });
     unawaited(context.read<TimeCubit>().load());
   }
@@ -98,11 +100,11 @@ class _HomeTabViewState extends State<HomeTabView> {
                 if (dashboard == null && state.hasError)
                   VeloraErrorState(
                     message: state.errorMessage ??
-                        'We couldn\'t load your day. Check your connection and try again.',
+                        tr('We couldn\'t load your day. Check your connection and try again.'),
                     onRetry: () => context.read<HomeCubit>().loadDashboard(),
                   )
                 else if (dashboard == null)
-                  const VeloraLoadingState(message: 'Loading your day…')
+                  VeloraLoadingState(message: tr('Loading your day…'))
                 else ...[
                   _VisitCard(
                     dashboard: dashboard,
@@ -117,8 +119,8 @@ class _HomeTabViewState extends State<HomeTabView> {
                     child: VeloraListRow(
                       showDivider: false,
                       leading: const IconTile(VeloraIcons.warning, tone: IconTileTone.danger),
-                      title: 'Report a change',
-                      subtitle: 'Hospital stay, a fall, or you can\'t work',
+                      title: tr('Report a change'),
+                      subtitle: tr('Hospital stay, a fall, or you can\'t work'),
                       onTap: () => AppNavigator.openReportChange(context),
                     ),
                   ),
@@ -167,7 +169,7 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
           _CircleButton(
-            semanticLabel: hasUnread ? 'Inbox, new messages' : 'Inbox',
+            semanticLabel: hasUnread ? tr('Inbox, new messages') : tr('Inbox'),
             onTap: () => AppNavigator.openInbox(context),
             child: Stack(
               clipBehavior: Clip.none,
@@ -192,7 +194,7 @@ class _HomeHeader extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           _CircleButton(
-            semanticLabel: 'Your profile',
+            semanticLabel: tr('Your profile'),
             onTap: () => AppNavigator.openProfile(context),
             background: VeloraColors.mint,
             ring: true,
@@ -310,7 +312,7 @@ class _VisitCardState extends State<_VisitCard> {
     final client = await sl<ClientRepository>().findByName(clientName);
     if (!mounted) return;
     if (client == null) {
-      showVeloraToast(context, 'Client details aren\'t available right now.');
+      showVeloraToast(context, tr('Client details aren\'t available right now.'));
       return;
     }
     await Navigator.of(context).push(
@@ -325,15 +327,15 @@ class _VisitCardState extends State<_VisitCard> {
     final inProgress = shift?.isInProgress ?? false;
 
     final (caption, pill, tone) = switch ((inProgress, saved != null)) {
-      (true, _) => ('Visit in progress', 'Clocked in', PillTone.good),
-      (false, true) => ('Today', 'Done', PillTone.good),
-      _ => ('Your client', 'Not clocked in', PillTone.mute),
+      (true, _) => (tr('Visit in progress'), tr('Clocked in'), PillTone.good),
+      (false, true) => (tr('Today'), tr('Done'), PillTone.good),
+      _ => (tr('Your client'), tr('Not clocked in'), PillTone.mute),
     };
 
     final Widget body;
     if (shift == null && saved == null) {
       body = Text(
-        'No visits scheduled right now. When the office assigns your next visit it will show here.',
+        tr('No visits scheduled right now. When the office assigns your next visit it will show here.'),
         style: VeloraText.body(13.5, color: VeloraColors.muted, height: 1.45),
       );
     } else if (inProgress) {
@@ -373,7 +375,7 @@ class _VisitCardState extends State<_VisitCard> {
                 minHeight: 48,
                 leading: InitialsTile(entry.initials, size: 36),
                 title: entry.clientName,
-                subtitle: 'Also today · ${entry.timeLabel}',
+                subtitle: tr('Also today · {0}', [entry.timeLabel]),
                 showChevron: false,
               ),
           ],
@@ -394,7 +396,7 @@ class _IdleBody extends StatelessWidget {
     final time = shift.cardScheduleLabel;
     return Semantics(
       button: true,
-      label: 'Open visit with ${shift.clientName}',
+      label: tr('Open visit with {0}', [shift.clientName]),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
@@ -410,8 +412,8 @@ class _IdleBody extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     time.isEmpty || time == '—'
-                        ? 'No set time · tap to start a visit'
-                        : '$time · tap to start a visit',
+                        ? tr('No set time · tap to start a visit')
+                        : tr('{0} · tap to start a visit', [time]),
                     style: VeloraText.subtitle,
                   ),
                 ],
@@ -510,7 +512,7 @@ class _OpenBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         VeloraButton(
-          label: 'Clock in now',
+          label: tr('Clock in now'),
           icon: VeloraIcons.clock,
           big: true,
           isLoading: busy,
@@ -519,7 +521,7 @@ class _OpenBody extends StatelessWidget {
         const SizedBox(height: 4),
         Align(
           alignment: Alignment.centerLeft,
-          child: VeloraTextLink(label: 'Client details', onTap: onDetails),
+          child: VeloraTextLink(label: tr('Client details'), onTap: onDetails),
         ),
       ],
     );
@@ -547,14 +549,14 @@ class _OnShiftBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'With ${VeloraFormat.firstName(shift.clientName)}',
+                    tr('With {0}', [VeloraFormat.firstName(shift.clientName)]),
                     style: VeloraText.body(17, weight: FontWeight.w700),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     started != null
-                        ? 'Clocked in at ${VeloraFormat.time(started)}'
-                        : (shift.startedAtLabel ?? 'Clocked in'),
+                        ? tr('Clocked in at {0}', [VeloraFormat.time(started)])
+                        : (shift.startedAtLabel ?? tr('Clocked in')),
                     style: VeloraText.subtitle,
                   ),
                 ],
@@ -568,7 +570,7 @@ class _OnShiftBody extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         VeloraButton(
-          label: 'Clock out',
+          label: tr('Clock out'),
           icon: VeloraIcons.stop,
           big: true,
           variant: VeloraButtonVariant.outline,
@@ -610,7 +612,7 @@ class _LiveTimerState extends State<_LiveTimer> {
     final elapsed = DateTime.now().difference(widget.startedAt);
     return Semantics(
       liveRegion: false,
-      label: 'Time on shift ${VeloraFormat.duration(elapsed)}',
+      label: tr('Time on shift {0}', [VeloraFormat.duration(elapsed)]),
       excludeSemantics: true,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -655,7 +657,7 @@ class _SavedBody extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Visit saved', style: VeloraText.body(17, weight: FontWeight.w700)),
+                  Text(tr('Visit saved'), style: VeloraText.body(17, weight: FontWeight.w700)),
                   const SizedBox(height: 2),
                   Text(summary, style: VeloraText.subtitle),
                 ],
@@ -664,7 +666,7 @@ class _SavedBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        VeloraTextLink(label: 'Start another visit', size: 13.5, onTap: onStartAnother),
+        VeloraTextLink(label: tr('Start another visit'), size: 13.5, onTap: onStartAnother),
       ],
     );
   }
@@ -687,9 +689,9 @@ class _ThisWeekCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SectionCaption(
-                'This week',
+                tr('This week'),
                 trailing: VeloraTextLink(
-                  label: 'See hours',
+                  label: tr('See hours'),
                   onTap: () => AppNavigator.goToTab(context, MainTab.time),
                 ),
               ),
@@ -699,7 +701,7 @@ class _ThisWeekCard extends StatelessWidget {
                   child: LinearProgressIndicator(color: VeloraColors.teal, backgroundColor: VeloraColors.mint),
                 )
               else if (state.hasError)
-                Text('Couldn\'t load this week\'s visits.', style: VeloraText.subtitle)
+                Text(tr('Couldn\'t load this week\'s visits.'), style: VeloraText.subtitle)
               else ...[
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -709,8 +711,8 @@ class _ThisWeekCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '${week.daysWorked == 1 ? 'day' : 'days'} worked · '
-                        '${VeloraFormat.duration(week.total)}',
+                        tr(week.daysWorked == 1 ? 'day worked · {0}' : 'days worked · {0}',
+                            [VeloraFormat.duration(week.total)]),
                         style: VeloraText.body(14, weight: FontWeight.w600, color: VeloraColors.muted),
                       ),
                     ),
@@ -726,8 +728,10 @@ class _ThisWeekCard extends StatelessWidget {
                 if (week.fixCount > 0) ...[
                   const SizedBox(height: 12),
                   Text(
-                    '${week.fixCount} ${week.fixCount == 1 ? 'visit needs' : 'visits need'} a clock-out time before '
-                    '${week.fixCount == 1 ? 'it counts' : 'they count'}.',
+                    week.fixCount == 1
+                        ? tr('1 visit needs a clock-out time before it counts.')
+                        : tr('{0} visits need a clock-out time before they count.',
+                            [week.fixCount]),
                     style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.45),
                   ),
                 ],
@@ -754,10 +758,10 @@ class _DayDot extends StatelessWidget {
             : day.isToday
                 ? (Colors.white, VeloraColors.brand, '${day.date.day}', VeloraColors.amber)
                 : (VeloraColors.muteBg, VeloraColors.chevron, day.isFuture ? '${day.date.day}' : '–', null);
-    final label = day.isToday ? 'Today' : VeloraFormat.weekdayShort(day.date);
+    final label = day.isToday ? tr('Today') : VeloraFormat.weekdayShort(day.date);
 
     return Semantics(
-      label: '$label: ${day.needsFix ? 'needs a clock-out' : day.worked ? 'worked' : 'not worked'}',
+      label: '$label: ${day.needsFix ? tr('needs a clock-out') : day.worked ? tr('worked') : tr('not worked')}',
       excludeSemantics: true,
       child: Column(
         children: [
@@ -813,11 +817,39 @@ class _AttentionItem {
 class _AttentionCard extends StatelessWidget {
   const _AttentionCard();
 
+  /// Server-ordered `needs_attention` (VELORA `/dashboard`, planned).
+  List<_AttentionItem> _serverItems(
+    BuildContext context,
+    List<NeedsAttentionItemModel> server,
+  ) {
+    return [
+      for (final item in server)
+        _AttentionItem(
+          icon: switch (item.key) {
+            'missed_clockout' => VeloraIcons.alertCircle,
+            'id_expiring' => VeloraIcons.idCard,
+            'check_in_opens' => VeloraIcons.clipboardCheck,
+            _ => VeloraIcons.info,
+          },
+          tone: item.key == 'check_in_opens' ? IconTileTone.mint : IconTileTone.amber,
+          title: item.title,
+          subtitle: item.subtitle ?? '',
+          onTap: () {
+            final action = item.action;
+            if (action != null) AppActionRouter.open(context, action);
+          },
+        ),
+    ];
+  }
+
   List<_AttentionItem> _items(
     BuildContext context,
     TaskPageData? tasks,
     List<VisitModel> visits,
+    List<NeedsAttentionItemModel>? server,
   ) {
+    if (server != null && server.isNotEmpty) return _serverItems(context, server);
+
     final items = <_AttentionItem>[];
 
     for (final visit in visits.where((v) => v.isMissingClockOut).take(3)) {
@@ -825,8 +857,8 @@ class _AttentionCard extends StatelessWidget {
         _AttentionItem(
           icon: VeloraIcons.alertCircle,
           tone: IconTileTone.amber,
-          title: 'Missed clock-out · ${VeloraFormat.shortDate(visit.clockInAt.toLocal())}',
-          subtitle: 'Tell us what time you left',
+          title: tr('Missed clock-out · {0}', [VeloraFormat.shortDate(visit.clockInAt.toLocal())]),
+          subtitle: tr('Tell us what time you left'),
           onTap: () => AppNavigator.openFixVisit(
             context,
             args: FixVisitArgs.fromVisit(visit),
@@ -869,11 +901,14 @@ class _AttentionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final server = context.select<HomeCubit, List<NeedsAttentionItemModel>?>(
+      (cubit) => cubit.state.dashboard?.velora?.needsAttention,
+    );
     return BlocBuilder<TaskCubit, TaskState>(
       builder: (context, taskState) {
         return BlocBuilder<TimeCubit, TimeState>(
           builder: (context, timeState) {
-            final items = _items(context, taskState.data, timeState.visits);
+            final items = _items(context, taskState.data, timeState.visits, server);
             final loading = taskState.isLoading && taskState.data == null;
 
             return VeloraCard(
@@ -885,7 +920,7 @@ class _AttentionCard extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(0, 10, 0, 4),
                     child: Row(
                       children: [
-                        Text('NEEDS YOUR ATTENTION', style: VeloraText.caption),
+                        Text(tr('NEEDS YOUR ATTENTION'), style: VeloraText.caption),
                         const SizedBox(width: 8),
                         if (items.isNotEmpty) StatusPill('${items.length}', tone: PillTone.warn),
                       ],
@@ -905,7 +940,7 @@ class _AttentionCard extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'You\'re all caught up.',
+                              tr('You\'re all caught up.'),
                               style: VeloraText.body(14, weight: FontWeight.w600),
                             ),
                           ),
@@ -939,11 +974,42 @@ class _PayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nextPaydayFromServer = context.select<HomeCubit, NextPaydayModel?>(
+      (cubit) => cubit.state.dashboard?.velora?.nextPayday,
+    );
     return BlocBuilder<TaskCubit, TaskState>(
       buildWhen: (p, c) => p.data?.payroll != c.data?.payroll,
       builder: (context, state) {
         final payroll = state.data?.payroll;
         final latest = (payroll?.paystubs.isNotEmpty ?? false) ? payroll!.paystubs.first : null;
+        // VELORA `next_payday` (planned) — shown only when the server sends it.
+        final nextPayday = nextPaydayFromServer;
+        if (nextPayday != null) {
+          return VeloraCard(
+            onTap: () => AppNavigator.goToTab(context, MainTab.pay),
+            child: Row(
+              children: [
+                const IconTile(VeloraIcons.wallet, size: 48, radius: 14),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(tr('NEXT PAYDAY'), style: VeloraText.caption),
+                      const SizedBox(height: 2),
+                      Text(nextPayday.label, style: VeloraText.display(20)),
+                      if (nextPayday.lastPaidLabel != null) ...[
+                        const SizedBox(height: 2),
+                        Text(nextPayday.lastPaidLabel!, style: VeloraText.subtitle),
+                      ],
+                    ],
+                  ),
+                ),
+                const VeloraIcon(VeloraIcons.chevronRight, size: 16, color: VeloraColors.chevron, strokeWidth: 2.2),
+              ],
+            ),
+          );
+        }
 
         return VeloraCard(
           onTap: () => AppNavigator.goToTab(context, MainTab.pay),
@@ -955,17 +1021,17 @@ class _PayCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('PAY', style: VeloraText.caption),
+                    Text(tr('PAY'), style: VeloraText.caption),
                     const SizedBox(height: 2),
                     Text(
-                      latest != null ? latest.grossPay : 'Paystubs',
+                      latest != null ? latest.grossPay : tr('Paystubs'),
                       style: VeloraText.display(20),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       latest != null
-                          ? 'Latest: ${latest.periodLabel} · ${latest.status}'
-                          : (payroll != null ? 'No paystubs yet' : 'See your pay and paystubs'),
+                          ? tr('Latest: {0} · {1}', [latest.periodLabel, latest.status])
+                          : (payroll != null ? tr('No paystubs yet') : tr('See your pay and paystubs')),
                       style: VeloraText.subtitle,
                     ),
                   ],

@@ -7,6 +7,7 @@ import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../task/cubit/task_state.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Pay tab: year-to-date and paystubs (`GET /earnings/summary`, `GET /pay`).
 ///
@@ -23,18 +24,18 @@ class PayTabView extends StatelessWidget {
         return VeloraPage(
           underTabBar: true,
           onRefresh: () => context.read<TaskCubit>().loadTasks(),
-          header: const VeloraHeader(
-            title: 'Pay',
-            subtitle: 'Your paystubs and earnings',
+          header: VeloraHeader(
+            title: tr('Pay'),
+            subtitle: tr('Your paystubs and earnings'),
           ),
           children: [
             if (state.hasError && payroll == null)
               VeloraErrorState(
-                message: 'We couldn\'t load your pay.',
+                message: tr('We couldn\'t load your pay.'),
                 onRetry: () => context.read<TaskCubit>().loadTasks(),
               )
             else if (payroll == null)
-              const VeloraLoadingState(message: 'Loading your pay…')
+              VeloraLoadingState(message: tr('Loading your pay…'))
             else ...[
               _YearCard(payroll: payroll),
               _PaystubsCard(payroll: payroll),
@@ -59,7 +60,7 @@ class _YearCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SectionCaption('${payroll.year} so far'),
+          SectionCaption(tr('{0} so far', [payroll.year])),
           const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -70,10 +71,10 @@ class _YearCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text('Gross earnings · ${payroll.hoursLabel}', style: VeloraText.body(13.5, color: VeloraColors.muted)),
+          Text(tr('Gross earnings · {0}', [payroll.hoursLabel]), style: VeloraText.body(13.5, color: VeloraColors.muted)),
           const SizedBox(height: 14),
           VeloraButton(
-            label: 'Go to check-in',
+            label: tr('Go to check-in'),
             icon: VeloraIcons.clipboardCheck,
             onPressed: () => AppNavigator.goToTab(context, MainTab.checkIn),
           ),
@@ -96,17 +97,17 @@ class _PaystubsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SectionCaption(
-            'Paystubs',
+            tr('Paystubs'),
             padding: const EdgeInsets.only(top: 8, bottom: 2),
             trailing: Text(
-              '${payroll.paystubCount} this year',
+              tr('{0} this year', [payroll.paystubCount]),
               style: VeloraText.body(12, color: VeloraColors.muted),
             ),
           ),
           if (payroll.paystubs.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text('Your paystubs will show here after your first payday.', style: VeloraText.subtitle),
+              child: Text(tr('Your paystubs will show here after your first payday.'), style: VeloraText.subtitle),
             )
           else
             for (var i = 0; i < payroll.paystubs.length; i++)
@@ -117,7 +118,7 @@ class _PaystubsCard extends StatelessWidget {
             ),
             child: Center(
               child: VeloraTextLink(
-                label: 'Tax forms (W-2)',
+                label: tr('Tax forms (W-2)'),
                 size: 13,
                 onTap: () => AppNavigator.goToTab(context, MainTab.docs),
               ),
@@ -166,17 +167,17 @@ class _HowPayWorksCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const steps = [
-      ('Work the month.', 'Clock in and out at every visit.'),
-      ('Finish your check-in', 'after the month ends, so the office can confirm your days.'),
-      ('Get paid', 'by direct deposit on the next payday.'),
+    final steps = [
+      (tr('Work the month.'), tr('Clock in and out at every visit.')),
+      (tr('Finish your check-in'), tr('after the month ends, so the office can confirm your days.')),
+      (tr('Get paid'), tr('by direct deposit on the next payday.')),
     ];
     return VeloraCard(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionCaption('How pay works', padding: EdgeInsets.only(top: 8, bottom: 2)),
+          SectionCaption(tr('How pay works'), padding: EdgeInsets.only(top: 8, bottom: 2)),
           for (var i = 0; i < steps.length; i++)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),

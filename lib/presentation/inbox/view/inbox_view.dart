@@ -8,10 +8,12 @@ import '../../../data/models/inbox_thread_model.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../data/repositories/inbox_repository.dart';
 import '../../../data/repositories/notification_repository.dart';
+import '../../main/app_action_router.dart';
 import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../widgets/velora/velora.dart';
 import 'chat_view.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Inbox: alerts (`GET /notifications`) and conversations with the office
 /// (`GET /conversations`, realtime refresh via [ChatRealtimeService]).
@@ -112,6 +114,10 @@ class _InboxViewState extends State<InboxView> {
       });
       unawaited(_notifications.markRead(alert.id).catchError((_) {}));
     }
+    // VELORA `action` deep link (planned) wins when the server sends one.
+    final action = alert.action;
+    if (action != null && await AppActionRouter.open(context, action)) return;
+    if (!mounted) return;
     switch (alert.kind) {
       case NotificationKind.schedule:
         AppNavigator.goToTab(context, MainTab.time);
@@ -130,7 +136,7 @@ class _InboxViewState extends State<InboxView> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _alerts = previous);
-      showVeloraToast(context, 'Unable to delete that alert.');
+      showVeloraToast(context, tr('Unable to delete that alert.'));
     }
   }
 
@@ -144,15 +150,15 @@ class _InboxViewState extends State<InboxView> {
         gap: 10,
         onRefresh: _load,
         header: VeloraHeader(
-          title: 'Inbox',
-          subtitle: 'Alerts and messages from the office',
+          title: tr('Inbox'),
+          subtitle: tr('Alerts and messages from the office'),
           onBack: () => Navigator.of(context).pop(),
         ),
         children: [
           if (alerts == null && !_alertsFailed)
             const VeloraLoadingState()
           else if (_alertsFailed)
-            VeloraErrorState(message: 'We couldn\'t load your alerts.', onRetry: _loadAlerts)
+            VeloraErrorState(message: tr('We couldn\'t load your alerts.'), onRetry: _loadAlerts)
           else
             for (final alert in alerts!)
               Dismissible(
@@ -165,7 +171,7 @@ class _InboxViewState extends State<InboxView> {
                     color: VeloraColors.dangerBg,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text('Delete',
+                  child: Text(tr('Delete'),
                       style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.dangerText)),
                 ),
                 onDismissed: (_) => _deleteAlert(alert),
@@ -174,7 +180,7 @@ class _InboxViewState extends State<InboxView> {
           Padding(
             padding: const EdgeInsets.only(top: 10, bottom: 2),
             child: Text(
-              'MESSAGES WITH THE OFFICE',
+              tr('MESSAGES WITH THE OFFICE'),
               textAlign: TextAlign.center,
               style: VeloraText.caption,
             ),
@@ -182,11 +188,11 @@ class _InboxViewState extends State<InboxView> {
           if (threads == null && !_threadsFailed)
             const VeloraLoadingState()
           else if (_threadsFailed)
-            VeloraErrorState(message: 'We couldn\'t load your messages.', onRetry: _loadThreads)
+            VeloraErrorState(message: tr('We couldn\'t load your messages.'), onRetry: _loadThreads)
           else if (threads!.isEmpty)
-            const VeloraEmptyState(
-              title: 'No messages yet',
-              message: 'Conversations with the office will show here.',
+            VeloraEmptyState(
+              title: tr('No messages yet'),
+              message: tr('Conversations with the office will show here.'),
               icon: VeloraIcons.message,
             )
           else
@@ -208,11 +214,11 @@ class _AlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, tone, tag, tagColor) = switch (alert.kind) {
       NotificationKind.schedule =>
-        (VeloraIcons.clock, IconTileTone.amber, 'Time', VeloraColors.warnText),
+        (VeloraIcons.clock, IconTileTone.amber, tr('Time'), VeloraColors.warnText),
       NotificationKind.compliance =>
-        (VeloraIcons.clipboardCheck, IconTileTone.good, 'Check-in', VeloraColors.goodText),
+        (VeloraIcons.clipboardCheck, IconTileTone.good, tr('Check-in'), VeloraColors.goodText),
       NotificationKind.message =>
-        (VeloraIcons.message, IconTileTone.mint, 'Message', VeloraColors.teal),
+        (VeloraIcons.message, IconTileTone.mint, tr('Message'), VeloraColors.teal),
     };
 
     return _InboxCard(
@@ -230,7 +236,7 @@ class _AlertCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${tag.toUpperCase()}${alert.isRead ? '' : ' · NEW'}',
+                        '${tag.toUpperCase()}${alert.isRead ? '' : ' · ${tr('NEW')}'}',
                         style: VeloraText.body(10.5,
                             weight: FontWeight.w700, color: tagColor, letterSpacing: 0.6),
                       ),

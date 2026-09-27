@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/velora_theme.dart';
 import 'velora_icon.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Dark-green page header with the concentric-ring decoration.
 ///
@@ -74,7 +75,7 @@ class VeloraHeader extends StatelessWidget {
                       if (_isPushed) ...[
                         HeaderSquareButton(
                           icon: VeloraIcons.chevronLeft,
-                          semanticLabel: 'Back',
+                          semanticLabel: tr('Back'),
                           onTap: onBack!,
                         ),
                         const SizedBox(width: 14),

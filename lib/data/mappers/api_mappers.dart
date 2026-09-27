@@ -17,6 +17,7 @@ import '../models/inbox_thread_model.dart';
 import '../models/notification_model.dart';
 import '../models/schedule_page_model.dart';
 import '../models/task_page_model.dart';
+import '../../core/i18n/tr.dart';
 
 String initialsFromName(String name) {
   final parts = name.trim().split(RegExp(r'\s+'));
@@ -73,8 +74,8 @@ String relativeDueLabel(DateTime date) {
   final target = DateTime(date.year, date.month, date.day);
   final diff = target.difference(today).inDays;
   if (diff < 0) return 'Overdue';
-  if (diff == 0) return 'Due Today';
-  if (diff == 1) return 'Due Tomorrow';
+  if (diff == 0) return tr('Due Today');
+  if (diff == 1) return tr('Due Tomorrow');
   return 'Due In $diff Days';
 }
 
@@ -142,7 +143,7 @@ PaystubItem payItemToPaystub(PayItemModel item) {
     id: item.id.toString(),
     periodLabel: item.period,
     hoursLabel:
-        '${item.hours.toStringAsFixed(1)} hrs · ${item.program} · ${formatCurrency(item.gross)}',
+        '${tr('{0} hrs', [item.hours.toStringAsFixed(1)])} · ${item.program} · ${formatCurrency(item.gross)}',
     grossPay: formatCurrency(item.gross),
     status: item.status,
     stubAvailable: item.stubAvailable,
@@ -155,14 +156,14 @@ PaystubDetail payItemToPaystubDetail(PayItemModel item) {
     periodLabel: item.period,
     grossPay: formatCurrency(item.gross),
     payDate: item.paidDate ?? '—',
-    hoursWorked: '${item.hours.toStringAsFixed(1)} hrs',
+    hoursWorked: tr('{0} hrs', [item.hours.toStringAsFixed(1)]),
     rate: '${formatCurrency(item.rate)} / hr',
     status: item.status,
     program: item.program,
     stubAvailable: item.stubAvailable,
     visitSummary: [
       if (item.clientName != null && item.clientName!.isNotEmpty)
-        MapEntry(item.clientName!, '${item.hours.toStringAsFixed(1)} hrs'),
+        MapEntry(item.clientName!, tr('{0} hrs', [item.hours.toStringAsFixed(1)])),
     ],
   );
 }
@@ -180,7 +181,7 @@ TaskItem visitToTaskItem(VisitModel visit) {
     status: visit.status == 'Completed'
         ? TaskItemStatus.submitted
         : TaskItemStatus.pending,
-    actionLabel: 'View visit',
+    actionLabel: tr('View visit'),
     clientName: visit.clientName,
     initials: initialsFromName(visit.clientName),
     timeLabel: subtitle,
@@ -237,13 +238,13 @@ TaskItem notificationToDocumentTaskItem(NotificationItemModel notification) {
 
 AssignedVisit assignmentToAssignedVisit(
   AssignmentModel assignment, {
-  String scheduleLabel = 'Assigned client',
+  String? scheduleLabel,
 }) {
   return AssignedVisit(
     clientName: assignment.name,
     initials: initialsFromName(assignment.name),
-    scheduleLabel: scheduleLabel,
-    scheduledLabel: scheduleLabel,
+    scheduleLabel: scheduleLabel ?? tr('Assigned client'),
+    scheduledLabel: scheduleLabel ?? tr('Assigned client'),
     serviceType: assignment.program,
   );
 }
@@ -280,6 +281,8 @@ AppNotification notificationItemToAppNotification(NotificationItemModel item) {
     timestampLabel: item.timeAgo,
     kind: notificationTypeToKind(item.type),
     isRead: item.read,
+    category: item.category,
+    action: item.action,
   );
 }
 
@@ -403,6 +406,7 @@ HomeDashboard dashboardToHomeDashboard({
     pendingTasks: pendingTasks,
     unreadNotifications: dashboard.badges.unreadNotifications,
     unreadConversations: dashboard.badges.unreadConversations,
+    velora: dashboard.velora,
   );
 }
 
@@ -426,7 +430,7 @@ ActiveShift? _buildActiveShiftFromDashboard({
       activeVisit?.clientName ?? nextShift?.clientName ?? 'Client';
   final address = nextShift?.address ??
       matchingAssignment?.address ??
-      'Address unavailable';
+      tr('Address unavailable');
 
   final shiftStatus =
       activeVisit != null ? ShiftStatus.inProgress : ShiftStatus.pending;
@@ -436,7 +440,7 @@ ActiveShift? _buildActiveShiftFromDashboard({
       : null;
 
   var scheduledTimeDisplay = '—';
-  var timeRange = 'No upcoming shift';
+  var timeRange = tr('No upcoming shift');
   var visitDateTime = formatDateLabel(now);
   var visitDate = formatDateLabel(now);
   var minutesUntilStart = startsInMinutes.clamp(0, 999);
@@ -477,11 +481,11 @@ ActiveShift? _buildActiveShiftFromDashboard({
     progress: progress,
     clientInitials: initialsFromName(clientName),
     authorizedHours: matchingAssignment != null
-        ? '${matchingAssignment.authorization.days} days · ${matchingAssignment.authorization.label}'
+        ? tr('{0} days · {1}', [matchingAssignment.authorization.days, matchingAssignment.authorization.label])
         : '—',
     scheduledTimeDisplay: scheduledTimeDisplay,
     serviceType:
-        matchingAssignment?.program ?? nextShift?.title ?? 'Care visit',
+        matchingAssignment?.program ?? nextShift?.title ?? tr('Care visit'),
     visitDateTime: visitDateTime,
     visitDate: visitDate,
     gpsAddress: address,
@@ -500,13 +504,13 @@ PaystubDetail payDetailToPaystubDetail(PayDetailModel detail) {
     periodLabel: detail.period,
     grossPay: formatCurrency(detail.gross),
     payDate: detail.payDate ?? '—',
-    hoursWorked: '${detail.hours.toStringAsFixed(1)} hrs',
+    hoursWorked: tr('{0} hrs', [detail.hours.toStringAsFixed(1)]),
     rate: '${formatCurrency(detail.rate)} / hr',
     status: detail.status,
     program: '',
     stubAvailable: true,
     visitSummary: detail.visitSummary
-        .map((item) => MapEntry(item.clientName, '${item.hours} hrs'))
+        .map((item) => MapEntry(item.clientName, tr('{0} hrs', [item.hours])))
         .toList(),
     netPay: formatCurrency(detail.breakdown.net),
     federalTax: formatCurrency(detail.breakdown.federalTax),
@@ -528,7 +532,7 @@ PayrollSummary earningsSummaryToPayrollSummary(
     year: summary.year,
     yearToDateAmount: formatCurrency(ytd.gross),
     hoursLabel:
-        '${ytd.hours.toStringAsFixed(1)} hours · ${ytd.paystubCount} paystubs',
+        tr('{0} hours · {1} paystubs', [ytd.hours.toStringAsFixed(1), ytd.paystubCount]),
     paystubCount: ytd.paystubCount,
     quickbooksStatus: qb.connected == true ? '${qb.label} connected' : qb.label,
     gustoStatus: gusto.ready == true ? '${gusto.label} ready' : gusto.label,
@@ -545,7 +549,7 @@ TaskItem complianceFormToTaskItem(ComplianceFormListItemModel form) {
     id: form.id.toString(),
     type: TaskItemType.complianceForm,
     title: '${form.periodLabel} Compliance Form Due',
-    subtitle: form.isOverdue ? 'Overdue' : (form.status == 'Due' ? 'Due Today' : form.status),
+    subtitle: form.isOverdue ? tr('Overdue') : (form.status == 'Due' ? tr('Due Today') : form.status),
     status: form.submitted
         ? TaskItemStatus.submitted
         : (form.isOverdue ? TaskItemStatus.overdue : TaskItemStatus.pending),

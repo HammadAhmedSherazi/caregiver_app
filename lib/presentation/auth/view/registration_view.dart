@@ -13,6 +13,7 @@ import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import '../models/signup_flow_data.dart';
 import 'privacy_terms_view.dart';
+import '../../../core/i18n/tr.dart';
 
 class RegistrationView extends StatefulWidget {
   const RegistrationView({super.key, required this.flowData});
@@ -106,23 +107,23 @@ class _RegistrationViewState extends State<RegistrationView> {
                   children: [
                     const SizedBox(height: 100),
                     Text(
-                      'Registration',
+                      tr('Registration'),
                       style: AppTextStyles.authTitle,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 39),
                     AuthTextField(
-                      hint: 'Enter Full Name',
+                      hint: tr('Enter Full Name'),
                       prefixIconAsset: AppAssets.icUser,
                       controller: _nameController,
                       textInputAction: TextInputAction.next,
                       textCapitalization: TextCapitalization.words,
                       validator: (value) =>
-                          FormValidators.required(value, fieldName: 'Full name'),
+                          FormValidators.required(value, fieldName: tr('Full name')),
                     ),
                     const SizedBox(height: 14),
                     AuthTextField(
-                      hint: 'Last 4digitof SSN',
+                      hint: tr('Last 4digitof SSN'),
                       controller: _ssnController,
                       keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.next,
@@ -132,16 +133,16 @@ class _RegistrationViewState extends State<RegistrationView> {
                     ),
                     const SizedBox(height: 14),
                     AuthTextField(
-                      hint: 'Date of birth',
+                      hint: tr('Date of birth'),
                       controller: _dobController,
                       readOnly: true,
                       onTap: _pickDateOfBirth,
                       validator: (value) =>
-                          FormValidators.required(value, fieldName: 'Date of birth'),
+                          FormValidators.required(value, fieldName: tr('Date of birth')),
                     ),
                     const SizedBox(height: 14),
                     AuthTextField(
-                      hint: 'Primary Phone No',
+                      hint: tr('Primary Phone No'),
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
@@ -150,7 +151,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                     ),
                     const SizedBox(height: 32),
                     AuthPrimaryButton(
-                      label: 'Complete Registration',
+                      label: tr('Complete Registration'),
                       height: 60,
                       borderRadius: 14,
                       horizontalPadding: 32,

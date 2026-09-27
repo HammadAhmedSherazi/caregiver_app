@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class ComplianceQuestionModel extends BaseModel {
   const ComplianceQuestionModel({
@@ -31,6 +32,7 @@ class ComplianceFormListItemModel extends BaseModel {
     required this.status,
     required this.submitted,
     required this.isOverdue,
+    this.velora,
   });
 
   final int id;
@@ -40,6 +42,9 @@ class ComplianceFormListItemModel extends BaseModel {
   final bool submitted;
   final bool isOverdue;
 
+  /// VELORA check-in fields (mode, period, due/pay dates, summary, timeline). 🚧 Planned.
+  final ComplianceFormExtensionModel? velora;
+
   factory ComplianceFormListItemModel.fromJson(Map<String, dynamic> json) {
     return ComplianceFormListItemModel(
       id: json['id'] as int,
@@ -48,6 +53,7 @@ class ComplianceFormListItemModel extends BaseModel {
       status: json['status'] as String? ?? '',
       submitted: json['submitted'] as bool? ?? false,
       isOverdue: json['is_overdue'] as bool? ?? false,
+      velora: ComplianceFormExtensionModel.maybeFromJson(json),
     );
   }
 
@@ -63,7 +69,7 @@ class ComplianceFormListItemModel extends BaseModel {
 
   @override
   List<Object?> get props =>
-      [id, period, periodLabel, status, submitted, isOverdue];
+      [velora, id, period, periodLabel, status, submitted, isOverdue];
 }
 
 class ComplianceFormDetailModel extends BaseModel {
@@ -73,6 +79,9 @@ class ComplianceFormDetailModel extends BaseModel {
     required this.status,
     required this.submitted,
     required this.questions,
+    this.velora,
+    this.checkIn,
+    this.submitResult,
   });
 
   final int id;
@@ -80,6 +89,15 @@ class ComplianceFormDetailModel extends BaseModel {
   final String status;
   final bool submitted;
   final List<ComplianceQuestionModel> questions;
+
+  /// VELORA check-in fields. 🚧 Planned.
+  final ComplianceFormExtensionModel? velora;
+
+  /// Prefill, days, counts, signature. 🚧 Planned.
+  final CheckInDetailModel? checkIn;
+
+  /// Submit response extras (counts, receipt, pay). 🚧 Planned.
+  final CheckInSubmitExtensionModel? submitResult;
 
   factory ComplianceFormDetailModel.fromJson(Map<String, dynamic> json) {
     final questionsRaw = json['questions'] as List<dynamic>? ?? const [];
@@ -92,6 +110,9 @@ class ComplianceFormDetailModel extends BaseModel {
           .whereType<Map<String, dynamic>>()
           .map(ComplianceQuestionModel.fromJson)
           .toList(),
+      velora: ComplianceFormExtensionModel.maybeFromJson(json),
+      checkIn: CheckInDetailModel.maybeFromJson(json['check_in']),
+      submitResult: CheckInSubmitExtensionModel.maybeFromJson(json),
     );
   }
 
@@ -105,7 +126,7 @@ class ComplianceFormDetailModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [id, periodLabel, status, submitted, questions];
+  List<Object?> get props => [velora, checkIn, submitResult, id, periodLabel, status, submitted, questions];
 }
 
 class ComplianceHistorySummaryModel extends BaseModel {
@@ -144,12 +165,16 @@ class ComplianceHistoryRecordModel extends BaseModel {
     required this.periodLabel,
     required this.status,
     this.submittedAt,
+    this.velora,
   });
 
   final int id;
   final String periodLabel;
   final String status;
   final DateTime? submittedAt;
+
+  /// signed_at, paid_at, net_pay, pay_id. 🚧 Planned.
+  final ComplianceHistoryExtensionModel? velora;
 
   factory ComplianceHistoryRecordModel.fromJson(Map<String, dynamic> json) {
     return ComplianceHistoryRecordModel(
@@ -159,6 +184,7 @@ class ComplianceHistoryRecordModel extends BaseModel {
       submittedAt: json['submitted_at'] != null
           ? DateTime.tryParse(json['submitted_at'] as String)
           : null,
+      velora: ComplianceHistoryExtensionModel.maybeFromJson(json),
     );
   }
 
@@ -171,7 +197,7 @@ class ComplianceHistoryRecordModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [id, periodLabel, status, submittedAt];
+  List<Object?> get props => [velora, id, periodLabel, status, submittedAt];
 }
 
 class ComplianceHistoryModel extends BaseModel {

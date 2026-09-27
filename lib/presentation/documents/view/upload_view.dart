@@ -3,30 +3,45 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/network/api_config.dart';
 import '../../../core/utils/document_picker_service.dart';
+import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/selected_document.dart';
+import '../../home/widgets/clock_out_sheet.dart' show DateField;
 import '../../task/cubit/task_cubit.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 class _DocType {
-  const _DocType(this.id, this.label, this.hint, this.icon, this.apiType);
+  const _DocType(this.id, this.label, this.hint, this.icon, this.legacyType, this.plannedType);
 
   final String id;
   final String label;
   final String hint;
   final VeloraIcons icon;
 
-  /// Value sent as `type` to `POST /documents` (existing API values).
-  final String apiType;
+  /// `type` on today's live `POST /documents`.
+  final String legacyType;
+
+  /// `type` once the planned API is on (MOBILE_API_VELORA.md §6).
+  final DocumentUploadType plannedType;
+
+  String get apiType => ApiConfig.veloraApiEnabled ? plannedType.value : legacyType;
+
+  bool get needsExpiry => id == 'id' && ApiConfig.veloraApiEnabled;
 }
 
 const _types = [
-  _DocType('id', 'Photo ID or driver\'s license', 'Front and back', VeloraIcons.idCard, 'ID'),
-  _DocType('tax', 'Tax or pay form', 'W-4, MI-W4, direct deposit', VeloraIcons.document, 'Signed Form'),
-  _DocType('med', 'Doctor or hospital note', 'For your client or for you', VeloraIcons.plus, 'Other'),
+  _DocType('id', 'Photo ID or driver\'s license', 'Front and back', VeloraIcons.idCard, 'ID',
+      DocumentUploadType.photoId),
+  _DocType('tax', 'Tax or pay form', 'W-4, MI-W4, direct deposit', VeloraIcons.document, 'Signed Form',
+      DocumentUploadType.taxOrPayForm),
+  _DocType('med', 'Doctor or hospital note', 'For your client or for you', VeloraIcons.plus, 'Other',
+      DocumentUploadType.doctorOrHospitalNote),
   _DocType('state', 'Letter from DHS or the plan', 'Anything the state or insurance mailed you',
-      VeloraIcons.mail, 'Mail/Letter'),
-  _DocType('other', 'Something else', 'Tell the office what it is', VeloraIcons.dots, 'Other'),
+      VeloraIcons.mail, 'Mail/Letter', DocumentUploadType.stateLetter),
+  _DocType('other', 'Something else', 'Tell the office what it is', VeloraIcons.dots, 'Other',
+      DocumentUploadType.other),
 ];
 
 enum _Step { type, capture, review, sent }
@@ -35,10 +50,21 @@ enum _Step { type, capture, review, sent }
 ///
 /// Uses the existing picker and `POST /documents`.
 class UploadView extends StatefulWidget {
-  const UploadView({super.key, this.initialType});
+  const UploadView({
+    super.key,
+    this.initialType,
+    this.replacesDocumentId,
+    this.directDeposit = false,
+  });
 
   /// One of `id`, `tax`, `med`, `state`, `other`.
   final String? initialType;
+
+  /// The expiring document this upload replaces (from an `upload` action).
+  final int? replacesDocumentId;
+
+  /// Bank change from My info → `tax_or_pay_form` + `purpose: direct_deposit`.
+  final bool directDeposit;
 
   @override
   State<UploadView> createState() => _UploadViewState();
@@ -53,6 +79,7 @@ class _UploadViewState extends State<UploadView> {
   );
   _Step _step = _Step.type;
   SelectedDocument? _document;
+  DateTime? _expiresOn;
   bool _picking = false;
   bool _uploading = false;
   bool _uploadedAny = false;
@@ -74,7 +101,7 @@ class _UploadViewState extends State<UploadView> {
       }
       if (!doc.isWithinSizeLimit) {
         setState(() => _picking = false);
-        showVeloraToast(context, 'That file is too large. The limit is 10 MB.');
+        showVeloraToast(context, tr('That file is too large. The limit is 10 MB.'));
         return;
       }
       setState(() {
@@ -85,13 +112,28 @@ class _UploadViewState extends State<UploadView> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _picking = false);
-      showVeloraToast(context, 'Could not load that file. Please try again.');
+      showVeloraToast(context, tr('Could not load that file. Please try again.'));
     }
+  }
+
+  Future<void> _pickExpiry() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _expiresOn ?? now.add(const Duration(days: 365 * 4)),
+      firstDate: now,
+      lastDate: DateTime(now.year + 20),
+    );
+    if (picked != null && mounted) setState(() => _expiresOn = picked);
   }
 
   Future<void> _send() async {
     final doc = _document;
     if (doc == null || _uploading) return;
+    if (_type.needsExpiry && _expiresOn == null) {
+      showVeloraToast(context, tr('Enter the new expiration date.'));
+      return;
+    }
     setState(() => _uploading = true);
 
     final note = _notesController.text.trim();
@@ -100,11 +142,19 @@ class _UploadViewState extends State<UploadView> {
       if (note.isNotEmpty) note,
     ].join(' – ');
 
+    final isTax = _type.id == 'tax';
+    final extras = DocumentUploadExtras(
+      expiresOn: _type.id == 'id' ? _expiresOn : null,
+      replacesDocumentId: widget.replacesDocumentId,
+      purpose: widget.directDeposit && isTax ? DocumentUploadPurpose.directDeposit : null,
+    );
+
     try {
       await context.read<TaskCubit>().uploadDocument(
             document: doc,
             type: _type.apiType,
             notes: notes.isEmpty ? null : notes,
+            extras: extras.isEmpty ? null : extras,
           );
       if (!mounted) return;
       setState(() {
@@ -115,7 +165,7 @@ class _UploadViewState extends State<UploadView> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _uploading = false);
-      showVeloraToast(context, 'Unable to upload the document. Please try again.');
+      showVeloraToast(context, tr('Unable to upload the document. Please try again.'));
     }
   }
 
@@ -134,10 +184,10 @@ class _UploadViewState extends State<UploadView> {
   @override
   Widget build(BuildContext context) {
     final title = switch (_step) {
-      _Step.type => 'Upload a document',
-      _Step.capture => 'Add a photo or file',
-      _Step.review => 'Check it',
-      _Step.sent => 'Sent',
+      _Step.type => tr('Upload a document'),
+      _Step.capture => tr('Add a photo or file'),
+      _Step.review => tr('Check it'),
+      _Step.sent => tr('Sent'),
     };
 
     return PopScope(
@@ -151,7 +201,7 @@ class _UploadViewState extends State<UploadView> {
         body: VeloraPage(
           header: VeloraHeader(
             title: title,
-            subtitle: 'Goes straight to your file at the office',
+            subtitle: tr('Goes straight to your file at the office'),
             onBack: _uploading ? () {} : _back,
           ),
           children: switch (_step) {
@@ -166,7 +216,7 @@ class _UploadViewState extends State<UploadView> {
   }
 
   List<Widget> _typeStep() => [
-        const SectionCaption('What are you sending?', padding: EdgeInsets.symmetric(horizontal: 2)),
+        SectionCaption(tr('What are you sending?'), padding: EdgeInsets.symmetric(horizontal: 2)),
         for (final type in _types)
           _TypeOption(
             type: type,
@@ -174,7 +224,7 @@ class _UploadViewState extends State<UploadView> {
             onTap: () => setState(() => _type = type),
           ),
         const SizedBox(height: 2),
-        VeloraButton(label: 'Continue', onPressed: () => setState(() => _step = _Step.capture)),
+        VeloraButton(label: tr('Continue'), onPressed: () => setState(() => _step = _Step.capture)),
       ];
 
   List<Widget> _captureStep() => [
@@ -196,8 +246,8 @@ class _UploadViewState extends State<UploadView> {
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
                         _type.id == 'id'
-                            ? 'Take a clear photo of the front of your ID'
-                            : 'Take a clear photo, or choose a file',
+                            ? tr('Take a clear photo of the front of your ID')
+                            : tr('Take a clear photo, or choose a file'),
                         textAlign: TextAlign.center,
                         style: VeloraText.body(14, weight: FontWeight.w600, color: Colors.white),
                       ),
@@ -206,18 +256,18 @@ class _UploadViewState extends State<UploadView> {
                 ),
         ),
         VeloraButton(
-          label: 'Take photo',
+          label: tr('Take photo'),
           icon: VeloraIcons.camera,
           onPressed: _picking ? null : () => _pick(DocumentSource.camera),
         ),
         VeloraButton(
-          label: 'Choose from photos',
+          label: tr('Choose from photos'),
           variant: VeloraButtonVariant.ghost,
           icon: VeloraIcons.idCard,
           onPressed: _picking ? null : () => _pick(DocumentSource.gallery),
         ),
         VeloraButton(
-          label: 'Choose a file or PDF',
+          label: tr('Choose a file or PDF'),
           variant: VeloraButtonVariant.ghost,
           icon: VeloraIcons.folder,
           onPressed: _picking ? null : () => _pick(DocumentSource.files),
@@ -254,7 +304,7 @@ class _UploadViewState extends State<UploadView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_type.label, style: VeloraText.body(15, weight: FontWeight.w700)),
+                  Text(tr(_type.label), style: VeloraText.body(15, weight: FontWeight.w700)),
                   const SizedBox(height: 3),
                   Text(
                     '${doc.fileName} · ${doc.formattedSize}',
@@ -263,7 +313,7 @@ class _UploadViewState extends State<UploadView> {
                     style: VeloraText.subtitle,
                   ),
                   VeloraTextLink(
-                    label: 'Retake',
+                    label: tr('Retake'),
                     size: 13,
                     onTap: () => setState(() => _step = _Step.capture),
                   ),
@@ -273,11 +323,22 @@ class _UploadViewState extends State<UploadView> {
           ],
         ),
       ),
+      if (_type.needsExpiry)
+        VeloraCard(
+          child: DateField(
+            label: tr('New expiration date'),
+            value: _expiresOn,
+            onTap: _pickExpiry,
+            labelColor: VeloraColors.body,
+          ),
+        ),
       VeloraCard(
         child: VeloraTextField(
           controller: _notesController,
-          label: _type.id == 'other' ? 'What is it?' : 'Note for the office (optional)',
-          hint: _type.id == 'id' ? 'e.g. New expiration date 10/12/2031' : 'Optional',
+          label: _type.id == 'other' ? tr('What is it?') : tr('Note for the office (optional)'),
+          hint: _type.id == 'id' && !_type.needsExpiry
+              ? tr('e.g. New expiration date 10/12/2031')
+              : tr('Optional'),
           maxLines: 3,
           minLines: 2,
         ),
@@ -286,13 +347,13 @@ class _UploadViewState extends State<UploadView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Column(
           children: [
-            const KeyValueRow(showDivider: false, label: 'Files to', value: 'Your file'),
-            KeyValueRow(label: 'Type', value: _type.apiType),
+            KeyValueRow(showDivider: false, label: tr('Files to'), value: tr('Your file')),
+            KeyValueRow(label: tr('Type'), value: tr(_type.label)),
           ],
         ),
       ),
       VeloraButton(
-        label: 'Send to office',
+        label: tr('Send to office'),
         icon: VeloraIcons.send,
         isLoading: _uploading,
         onPressed: _send,
@@ -302,15 +363,16 @@ class _UploadViewState extends State<UploadView> {
 
   List<Widget> _sentStep() => [
         VeloraDoneCard(
-          title: 'The office has it',
-          message: 'Your document is in your file. The office will review it and let you know in your inbox if anything else is needed.',
+          title: tr('The office has it'),
+          message: tr('Your document is in your file. The office will review it and let you know in your inbox if anything else is needed.'),
           actions: [
-            VeloraButton(label: 'Done', onPressed: () => Navigator.of(context).pop(true)),
+            VeloraButton(label: tr('Done'), onPressed: () => Navigator.of(context).pop(true)),
             VeloraTextLink(
-              label: 'Send another',
+              label: tr('Send another'),
               size: 13,
               onTap: () => setState(() {
                 _document = null;
+                _expiresOn = null;
                 _notesController.clear();
                 _step = _Step.type;
               }),
@@ -356,8 +418,8 @@ class _TypeOption extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(type.label, style: VeloraText.body(14.5, weight: FontWeight.w700)),
-                        Text(type.hint, style: VeloraText.body(12, color: VeloraColors.muted)),
+                        Text(tr(type.label), style: VeloraText.body(14.5, weight: FontWeight.w700)),
+                        Text(tr(type.hint), style: VeloraText.body(12, color: VeloraColors.muted)),
                       ],
                     ),
                   ),

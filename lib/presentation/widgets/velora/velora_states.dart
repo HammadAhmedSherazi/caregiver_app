@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/velora_theme.dart';
 import 'velora_components.dart';
 import 'velora_icon.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Centered spinner for sections still loading.
 class VeloraLoadingState extends StatelessWidget {
@@ -106,17 +107,17 @@ class VeloraErrorState extends StatelessWidget {
             radius: 16,
           ),
           const SizedBox(height: 12),
-          Text(title, textAlign: TextAlign.center, style: VeloraText.display(18)),
+          Text(tr(title), textAlign: TextAlign.center, style: VeloraText.display(18)),
           const SizedBox(height: 6),
           Text(
-            message,
+            tr(message),
             textAlign: TextAlign.center,
             style: VeloraText.body(13.5, color: VeloraColors.muted, height: 1.45),
           ),
           if (onRetry != null) ...[
             const SizedBox(height: 14),
             VeloraButton(
-              label: 'Try again',
+              label: tr('Try again'),
               variant: VeloraButtonVariant.ghost,
               onPressed: onRetry,
             ),
@@ -162,21 +163,20 @@ Future<void> showApiRequiredSheet(
             ),
             const SizedBox(height: 12),
             Text(
-              'Not connected yet',
+              tr('Not connected yet'),
               textAlign: TextAlign.center,
               style: VeloraText.display(20),
             ),
             const SizedBox(height: 8),
             Text(
-              '$feature can\'t be sent from the app yet. Nothing was sent. '
-              'Please message or call the office instead.',
+              tr('{0} can\'t be sent from the app yet. Nothing was sent. Please message or call the office instead.', [feature]),
               textAlign: TextAlign.center,
               style: VeloraText.body(14, color: VeloraColors.muted, height: 1.5),
             ),
             const SizedBox(height: 18),
             if (onContactOffice != null) ...[
               VeloraButton(
-                label: 'Message the office',
+                label: tr('Message the office'),
                 icon: VeloraIcons.message,
                 onPressed: () {
                   Navigator.of(sheetContext).pop();
@@ -186,7 +186,7 @@ Future<void> showApiRequiredSheet(
               const SizedBox(height: 10),
             ],
             VeloraButton(
-              label: 'Close',
+              label: tr('Close'),
               variant: VeloraButtonVariant.ghost,
               onPressed: () => Navigator.of(sheetContext).pop(),
             ),
@@ -231,7 +231,7 @@ void showVeloraToast(BuildContext context, String message) {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                message,
+                tr(message),
                 style: VeloraText.body(13.5, weight: FontWeight.w600, color: Colors.white),
               ),
             ),

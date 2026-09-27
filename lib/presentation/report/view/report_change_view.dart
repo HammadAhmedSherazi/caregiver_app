@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/di/service_locator.dart';
+import '../../../core/network/api_config.dart';
+import '../../../core/network/api_error_message.dart';
+import '../../../data/models/api/velora/velora_models.dart';
+import '../../../data/repositories/change_report_repository.dart';
 import '../../home/widgets/clock_out_sheet.dart' show DateField;
 import '../../main/app_navigator.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 class _ChangeType {
   const _ChangeType({
+    required this.apiType,
     required this.label,
     required this.hint,
     required this.icon,
@@ -17,6 +24,7 @@ class _ChangeType {
     this.askDoctor = false,
   });
 
+  final ChangeReportType apiType;
   final String label;
   final String hint;
   final VeloraIcons icon;
@@ -31,6 +39,7 @@ class _ChangeType {
 
 const _types = [
   _ChangeType(
+    apiType: ChangeReportType.hospitalStay,
     label: 'Hospital or nursing home stay',
     hint: 'Your client was admitted somewhere',
     icon: VeloraIcons.hospital,
@@ -40,6 +49,7 @@ const _types = [
     noteHint: 'e.g. hospital name and room',
   ),
   _ChangeType(
+    apiType: ChangeReportType.fallInjury,
     label: 'A fall or injury',
     hint: 'Your client fell or got hurt',
     icon: VeloraIcons.warning,
@@ -49,6 +59,7 @@ const _types = [
     noteHint: 'Where, when, and how your client is doing now',
   ),
   _ChangeType(
+    apiType: ChangeReportType.needsChanged,
     label: 'Your client\'s needs changed',
     hint: 'More help needed, new condition, new doctor',
     icon: VeloraIcons.pulse,
@@ -57,6 +68,7 @@ const _types = [
     noteHint: 'e.g. needs help walking now',
   ),
   _ChangeType(
+    apiType: ChangeReportType.cannotWork,
     label: 'I can\'t work',
     hint: 'You\'re sick, traveling, or need time off',
     icon: VeloraIcons.calendar,
@@ -66,6 +78,7 @@ const _types = [
     noteHint: 'Optional',
   ),
   _ChangeType(
+    apiType: ChangeReportType.contactChanged,
     label: 'Address or phone changed',
     hint: 'For you or for your client',
     icon: VeloraIcons.pin,
@@ -74,6 +87,7 @@ const _types = [
     noteHint: 'Include apartment number',
   ),
   _ChangeType(
+    apiType: ChangeReportType.clientPassed,
     label: 'Your client is no longer with us',
     hint: 'Let us know, and we\'ll take care of the rest',
     icon: VeloraIcons.heart,
@@ -83,6 +97,7 @@ const _types = [
     noteHint: 'Optional — you don\'t need to write anything',
   ),
   _ChangeType(
+    apiType: ChangeReportType.other,
     label: 'Something else',
     hint: 'Tell us in your own words',
     icon: VeloraIcons.dots,
@@ -93,9 +108,10 @@ const _types = [
 
 /// Report a change: pick what happened → details.
 ///
-/// UI ONLY — API REQUIRED: there is no endpoint for change reports, so
-/// "Send to office" explains that and offers the Inbox. The emergency
-/// banner dials 911 directly.
+/// Sends `POST /change-reports` (🚧 PLANNED — NOT LIVE) when
+/// `ApiConfig.veloraApiEnabled`; otherwise "Send to office" explains the
+/// endpoint isn't available and offers the Inbox. The emergency banner
+/// dials 911 directly.
 class ReportChangeView extends StatefulWidget {
   const ReportChangeView({super.key});
 
@@ -108,7 +124,38 @@ class _ReportChangeViewState extends State<ReportChangeView> {
   DateTime? _from;
   DateTime? _until;
   bool? _sawDoctor;
+  bool _sending = false;
   final _noteController = TextEditingController();
+
+  Future<void> _send(_ChangeType type) async {
+    if (!ApiConfig.veloraApiEnabled) {
+      await showApiRequiredSheet(
+        context,
+        feature: tr('Change reports'),
+        onContactOffice: () => AppNavigator.openInbox(context),
+      );
+      return;
+    }
+    setState(() => _sending = true);
+    try {
+      final result = await sl<ChangeReportRepository>().send(
+        ChangeReportRequest(
+          type: type.apiType,
+          from: _from,
+          until: _until,
+          note: _noteController.text,
+          sawDoctor: _sawDoctor,
+        ),
+      );
+      if (!mounted) return;
+      showVeloraToast(context, result.doneTitle ?? result.message);
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      showVeloraToast(context, apiErrorMessage(error));
+    }
+  }
 
   @override
   void dispose() {
@@ -141,7 +188,7 @@ class _ReportChangeViewState extends State<ReportChangeView> {
   Future<void> _call911() async {
     final uri = Uri(scheme: 'tel', path: '911');
     if (!await launchUrl(uri) && mounted) {
-      showVeloraToast(context, 'Couldn\'t start the call. Please dial 911.');
+      showVeloraToast(context, tr('Couldn\'t start the call. Please dial 911.'));
     }
   }
 
@@ -157,8 +204,8 @@ class _ReportChangeViewState extends State<ReportChangeView> {
         body: VeloraPage(
           gap: 12,
           header: VeloraHeader(
-            title: selected?.label ?? 'Report a change',
-            subtitle: 'Tell the office what happened',
+            title: selected != null ? tr(selected.label) : tr('Report a change'),
+            subtitle: tr('Tell the office what happened'),
             onBack: () => selected == null ? Navigator.of(context).pop() : _select(null),
           ),
           children: selected == null ? _pickStep() : _detailsStep(selected),
@@ -185,11 +232,11 @@ class _ReportChangeViewState extends State<ReportChangeView> {
                       TextSpan(
                         children: [
                           TextSpan(
-                            text: 'Emergency? ',
+                            text: tr('Emergency? '),
                             style: VeloraText.body(13.5, weight: FontWeight.w700, color: const Color(0xFF7E2A23)),
                           ),
                           TextSpan(
-                            text: 'Call 911 first, then tell us here.',
+                            text: tr('Call 911 first, then tell us here.'),
                             style: VeloraText.body(13.5, color: const Color(0xFF7E2A23)),
                           ),
                         ],
@@ -201,7 +248,7 @@ class _ReportChangeViewState extends State<ReportChangeView> {
             ),
           ),
         ),
-        const SectionCaption('What happened?', padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
+        SectionCaption(tr('What happened?'), padding: EdgeInsets.fromLTRB(2, 4, 2, 0)),
         for (final type in _types)
           Material(
             color: Colors.white,
@@ -222,8 +269,8 @@ class _ReportChangeViewState extends State<ReportChangeView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(type.label, style: VeloraText.body(14.5, weight: FontWeight.w700)),
-                          Text(type.hint, style: VeloraText.body(12, color: VeloraColors.muted)),
+                          Text(tr(type.label), style: VeloraText.body(14.5, weight: FontWeight.w700)),
+                          Text(tr(type.hint), style: VeloraText.body(12, color: VeloraColors.muted)),
                         ],
                       ),
                     ),
@@ -245,7 +292,7 @@ class _ReportChangeViewState extends State<ReportChangeView> {
                   children: [
                     Expanded(
                       child: DateField(
-                        label: type.fromLabel!,
+                        label: tr(type.fromLabel!),
                         value: _from,
                         labelColor: VeloraColors.body,
                         onTap: () => _pickDate(from: true),
@@ -255,7 +302,7 @@ class _ReportChangeViewState extends State<ReportChangeView> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: DateField(
-                          label: 'Until',
+                          label: tr('Until'),
                           value: _until,
                           labelColor: VeloraColors.body,
                           onTap: () => _pickDate(from: false),
@@ -266,14 +313,14 @@ class _ReportChangeViewState extends State<ReportChangeView> {
                 ),
                 if (type.fromLabel != 'Date') ...[
                   const SizedBox(height: 6),
-                  Text('Leave "Until" empty if it\'s still going on.',
+                  Text(tr('Leave "Until" empty if it\'s still going on.'),
                       style: VeloraText.body(12, color: VeloraColors.muted)),
                 ],
                 const SizedBox(height: 14),
               ],
               if (type.askDoctor) ...[
                 Text(
-                  'Did your client see a doctor or go to the ER?',
+                  tr('Did your client see a doctor or go to the ER?'),
                   style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.body),
                 ),
                 const SizedBox(height: 8),
@@ -281,8 +328,8 @@ class _ReportChangeViewState extends State<ReportChangeView> {
                 const SizedBox(height: 14),
               ],
               VeloraTextField(
-                label: type.noteLabel,
-                hint: type.noteHint,
+                label: tr(type.noteLabel),
+                hint: tr(type.noteHint),
                 controller: _noteController,
                 maxLines: 4,
                 minLines: 3,
@@ -290,7 +337,7 @@ class _ReportChangeViewState extends State<ReportChangeView> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: VeloraTextLink(
-                  label: 'Add a photo of paperwork (optional)',
+                  label: tr('Add a photo of paperwork (optional)'),
                   size: 13.5,
                   icon: VeloraIcons.camera,
                   onTap: () => AppNavigator.openUpload(context, initialType: 'med'),
@@ -300,13 +347,10 @@ class _ReportChangeViewState extends State<ReportChangeView> {
           ),
         ),
         VeloraButton(
-          label: 'Send to office',
+          label: tr('Send to office'),
           icon: VeloraIcons.send,
-          onPressed: () => showApiRequiredSheet(
-            context,
-            feature: 'Change reports',
-            onContactOffice: () => AppNavigator.openInbox(context),
-          ),
+          isLoading: _sending,
+          onPressed: () => _send(type),
         ),
       ];
 }

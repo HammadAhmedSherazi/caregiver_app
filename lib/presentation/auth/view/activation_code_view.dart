@@ -12,6 +12,7 @@ import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import '../models/signup_flow_data.dart';
 import 'registration_view.dart';
+import '../../../core/i18n/tr.dart';
 
 class ActivationCodeView extends StatefulWidget {
   const ActivationCodeView({super.key, required this.flowData});
@@ -72,13 +73,13 @@ class _ActivationCodeViewState extends State<ActivationCodeView> {
                   children: [
                     const SizedBox(height: 100),
                     Text(
-                      'Activation Code',
+                      tr('Activation Code'),
                       style: AppTextStyles.authTitle,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 39),
                     AuthTextField(
-                      hint: 'Enter Code',
+                      hint: tr('Enter Code'),
                       prefixIconAsset: AppAssets.icPassword,
                       controller: _codeController,
                       textInputAction: TextInputAction.done,
@@ -86,12 +87,12 @@ class _ActivationCodeViewState extends State<ActivationCodeView> {
                       validator: (value) => FormValidators.minLength(
                         value,
                         4,
-                        fieldName: 'Activation code',
+                        fieldName: tr('Activation code'),
                       ),
                     ),
                     const SizedBox(height: 14),
                     AuthPrimaryButton(
-                      label: 'Submit Code',
+                      label: tr('Submit Code'),
                       height: 60,
                       borderRadius: 14,
                       horizontalPadding: 32,

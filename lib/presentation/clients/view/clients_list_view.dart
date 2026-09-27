@@ -10,6 +10,7 @@ import '../../widgets/skeletons/api_tab_skeletons.dart';
 import '../widgets/client_list_widgets.dart';
 import '../widgets/clients_search_bar.dart';
 import 'client_profile_view.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2202` — assigned clients list.
 class ClientsListView extends StatefulWidget {
@@ -89,8 +90,8 @@ class _ClientsListViewState extends State<ClientsListView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           VeloraHeader(
-            title: 'My clients',
-            subtitle: 'Assigned to you',
+            title: tr('My clients'),
+            subtitle: tr('Assigned to you'),
             onBack: () => Navigator.of(context).pop(),
             bottom: Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -123,9 +124,9 @@ class _ClientsListViewState extends State<ClientsListView> {
         color: AppColors.homePrimary,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
+          children: [
             SizedBox(height: 120),
-            Center(child: Text('No clients found')),
+            Center(child: Text(tr('No clients found'))),
           ],
         ),
       );

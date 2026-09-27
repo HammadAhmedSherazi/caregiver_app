@@ -12,6 +12,7 @@ import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
 import '../models/signup_flow_data.dart';
 import 'finish_account_setup_view.dart';
+import '../../../core/i18n/tr.dart';
 
 class EmailVerificationView extends StatefulWidget {
   const EmailVerificationView({super.key, required this.email});
@@ -59,7 +60,7 @@ class _EmailVerificationViewState extends State<EmailVerificationView> {
 
     SnackbarHelper.showSuccess(
       context,
-      'Verification email sent. Please check your inbox.',
+      tr('Verification email sent. Please check your inbox.'),
     );
   }
 
@@ -83,7 +84,7 @@ class _EmailVerificationViewState extends State<EmailVerificationView> {
                 children: [
                   const SizedBox(height: 100),
                   Text(
-                    'Email Verification Required',
+                    tr('Email Verification Required'),
                     style: AppTextStyles.authTitle,
                     textAlign: TextAlign.center,
                   ),
@@ -96,16 +97,12 @@ class _EmailVerificationViewState extends State<EmailVerificationView> {
                   ),
                   const SizedBox(height: 25),
                   Text(
-                    'We\'ve emailed a verification link to $normalizedEmail. '
-                    'Please follow the link in the email to verify your account '
-                    'before you can log in.\n\n'
-                    'Don\'t forget to check your spam or junk folder if you '
-                    'don\'t see the email.',
+                    tr('We\'ve emailed a verification link to {0}. Please follow the link in the email to verify your account before you can log in.\n\nDon\'t forget to check your spam or junk folder if you don\'t see the email.', [normalizedEmail]),
                     style: AppTextStyles.authSubtitle,
                   ),
                   const SizedBox(height: 32),
                   AuthPrimaryButton(
-                    label: 'Return to login',
+                    label: tr('Return to login'),
                     height: 60,
                     borderRadius: 14,
                     horizontalPadding: 32,
@@ -122,7 +119,7 @@ class _EmailVerificationViewState extends State<EmailVerificationView> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      'Resend Verification Email',
+                      tr('Resend Verification Email'),
                       style: AppTextStyles.authResendLink,
                     ),
                   ),

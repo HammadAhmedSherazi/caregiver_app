@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/service_locator.dart';
+import '../../../core/network/api_config.dart';
+import '../../../core/network/api_error_message.dart';
 import '../../../core/utils/velora_format.dart';
+import '../../../data/models/api/velora/velora_models.dart';
+import '../../../data/repositories/visit_repository.dart';
 import '../../../data/models/api/visit_model.dart';
 import '../../main/app_navigator.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 class FixVisitArgs {
   const FixVisitArgs({
@@ -25,9 +31,12 @@ class FixVisitArgs {
 
 /// "Missed clock-out" form.
 ///
-/// UI ONLY — API REQUIRED: there is no endpoint to submit a corrected
-/// clock-out time for review, so "Send to office" explains that instead of
-/// pretending to submit.
+/// Submits `POST /visits/{schedule}/fix-clockout` (🚧 PLANNED — NOT LIVE)
+/// when `ApiConfig.veloraApiEnabled`; otherwise "Send to office" explains the
+/// endpoint isn't available instead of pretending to submit.
+///
+/// The path id is the `visit_id` the contract's `fix_clockout` action
+/// carries (see open question in the API report).
 class FixVisitView extends StatefulWidget {
   const FixVisitView({super.key, required this.args});
 
@@ -47,6 +56,56 @@ class _FixVisitViewState extends State<FixVisitView> {
 
   TimeOfDay? _leftAt;
   String _reason = _reasons.first;
+  bool _sending = false;
+
+  static const _reasonValues = {
+    'Forgot to tap out': FixClockoutReason.forgotToTapOut,
+    'Phone died': FixClockoutReason.phoneDied,
+    'App problem': FixClockoutReason.appProblem,
+    'Something else': FixClockoutReason.somethingElse,
+  };
+
+  /// Picked time on the clock-in day; before the clock-in means after midnight.
+  DateTime _leftAtDateTime() {
+    final start = widget.args.clockInAt;
+    final t = _leftAt!;
+    var left = DateTime(start.year, start.month, start.day, t.hour, t.minute);
+    if (!left.isAfter(start)) left = left.add(const Duration(days: 1));
+    return left;
+  }
+
+  Future<void> _submit() async {
+    if (!ApiConfig.veloraApiEnabled) {
+      await showApiRequiredSheet(
+        context,
+        feature: tr('Clock-out corrections'),
+        onContactOffice: () => AppNavigator.openInbox(context),
+      );
+      return;
+    }
+    setState(() => _sending = true);
+    try {
+      final result = await sl<VisitRepository>().fixClockout(
+        widget.args.visitId,
+        FixClockoutRequest(
+          leftAt: _leftAtDateTime(),
+          reason: _reasonValues[_reason]!,
+          note: _noteController.text,
+          clockInAt: widget.args.clockInAt,
+        ),
+      );
+      if (!mounted) return;
+      showVeloraToast(
+        context,
+        [result.message, result.reviewEta].whereType<String>().where((s) => s.isNotEmpty).join(' · '),
+      );
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      showVeloraToast(context, apiErrorMessage(error));
+    }
+  }
   final _noteController = TextEditingController();
 
   @override
@@ -69,7 +128,7 @@ class _FixVisitViewState extends State<FixVisitView> {
     return VeloraScaffold(
       body: VeloraPage(
         header: VeloraHeader(
-          title: 'Missed clock-out',
+          title: tr('Missed clock-out'),
           subtitle: '${VeloraFormat.shortDate(args.clockInAt)} · ${args.clientName}',
           onBack: () => Navigator.of(context).pop(),
         ),
@@ -80,12 +139,12 @@ class _FixVisitViewState extends State<FixVisitView> {
               children: [
                 KeyValueRow(
                   showDivider: false,
-                  label: 'Clocked in',
+                  label: tr('Clocked in'),
                   value: VeloraFormat.time(args.clockInAt),
                 ),
-                const KeyValueRow(
-                  label: 'Clocked out',
-                  value: 'Missing',
+                KeyValueRow(
+                  label: tr('Clocked out'),
+                  value: tr('Missing'),
                   valueColor: VeloraColors.warnText,
                 ),
               ],
@@ -96,7 +155,7 @@ class _FixVisitViewState extends State<FixVisitView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'What time did you leave?',
+                  tr('What time did you leave?'),
                   style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.body),
                 ),
                 const SizedBox(height: 7),
@@ -117,7 +176,7 @@ class _FixVisitViewState extends State<FixVisitView> {
                           children: [
                             Expanded(
                               child: Text(
-                                _leftAt?.format(context) ?? 'Select a time',
+                                _leftAt?.format(context) ?? tr('Select a time'),
                                 style: VeloraText.body(
                                   16,
                                   color: _leftAt == null ? VeloraColors.faint : VeloraColors.ink,
@@ -133,7 +192,7 @@ class _FixVisitViewState extends State<FixVisitView> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'What happened?',
+                  tr('What happened?'),
                   style: VeloraText.body(13, weight: FontWeight.w700, color: VeloraColors.body),
                 ),
                 const SizedBox(height: 8),
@@ -148,7 +207,7 @@ class _FixVisitViewState extends State<FixVisitView> {
                           SizedBox(
                             width: w,
                             child: VeloraChoiceChip(
-                              label: reason,
+                              label: tr(reason),
                               expand: true,
                               selected: _reason == reason,
                               onTap: () => setState(() => _reason = reason),
@@ -161,7 +220,7 @@ class _FixVisitViewState extends State<FixVisitView> {
                 const SizedBox(height: 16),
                 VeloraTextField(
                   controller: _noteController,
-                  label: 'Note for the office (optional)',
+                  label: tr('Note for the office (optional)'),
                   maxLines: 3,
                   minLines: 3,
                 ),
@@ -171,20 +230,14 @@ class _FixVisitViewState extends State<FixVisitView> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
-              'The office reviews time changes, usually within 1 business day. '
-              'Your hours for this day count once it\'s approved.',
+              tr('The office reviews time changes, usually within 1 business day. Your hours for this day count once it\'s approved.'),
               style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.5),
             ),
           ),
           VeloraButton(
-            label: 'Send to office',
-            onPressed: _leftAt == null
-                ? null
-                : () => showApiRequiredSheet(
-                      context,
-                      feature: 'Clock-out corrections',
-                      onContactOffice: () => AppNavigator.openInbox(context),
-                    ),
+            label: tr('Send to office'),
+            isLoading: _sending,
+            onPressed: _leftAt == null ? null : _submit,
           ),
         ],
       ),

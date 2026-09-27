@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class DocumentModel extends BaseModel {
   const DocumentModel({
@@ -14,6 +15,12 @@ class DocumentModel extends BaseModel {
     this.clientId,
     this.url,
     this.uploadedAt,
+    this.pages,
+    this.status,
+    this.filedUnder,
+    this.replaces,
+    this.replacesId,
+    this.reviewEta,
   });
 
   final int id;
@@ -28,6 +35,24 @@ class DocumentModel extends BaseModel {
   final int? clientId;
   final String? url;
   final DateTime? uploadedAt;
+
+  /// 🚧 Planned.
+  final int? pages;
+
+  /// `Received` · `Confirmed` · `Needs another photo`. 🚧 Planned.
+  final String? status;
+
+  /// Upload response, e.g. "Your file › Identity". 🚧 Planned.
+  final String? filedUnder;
+
+  /// Upload response `{ id, label }` of the replaced document. 🚧 Planned.
+  final LabeledActionModel? replaces;
+
+  /// Id of the replaced document. 🚧 Planned.
+  final int? replacesId;
+
+  /// 🚧 Planned.
+  final String? reviewEta;
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
     return DocumentModel(
@@ -45,6 +70,12 @@ class DocumentModel extends BaseModel {
       uploadedAt: json['uploaded_at'] != null
           ? DateTime.tryParse(json['uploaded_at'] as String)
           : null,
+      pages: intOrNull(json['pages']),
+      status: str(json['status']),
+      filedUnder: str(json['filed_under']),
+      replaces: LabeledActionModel.maybeFromJson(json['replaces']),
+      replacesId: intOrNull(jsonMap(json['replaces'])?['id']),
+      reviewEta: str(json['review_eta']),
     );
   }
 
@@ -65,7 +96,7 @@ class DocumentModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [
+  List<Object?> get props => [pages, status, filedUnder, replaces, replacesId, reviewEta, 
         id,
         name,
         type,

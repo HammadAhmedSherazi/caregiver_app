@@ -5,6 +5,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/chat_message_model.dart';
 import '../../widgets/velora/velora.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2779` — chat message bubble.
 class ChatBubble extends StatelessWidget {
@@ -123,7 +124,7 @@ class _StatusRow extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Text(
-                'Tap to send again',
+                tr('Tap to send again'),
                 style: context.responsiveStyle(
                   AppTextStyles.homeNavLabel.copyWith(
                     fontSize: 12,

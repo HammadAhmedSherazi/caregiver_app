@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../../core/base/base_cubit.dart';
 import '../../../data/models/api/compliance_form_model.dart';
 import '../../../data/repositories/task_repository.dart';
+import '../../../core/i18n/tr.dart';
 
 enum CheckInStatus { initial, loading, success, failure }
 
@@ -91,7 +92,7 @@ class CheckInCubit extends BaseCubit<CheckInState> {
       emit(
         state.copyWith(
           status: hasData ? CheckInStatus.success : CheckInStatus.failure,
-          errorMessage: 'Failed to load your check-ins. Please try again.',
+          errorMessage: tr('Failed to load your check-ins. Please try again.'),
         ),
       );
     }

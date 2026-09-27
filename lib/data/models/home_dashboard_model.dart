@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import 'api/velora/dashboard_models.dart';
+import '../../core/i18n/tr.dart';
+
 enum ShiftStatus { pending, inProgress }
 
 class CareTaskItem extends Equatable {
@@ -36,6 +39,7 @@ class HomeDashboard extends Equatable {
     required this.pendingTasks,
     this.unreadNotifications = 0,
     this.unreadConversations = 0,
+    this.velora,
   });
 
   final String caregiverName;
@@ -47,6 +51,10 @@ class HomeDashboard extends Equatable {
   final List<PendingTask> pendingTasks;
   final int unreadNotifications;
   final int unreadConversations;
+
+  /// VELORA additive `/dashboard` fields (needs_attention, next_payday, …).
+  /// 🚧 Planned — null until the server sends them.
+  final DashboardExtensionModel? velora;
 
   bool get hasShiftCard => activeShift != null;
 
@@ -64,6 +72,7 @@ class HomeDashboard extends Equatable {
       avatarUrl: avatarUrl,
       unreadNotifications: unreadNotifications,
       unreadConversations: unreadConversations,
+      velora: velora,
     );
   }
 
@@ -78,6 +87,7 @@ class HomeDashboard extends Equatable {
         avatarUrl,
         unreadNotifications,
         unreadConversations,
+        velora,
       ];
 }
 
@@ -132,9 +142,9 @@ class ActiveShift extends Equatable {
 
   /// Small label above the client name on the home shift card.
   String get cardHeading {
-    if (isInProgress) return 'Active Shift';
-    if (minutesUntilStart <= 0) return 'Ready to Start';
-    return 'Upcoming Shift';
+    if (isInProgress) return tr('Active Shift');
+    if (minutesUntilStart <= 0) return tr('Ready to Start');
+    return tr('Upcoming Shift');
   }
 
   /// Start Shift is only offered before clock-in.

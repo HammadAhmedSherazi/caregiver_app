@@ -1,5 +1,6 @@
 package com.homecare.android
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity is required by local_auth for the biometric prompt.
+class MainActivity : FlutterFragmentActivity()

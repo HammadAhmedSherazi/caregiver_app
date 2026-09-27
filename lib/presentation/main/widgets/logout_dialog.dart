@@ -8,6 +8,7 @@ import '../../../core/utils/extensions/context_extensions.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
 import '../../home/widgets/home_svg_icon.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:923` — logout confirmation bottom sheet.
 class LogoutDialog extends StatelessWidget {
@@ -85,7 +86,7 @@ class LogoutDialog extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'Logout ?',
+                            tr('Logout ?'),
                             style: context.responsiveStyle(
                               AppTextStyles.homeConfirmDialogTitle.copyWith(
                                 fontSize: 22,
@@ -96,7 +97,7 @@ class LogoutDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Are you sure want to logout ?',
+                            tr('Are you sure want to logout ?'),
                             textAlign: TextAlign.center,
                             style: context.responsiveStyle(
                               AppTextStyles.homeCardSubtitle,
@@ -133,7 +134,7 @@ class LogoutDialog extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-                                    child: const Text('Cancel'),
+                                    child: Text(tr('Cancel')),
                                   ),
                                 ),
                               ),
@@ -174,7 +175,7 @@ class LogoutDialog extends StatelessWidget {
                                               color: AppColors.authOnGradient,
                                             ),
                                           )
-                                        : const Text('Logout'),
+                                        : Text(tr('Logout')),
                                   ),
                                 ),
                               ),

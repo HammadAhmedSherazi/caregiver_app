@@ -14,12 +14,19 @@ void main() {
     await setupServiceLocator();
   });
 
-  testWidgets('App renders onboarding on first launch', (WidgetTester tester) async {
+  testWidgets('App opens on sign-in (no onboarding)', (WidgetTester tester) async {
     await tester.pumpWidget(const App());
-    await tester.pumpAndSettle();
+    // Startup reads the Keychain/Keystore (real futures), and the sign-in
+    // hero animates forever, so pump until sign-in shows (max ~5 s).
+    for (var i = 0; i < 50 && find.text('Use my phone number').evaluate().isEmpty; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Built for caregivers, not paperwork.'), findsOneWidget);
-    expect(find.text('Next'), findsOneWidget);
+    expect(find.text('Built for caregivers, not paperwork.'), findsNothing);
+    expect(find.text('Use my phone number'), findsOneWidget);
+    expect(find.text('New here? I have an invite code'), findsOneWidget);
   });
 
   testWidgets('Signup screen renders Figma fields', (WidgetTester tester) async {

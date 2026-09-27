@@ -5,6 +5,7 @@ import '../../../core/responsive/responsive_helper.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import 'responsive_layout.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Generic app shell — AppBar on mobile, NavigationRail on tablet/large.
 class AdaptiveScaffold extends StatelessWidget {
@@ -76,7 +77,7 @@ class AdaptiveScaffold extends StatelessWidget {
                   if (isExpanded) ...[
                     const SizedBox(height: 12),
                     Text(
-                      'Caregiver',
+                      tr('Caregiver'),
                       style: AppTextStyles.labelMedium.copyWith(
                         color: AppColors.textOnDark,
                       ),

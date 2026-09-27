@@ -1,3 +1,4 @@
+import 'api/velora/common_models.dart';
 import 'base_model.dart';
 
 enum NotificationKind { schedule, compliance, message }
@@ -10,6 +11,8 @@ class AppNotification extends BaseModel {
     required this.timestampLabel,
     required this.kind,
     this.isRead = false,
+    this.category,
+    this.action,
   });
 
   final String id;
@@ -19,6 +22,12 @@ class AppNotification extends BaseModel {
   final NotificationKind kind;
   final bool isRead;
 
+  /// VELORA `category` (`time`, `documents`, `pay`, …). 🚧 Planned — null today.
+  final String? category;
+
+  /// VELORA deep link. 🚧 Planned — null today; when present it wins over [kind].
+  final AppActionModel? action;
+
   AppNotification copyWith({bool? isRead}) {
     return AppNotification(
       id: id,
@@ -27,6 +36,8 @@ class AppNotification extends BaseModel {
       timestampLabel: timestampLabel,
       kind: kind,
       isRead: isRead ?? this.isRead,
+      category: category,
+      action: action,
     );
   }
 
@@ -41,5 +52,6 @@ class AppNotification extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [id, title, body, timestampLabel, kind, isRead];
+  List<Object?> get props =>
+      [id, title, body, timestampLabel, kind, isRead, category, action];
 }

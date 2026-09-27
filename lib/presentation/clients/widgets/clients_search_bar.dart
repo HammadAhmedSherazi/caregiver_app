@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
 import '../../home/widgets/home_svg_icon.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Figma node `1:2202` — clients search field.
 class ClientsSearchBar extends StatelessWidget {
@@ -49,7 +50,7 @@ class ClientsSearchBar extends StatelessWidget {
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
-                hintText: 'Search Clients',
+                hintText: tr('Search Clients'),
                 hintStyle: context.responsiveStyle(
                   AppTextStyles.homeCardSubtitle,
                 ),

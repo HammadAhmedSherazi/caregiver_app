@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/app_constants.dart';
+import '../../i18n/tr.dart';
 
 class SnackbarHelper {
   SnackbarHelper._();
@@ -15,7 +16,7 @@ class SnackbarHelper {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(tr(message)),
           backgroundColor: backgroundColor,
           duration: duration,
         ),

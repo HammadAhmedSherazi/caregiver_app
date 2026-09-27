@@ -1,6 +1,7 @@
 import '../base_model.dart';
 import 'schedule_item_model.dart';
 import 'visit_model.dart';
+import 'velora/velora_models.dart';
 
 class DashboardCaregiverModel extends BaseModel {
   const DashboardCaregiverModel({
@@ -191,6 +192,7 @@ class DashboardModel extends BaseModel {
     required this.hoursThisWeek,
     required this.pay,
     required this.badges,
+    this.velora,
   });
 
   final DashboardCaregiverModel caregiver;
@@ -202,6 +204,9 @@ class DashboardModel extends BaseModel {
   final double hoursThisWeek;
   final DashboardPayModel pay;
   final DashboardBadgesModel badges;
+
+  /// VELORA additive fields (client, week, needs_attention, next_payday). 🚧 Planned — null until the server sends them.
+  final DashboardExtensionModel? velora;
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) {
     final activeRaw = json['active_visit'];
@@ -235,6 +240,7 @@ class DashboardModel extends BaseModel {
       badges: DashboardBadgesModel.fromJson(
         json['badges'] as Map<String, dynamic>? ?? const {},
       ),
+      velora: DashboardExtensionModel.maybeFromJson(json),
     );
   }
 
@@ -252,7 +258,7 @@ class DashboardModel extends BaseModel {
       };
 
   @override
-  List<Object?> get props => [
+  List<Object?> get props => [velora, 
         caregiver,
         today,
         activeVisit,

@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class VisitLocationModel extends BaseModel {
   const VisitLocationModel({
@@ -38,6 +39,8 @@ class VisitModel extends BaseModel {
     this.clockInLocation,
     this.evvVerified,
     this.scheduleId,
+    this.clockOutDetails,
+    this.locationMatch,
   });
 
   final int id;
@@ -62,6 +65,12 @@ class VisitModel extends BaseModel {
         normalized == 'active';
   }
 
+  /// VELORA additive clock-out response fields (hospital, care_not_given, services, summary). 🚧 Planned.
+  final ClockOutExtensionModel? clockOutDetails;
+
+  /// VELORA clock-in response `location_match` ("Location matched"). 🚧 Planned.
+  final LocationMatchModel? locationMatch;
+
   factory VisitModel.fromJson(Map<String, dynamic> json) {
     return VisitModel(
       id: json['id'] as int,
@@ -80,6 +89,8 @@ class VisitModel extends BaseModel {
           : null,
       evvVerified: json['evv_verified'] as bool?,
       scheduleId: json['schedule_id'] as int?,
+      clockOutDetails: ClockOutExtensionModel.maybeFromJson(json),
+      locationMatch: LocationMatchModel.maybeFromJson(json['location_match']),
     );
   }
 
@@ -100,6 +111,8 @@ class VisitModel extends BaseModel {
 
   @override
   List<Object?> get props => [
+        clockOutDetails,
+        locationMatch,
         id,
         clientId,
         clientName,

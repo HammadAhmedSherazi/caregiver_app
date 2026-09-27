@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../../core/base/base_cubit.dart';
 import '../../../data/models/api/document_model.dart';
 import '../../../data/repositories/task_repository.dart';
+import '../../../core/i18n/tr.dart';
 
 enum DocumentsStatus { initial, loading, success, failure }
 
@@ -74,7 +75,7 @@ class DocumentsCubit extends BaseCubit<DocumentsState> {
       emit(
         state.copyWith(
           status: hasData ? DocumentsStatus.success : DocumentsStatus.failure,
-          errorMessage: 'Failed to load your documents. Please try again.',
+          errorMessage: tr('Failed to load your documents. Please try again.'),
         ),
       );
     }

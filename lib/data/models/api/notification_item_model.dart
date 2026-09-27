@@ -1,4 +1,5 @@
 import '../base_model.dart';
+import 'velora/velora_models.dart';
 
 class NotificationItemModel extends BaseModel {
   const NotificationItemModel({
@@ -9,6 +10,9 @@ class NotificationItemModel extends BaseModel {
     required this.read,
     required this.createdAt,
     required this.timeAgo,
+    this.category,
+    this.isNew,
+    this.action,
   });
 
   final int id;
@@ -19,6 +23,15 @@ class NotificationItemModel extends BaseModel {
   final DateTime createdAt;
   final String timeAgo;
 
+  /// `time` · `documents` · `pay` · `check_in` · `message` · `other`. 🚧 Planned.
+  final String? category;
+
+  /// Same as `!read`. 🚧 Planned.
+  final bool? isNew;
+
+  /// Deep link to open on tap. 🚧 Planned.
+  final AppActionModel? action;
+
   factory NotificationItemModel.fromJson(Map<String, dynamic> json) {
     return NotificationItemModel(
       id: json['id'] as int,
@@ -28,6 +41,9 @@ class NotificationItemModel extends BaseModel {
       read: json['read'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       timeAgo: json['time_ago'] as String? ?? '',
+      category: str(json['category']),
+      isNew: boolOrNull(json['is_new']),
+      action: AppActionModel.maybeFromJson(json['action']),
     );
   }
 
@@ -44,5 +60,5 @@ class NotificationItemModel extends BaseModel {
 
   @override
   List<Object?> get props =>
-      [id, type, title, body, read, createdAt, timeAgo];
+      [category, isNew, action, id, type, title, body, read, createdAt, timeAgo];
 }

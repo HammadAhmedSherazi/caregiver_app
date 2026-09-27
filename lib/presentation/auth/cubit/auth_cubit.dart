@@ -1,9 +1,18 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/base/base_cubit.dart';
 import '../../../core/di/service_locator.dart';
+import '../../../core/push/push_notification_handler.dart';
 import '../../../core/network/chat_realtime_service.dart';
+import '../../../data/local/face_id_store.dart';
 import '../../../data/local/remember_me_storage.dart';
+import '../../../data/local/token_storage.dart';
+import '../../../data/models/api/velora/velora_models.dart';
+import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/profile_repository.dart';
 import 'auth_state.dart';
+import '../../../core/i18n/tr.dart';
 
 class AuthCubit extends BaseCubit<AuthState> {
   AuthCubit({
@@ -19,6 +28,22 @@ class AuthCubit extends BaseCubit<AuthState> {
 
     try {
       final hasSession = await repository.hasStoredSession();
+      final faceStore = sl<FaceIdStore>();
+      final canUnlock =
+          hasSession || await faceStore.lockedToken() != null;
+      if (canUnlock && await faceStore.isEnabled()) {
+        // Face ID guards the saved session (MOBILE_API_VELORA.md §1): stay on
+        // the sign-in screen until [unlockWithFaceId].
+        emit(
+          state.copyWith(
+            status: AuthStatus.unauthenticated,
+            faceLocked: true,
+            clearError: true,
+          ),
+        );
+        return;
+      }
+
       if (hasSession) {
         // Refresh restores the authenticatable user id (needed for Pusher
         // private-user.{id}). Local session may previously have stored /me
@@ -26,7 +51,6 @@ class AuthCubit extends BaseCubit<AuthState> {
         await repository.refreshSession();
         final user = await repository.getCurrentUser();
         if (user != null && await repository.hasStoredSession()) {
-          await repository.setOnboardingCompleted();
           emit(
             state.copyWith(
               status: AuthStatus.authenticated,
@@ -37,89 +61,153 @@ class AuthCubit extends BaseCubit<AuthState> {
           return;
         }
       }
-
-      final onboardingCompleted = await repository.isOnboardingCompleted();
-      if (!onboardingCompleted) {
-        emit(state.copyWith(status: AuthStatus.onboarding, clearError: true));
-        return;
-      }
-
-      emit(state.copyWith(status: AuthStatus.unauthenticated, clearError: true));
     } catch (error, stackTrace) {
       logError('Failed to initialize auth', error: error, stackTrace: stackTrace);
+    }
 
-      final hasSession = await repository.hasStoredSession();
-      if (hasSession) {
-        await repository.refreshSession();
-        final user = await repository.getCurrentUser();
-        if (user != null && await repository.hasStoredSession()) {
-          await repository.setOnboardingCompleted();
-          emit(
-            state.copyWith(
-              status: AuthStatus.authenticated,
-              user: user,
-              clearError: true,
-            ),
-          );
-          return;
-        }
+    emit(state.copyWith(status: AuthStatus.unauthenticated, clearError: true));
+  }
+
+  /// After a successful Face ID check: rotate the saved token with
+  /// `POST /refresh` and hold the user for "You're in" ([finishSignIn]).
+  Future<UserModel?> unlockWithFaceId() async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    final faceStore = sl<FaceIdStore>();
+    try {
+      // After a Face ID sign-out the token is parked in the Face ID slot.
+      final parked = await faceStore.lockedToken();
+      if (parked != null && !await repository.hasStoredSession()) {
+        await sl<TokenStorage>().saveToken(parked);
       }
+      await faceStore.clearLockedToken();
 
-      final onboardingCompleted = await repository.isOnboardingCompleted();
-      if (!onboardingCompleted) {
-        emit(state.copyWith(status: AuthStatus.onboarding, clearError: true));
-        return;
+      final refreshed = await repository.refreshSession();
+      final user = refreshed ? await repository.getCurrentUser() : null;
+      if (user != null && await repository.hasStoredSession()) {
+        _pendingUser = user;
+        emit(state.copyWith(isSubmitting: false));
+        return user;
       }
+    } catch (error, stackTrace) {
+      logError('Face ID unlock failed', error: error, stackTrace: stackTrace);
+    }
+    await repository.clearLocalSession();
+    emit(
+      state.copyWith(
+        isSubmitting: false,
+        faceLocked: false,
+        errorMessage: tr('Your session has ended. Please sign in again.'),
+      ),
+    );
+    return null;
+  }
 
-      emit(
-        state.copyWith(
-          status: AuthStatus.unauthenticated,
-          errorMessage: 'Unable to load session. Please sign in.',
-        ),
-      );
+  /// Records Face ID on/off on this phone and, once the planned
+  /// `PUT /me/settings` is live, on the caregiver for support.
+  Future<void> setFaceIdEnabled(bool enabled, {String? name}) async {
+    final store = sl<FaceIdStore>();
+    enabled ? await store.enable(name: name) : await store.disable();
+    try {
+      await sl<ProfileRepository>()
+          .updateSettings(CaregiverSettingsModel(faceIdEnabled: enabled));
+    } catch (_) {
+      // Planned endpoint (ApiNotLiveException) or offline: the phone's own
+      // setting is what gates Face ID, so this is best effort.
     }
   }
 
-  Future<void> completeOnboarding() async {
-    try {
-      await repository.setOnboardingCompleted();
-      emit(state.copyWith(status: AuthStatus.unauthenticated, clearError: true));
-    } catch (error, stackTrace) {
-      logError('Failed to complete onboarding', error: error, stackTrace: stackTrace);
-      emit(
-        state.copyWith(
-          errorMessage: 'Something went wrong. Please try again.',
-        ),
-      );
-    }
+  // Phone sign-in (planned API, D5). These throw ApiException subclasses —
+  // including ApiNotLiveException while VELORA_API is off — so the sign-in
+  // screen can show the right message on the step the caregiver is on.
+
+  Future<PhoneCodeSentModel> sendPhoneCode(String phone) =>
+      repository.sendPhoneCode(phone: phone);
+
+  Future<InviteDetailsModel> checkInvite(String code) =>
+      repository.checkInvite(code: code);
+
+  Future<PhoneCodeSentModel> confirmInvite({
+    required String code,
+    required String phone,
+  }) =>
+      repository.confirmInvite(code: code, phone: phone);
+
+  /// Verifies the texted code and signs in, held for [finishSignIn].
+  /// Returns `true` on the first sign-in from this phone.
+  Future<bool> verifyPhoneCode({
+    required String phone,
+    required String code,
+  }) async {
+    final result = await repository.verifyPhoneCode(
+      phone: phone,
+      code: code,
+      deviceName: defaultTargetPlatform == TargetPlatform.iOS
+          ? 'VELORA iPhone'
+          : 'VELORA Android',
+    );
+    await repository.setOnboardingCompleted();
+    _pendingUser = result.user;
+    return result.firstSignIn;
   }
 
   Future<RememberMeCredentials> getRememberMeCredentials() {
     return rememberMeStorage.load();
   }
 
-  Future<void> login({
+  /// Signed in, but held on the sign-in screen for the "Turn on Face ID?"
+  /// and "You're in" steps. [finishSignIn] lets the app through.
+  UserModel? _pendingUser;
+
+  /// Name of the caregiver held for [finishSignIn], if any.
+  String? get pendingUserName => _pendingUser?.name;
+
+  void finishSignIn() {
+    final user = _pendingUser;
+    _pendingUser = null;
+    if (user == null) return;
+    emit(
+      state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+        isSubmitting: false,
+        faceLocked: false,
+        clearError: true,
+      ),
+    );
+  }
+
+  /// Returns the user on success. With [deferSession] the app stays on the
+  /// sign-in screen until [finishSignIn].
+  Future<UserModel?> login({
     required String email,
     required String password,
     required bool rememberMe,
+    bool deferSession = false,
   }) async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
     try {
       final user = await repository.login(email: email, password: password);
+      await sl<FaceIdStore>().clearLockedToken();
       await repository.setOnboardingCompleted();
       await rememberMeStorage.save(
         enabled: rememberMe,
         email: rememberMe ? email : null,
         password: rememberMe ? password : null,
       );
-      emit(
-        state.copyWith(
-          status: AuthStatus.authenticated,
-          user: user,
-          isSubmitting: false,
-        ),
-      );
+      if (deferSession) {
+        _pendingUser = user;
+        emit(state.copyWith(isSubmitting: false));
+      } else {
+        emit(
+          state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+            isSubmitting: false,
+          ),
+        );
+      }
+      return user;
     } on AuthException catch (error) {
       emit(
         state.copyWith(
@@ -132,10 +220,11 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Sign in failed. Please try again.',
+          errorMessage: tr('Sign in failed. Please try again.'),
         ),
       );
     }
+    return null;
   }
 
   Future<bool> signup({
@@ -165,7 +254,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Account creation failed. Please try again.',
+          errorMessage: tr('Account creation failed. Please try again.'),
         ),
       );
     }
@@ -196,7 +285,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to resend verification email. Please try again.',
+          errorMessage: tr('Unable to resend verification email. Please try again.'),
         ),
       );
     }
@@ -226,7 +315,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to verify activation code. Please try again.',
+          errorMessage: tr('Unable to verify activation code. Please try again.'),
         ),
       );
     }
@@ -265,7 +354,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Registration failed. Please try again.',
+          errorMessage: tr('Registration failed. Please try again.'),
         ),
       );
     }
@@ -292,7 +381,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to complete registration. Please try again.',
+          errorMessage: tr('Unable to complete registration. Please try again.'),
         ),
       );
     }
@@ -319,7 +408,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Unable to send reset email. Please try again.',
+          errorMessage: tr('Unable to send reset email. Please try again.'),
         ),
       );
     }
@@ -339,22 +428,40 @@ class AuthCubit extends BaseCubit<AuthState> {
         status: AuthStatus.unauthenticated,
         clearUser: true,
         isSubmitting: false,
-        errorMessage: 'Session expired. Please sign in again.',
+        errorMessage: tr('Session expired. Please sign in again.'),
       ),
     );
   }
 
+  /// With Face ID on, Sign out locks the session behind Face ID (the token
+  /// is parked in the Keychain / Keystore and not revoked), so "Sign in with
+  /// Face ID" works straight away — as in the design. With Face ID off it is
+  /// a full sign-out (`POST /logout`).
   Future<void> logout() async {
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
     try {
       await sl<ChatRealtimeService>().disconnect();
-      await repository.logout();
+      // Stop pushes to this phone (no-op while the planned API is off).
+      await sl<PushNotificationHandler>().onSignOut();
+
+      final faceStore = sl<FaceIdStore>();
+      final token = await sl<TokenStorage>().getToken();
+      final lockWithFace = await faceStore.isEnabled() &&
+          token != null &&
+          token.isNotEmpty;
+      if (lockWithFace) {
+        await faceStore.lockToken(token);
+        await repository.clearLocalSession();
+      } else {
+        await repository.logout();
+      }
       emit(
         state.copyWith(
           status: AuthStatus.unauthenticated,
           clearUser: true,
           isSubmitting: false,
+          faceLocked: lockWithFace,
         ),
       );
     } catch (error, stackTrace) {
@@ -362,7 +469,7 @@ class AuthCubit extends BaseCubit<AuthState> {
       emit(
         state.copyWith(
           isSubmitting: false,
-          errorMessage: 'Sign out failed. Please try again.',
+          errorMessage: tr('Sign out failed. Please try again.'),
         ),
       );
     }

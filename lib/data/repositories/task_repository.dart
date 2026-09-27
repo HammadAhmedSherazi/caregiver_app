@@ -4,6 +4,9 @@ import '../models/api/compliance_form_model.dart';
 import '../models/api/document_model.dart';
 import '../models/selected_document.dart';
 import '../models/task_page_model.dart';
+import '../api/velora_api.dart';
+import '../models/api/velora/velora_models.dart';
+import '../../core/utils/pay_stub_file_helper.dart';
 
 abstract class TaskRepository {
   Future<TaskPageData> getTaskPage();
@@ -24,7 +27,31 @@ abstract class TaskRepository {
     required String type,
     int? clientId,
     String? notes,
+    DocumentUploadExtras? extras,
   });
+
+  // 🚧 PLANNED — NOT LIVE (MOBILE_API_VELORA.md).
+
+  /// `GET /documents/required`.
+  Future<RequiredDocumentsModel> getRequiredDocuments();
+
+  /// `GET /documents/office`.
+  Future<List<OfficeDocumentModel>> getOfficeDocuments();
+
+  /// `GET /documents/office/{id}/download` → saved and opened as a PDF.
+  Future<void> openOfficeDocument(OfficeDocumentModel document);
+
+  /// `PUT /compliance-forms/{id}/draft`.
+  Future<ComplianceFormDetailModel> saveCheckInDraft(int formId, CheckInDraftRequest request);
+
+  /// Extended `POST /compliance-forms/{id}/submit` (typed-name signature).
+  Future<ComplianceFormDetailModel> submitCheckIn(int formId, CheckInSubmitRequest request);
+
+  /// `GET /compliance-forms/{id}/receipt` → saved and opened as a PDF.
+  Future<void> openCheckInReceipt(int formId);
+
+  /// `GET /pay/next`.
+  Future<PayNextModel> getPayNext();
 
   /// Documents on file for the caregiver (`GET /documents`).
   Future<List<DocumentModel>> getDocuments();
@@ -34,9 +61,10 @@ abstract class TaskRepository {
 }
 
 class TaskRepositoryImpl implements TaskRepository {
-  TaskRepositoryImpl({required this._api});
+  TaskRepositoryImpl({required this._api, required this._velora});
 
   final CaregiverApi _api;
+  final VeloraApi _velora;
 
   @override
   Future<TaskPageData> getTaskPage() async {
@@ -208,6 +236,7 @@ class TaskRepositoryImpl implements TaskRepository {
     required String type,
     int? clientId,
     String? notes,
+    DocumentUploadExtras? extras,
   }) async {
     final path = document.filePath;
     if (path == null) {
@@ -221,6 +250,7 @@ class TaskRepositoryImpl implements TaskRepository {
       clientId: clientId,
       notes: notes,
       mimeType: document.mimeType,
+      extras: extras,
     );
   }
 
@@ -237,4 +267,35 @@ class TaskRepositoryImpl implements TaskRepository {
     final response = await _api.getComplianceForms(status: status);
     return response.data;
   }
+
+  @override
+  Future<RequiredDocumentsModel> getRequiredDocuments() => _velora.getRequiredDocuments();
+
+  @override
+  Future<List<OfficeDocumentModel>> getOfficeDocuments() => _velora.getOfficeDocuments();
+
+  @override
+  Future<void> openOfficeDocument(OfficeDocumentModel document) async {
+    final bytes = await _velora.downloadOfficeDocument(document.id);
+    await PayStubFileHelper.saveAndOpen(bytes: bytes, fileName: '${document.id}.pdf');
+  }
+
+  @override
+  Future<ComplianceFormDetailModel> saveCheckInDraft(int formId, CheckInDraftRequest request) {
+    return _velora.saveCheckInDraft(formId, request);
+  }
+
+  @override
+  Future<ComplianceFormDetailModel> submitCheckIn(int formId, CheckInSubmitRequest request) {
+    return _velora.submitCheckIn(formId, request);
+  }
+
+  @override
+  Future<void> openCheckInReceipt(int formId) async {
+    final bytes = await _velora.downloadCheckInReceipt(formId);
+    await PayStubFileHelper.saveAndOpen(bytes: bytes, fileName: 'check-in-receipt-$formId.pdf');
+  }
+
+  @override
+  Future<PayNextModel> getPayNext() => _velora.getPayNext();
 }

@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/auth/biometric_auth.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/utils/velora_format.dart';
+import '../../../data/local/face_id_store.dart';
+import '../../../data/repositories/profile_repository.dart';
+import '../../../data/models/api/velora/velora_models.dart';
+import '../../../data/local/language_store.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../clients/view/clients_list_view.dart';
 import '../../home/cubit/home_cubit.dart';
@@ -11,6 +17,7 @@ import '../../widgets/velora/velora.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 import '../widgets/profile_hours_chart.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Profile & settings, opened from the person icon on Home (`GET /me`,
 /// `GET /earnings/summary`).
@@ -46,7 +53,7 @@ class _ProfileViewState extends State<ProfileView> {
           return VeloraPage(
             onRefresh: _load,
             header: VeloraHeader(
-              title: 'Profile',
+              title: tr('Profile'),
               onBack: () => Navigator.of(context).pop(),
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               bottom: Padding(
@@ -62,7 +69,7 @@ class _ProfileViewState extends State<ProfileView> {
                           Text(name, style: VeloraText.display(21, color: Colors.white)),
                           const SizedBox(height: 3),
                           Text(
-                            data?.title ?? 'Caregiver',
+                            data?.title ?? tr('Caregiver'),
                             style: VeloraText.body(13, color: VeloraColors.onHeaderMuted),
                           ),
                         ],
@@ -79,7 +86,7 @@ class _ProfileViewState extends State<ProfileView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SectionCaption('Your client'),
+                      SectionCaption(tr('Your client')),
                       const SizedBox(height: 10),
                       Row(
                         children: [
@@ -92,7 +99,7 @@ class _ProfileViewState extends State<ProfileView> {
                                 Text(shift.clientName, style: VeloraText.body(15, weight: FontWeight.w700)),
                                 const SizedBox(height: 2),
                                 Text(
-                                  [shift.serviceType, if (data?.isLiveIn ?? false) 'Live-in'].join(' · '),
+                                  [shift.serviceType, if (data?.isLiveIn ?? false) tr('Live-in')].join(' · '),
                                   style: VeloraText.subtitle,
                                 ),
                               ],
@@ -104,7 +111,7 @@ class _ProfileViewState extends State<ProfileView> {
                   ),
                 ),
               if (state.hasError && data == null)
-                VeloraErrorState(message: 'We couldn\'t load your profile.', onRetry: _load)
+                VeloraErrorState(message: tr('We couldn\'t load your profile.'), onRetry: _load)
               else if (data == null)
                 const VeloraLoadingState()
               else ...[
@@ -113,16 +120,16 @@ class _ProfileViewState extends State<ProfileView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      KeyValueRow(showDivider: false, label: 'Mobile', value: data.phone ?? '—'),
-                      KeyValueRow(label: 'Email', value: data.email ?? user?.email ?? '—'),
-                      KeyValueRow(label: 'Home address', value: data.address ?? '—'),
+                      KeyValueRow(showDivider: false, label: tr('Mobile'), value: data.phone ?? '—'),
+                      KeyValueRow(label: tr('Email'), value: data.email ?? user?.email ?? '—'),
+                      KeyValueRow(label: tr('Home address'), value: data.address ?? '—'),
                       DecoratedBox(
                         decoration: const BoxDecoration(
                           border: Border(top: BorderSide(color: VeloraColors.line)),
                         ),
                         child: Center(
                           child: VeloraTextLink(
-                            label: 'Update my info',
+                            label: tr('Update my info'),
                             size: 13.5,
                             onTap: () => AppNavigator.openMyInfo(context),
                           ),
@@ -136,7 +143,7 @@ class _ProfileViewState extends State<ProfileView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SectionCaption('Hours by week'),
+                        SectionCaption(tr('Hours by week')),
                         const SizedBox(height: 12),
                         ProfileHoursChart(
                           weeklyHours: data.weeklyHours,
@@ -154,7 +161,7 @@ class _ProfileViewState extends State<ProfileView> {
                   children: [
                     _LinkRow(
                       icon: VeloraIcons.user,
-                      label: 'My clients',
+                      label: tr('My clients'),
                       showDivider: false,
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(builder: (_) => const ClientsListView()),
@@ -162,22 +169,22 @@ class _ProfileViewState extends State<ProfileView> {
                     ),
                     _LinkRow(
                       icon: VeloraIcons.phone,
-                      label: 'Contact the office',
+                      label: tr('Contact the office'),
                       onTap: () => AppNavigator.openInbox(context),
                     ),
                     _LinkRow(
                       icon: VeloraIcons.question,
-                      label: 'Help & questions',
+                      label: tr('Help & questions'),
                       onTap: () => AppNavigator.openHelp(context),
                     ),
                     _LinkRow(
                       icon: VeloraIcons.shield,
-                      label: 'Privacy & your information',
+                      label: tr('Privacy & your information'),
                       onTap: () => AppNavigator.openPrivacy(context),
                     ),
                     _LinkRow(
                       icon: VeloraIcons.logout,
-                      label: 'Sign out',
+                      label: tr('Sign out'),
                       danger: true,
                       onTap: () => LogoutDialog.show(context),
                     ),
@@ -229,11 +236,66 @@ class _Avatar extends StatelessWidget {
   }
 }
 
-/// Language / reminders / Face ID from the design. None of these have app
-/// or API support yet, so they are shown as unavailable rather than as
-/// switches that do nothing.
-class _SettingsCard extends StatelessWidget {
+/// Language / reminders / Face ID from the design. Face ID is live (it
+/// guards the saved session, see the sign-in screen); language and
+/// reminders have no app support yet, so they show as unavailable rather
+/// than as switches that do nothing.
+class _SettingsCard extends StatefulWidget {
   const _SettingsCard();
+
+  @override
+  State<_SettingsCard> createState() => _SettingsCardState();
+}
+
+class _SettingsCardState extends State<_SettingsCard> {
+  final _biometric = sl<BiometricAuth>();
+  final _faceStore = sl<FaceIdStore>();
+
+  bool _loaded = false;
+  bool _available = false;
+  bool _enabled = false;
+  bool _busy = false;
+  String _label = 'Face ID';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final available = await _biometric.isAvailable();
+    final label = available ? await _biometric.label() : _label;
+    final enabled = await _faceStore.isEnabled();
+    if (!mounted) return;
+    setState(() {
+      _available = available;
+      _label = label;
+      _enabled = enabled;
+      _loaded = true;
+    });
+  }
+
+  Future<void> _toggleFace() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final auth = context.read<AuthCubit>();
+    if (_enabled) {
+      await auth.setFaceIdEnabled(false);
+      if (mounted) setState(() => _enabled = false);
+    } else {
+      // Same check as on sign-in; the first time it also shows the iPhone
+      // "Allow Face ID?" permission.
+      final result =
+          await _biometric.authenticate(tr('Turn on {0} for VELORA', [_label]));
+      if (result == BiometricResult.success) {
+        final first = auth.state.user?.name.trim().split(RegExp(r'\s+')).first;
+        await auth.setFaceIdEnabled(true, name: first);
+        if (mounted) setState(() => _enabled = true);
+      }
+    }
+    if (mounted) setState(() => _busy = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,14 +309,148 @@ class _SettingsCard extends StatelessWidget {
       );
     }
 
+    final faceTitle = tr('Sign in with {0}', [_label]);
+    final Widget faceRow = !_loaded
+        ? row(VeloraIcons.faceId, faceTitle, '…')
+        : !_available
+            ? row(VeloraIcons.faceId, faceTitle, tr('Not set up on this phone'))
+            : Semantics(
+                toggled: _enabled,
+                label: faceTitle,
+                excludeSemantics: true,
+                child: VeloraListRow(
+                  leading:
+                      IconTile(VeloraIcons.faceId, size: 36, iconSize: 17, radius: 11),
+                  title: faceTitle,
+                  trailing: _DesignSwitch(value: _enabled, busy: _busy),
+                  showChevron: false,
+                  onTap: _toggleFace,
+                ),
+              );
+
     return VeloraCard(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          row(VeloraIcons.globe, 'Language', 'English', divider: false),
-          row(VeloraIcons.bell, 'Clock-out & payday reminders', 'Coming soon'),
-          row(VeloraIcons.faceId, 'Sign in with Face ID', 'Coming soon'),
+          VeloraListRow(
+            showDivider: false,
+            leading: IconTile(VeloraIcons.globe, size: 36, iconSize: 17, radius: 11),
+            title: tr('Language'),
+            trailing: const _LanguageSwitch(),
+            showChevron: false,
+          ),
+          row(VeloraIcons.bell, tr('Clock-out & payday reminders'), tr('Coming soon')),
+          faceRow,
         ],
+      ),
+    );
+  }
+}
+
+/// English / العربية (`.seg` in the design). Switches the whole app at once
+/// and, once `PUT /me/settings` is live, saves it on the caregiver too.
+class _LanguageSwitch extends StatelessWidget {
+  const _LanguageSwitch();
+
+  Future<void> _set(String code) async {
+    await sl<LanguageStore>().set(code);
+    try {
+      await sl<ProfileRepository>()
+          .updateSettings(CaregiverSettingsModel(language: code));
+    } catch (_) {
+      // Planned endpoint (not live yet) or offline: the phone's choice is
+      // what drives the app language.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = sl<LanguageStore>().current;
+    Widget option(String label, String code) {
+      final selected = current == code;
+      return Semantics(
+        button: true,
+        selected: selected,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: selected ? null : () => _set(code),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            constraints: const BoxConstraints(minHeight: 34),
+            padding: const EdgeInsets.symmetric(horizontal: 11),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? VeloraColors.brand : Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Text(
+              label,
+              style: VeloraText.body(
+                12.5,
+                weight: FontWeight.w700,
+                color: selected ? Colors.white : VeloraColors.muted,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: VeloraColors.muteBg,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          option('English', 'en'),
+          const SizedBox(width: 2),
+          option('العربية', 'ar'),
+        ],
+      ),
+    );
+  }
+}
+
+/// The design's `.sw` switch: 48×28 track (teal on, grey off), 22 px knob.
+class _DesignSwitch extends StatelessWidget {
+  const _DesignSwitch({required this.value, this.busy = false});
+
+  final bool value;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 150),
+      opacity: busy ? 0.5 : 1,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 48,
+        height: 28,
+        decoration: BoxDecoration(
+          color: value ? VeloraColors.teal : VeloraColors.disabled,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 22,
+            height: 22,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: Color(0x40000000), blurRadius: 3, offset: Offset(0, 1)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
   flutter_bloc: ^9.1.1
@@ -26,6 +28,8 @@ dependencies:
   open_filex: ^4.7.0
   pusher_channels_flutter:
     path: packages/pusher_channels_flutter
+  local_auth: ^3.0.2
+  flutter_secure_storage: ^10.3.4
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +54,7 @@ flutter:
     - assets/images/task/
     - assets/images/task/icons/
     - assets/images/brand/
+    - assets/i18n/
 
   fonts:
     - family: Bricolage Grotesque

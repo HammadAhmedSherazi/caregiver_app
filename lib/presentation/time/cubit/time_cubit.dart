@@ -4,6 +4,7 @@ import '../../../core/base/base_cubit.dart';
 import '../../../data/models/api/schedule_item_model.dart';
 import '../../../data/models/api/visit_model.dart';
 import '../../../data/repositories/visit_repository.dart';
+import '../../../core/i18n/tr.dart';
 
 enum TimeStatus { initial, loading, success, failure }
 
@@ -85,7 +86,7 @@ class TimeCubit extends BaseCubit<TimeState> {
       emit(
         state.copyWith(
           status: hasData ? TimeStatus.success : TimeStatus.failure,
-          errorMessage: 'Failed to load your visits. Please try again.',
+          errorMessage: tr('Failed to load your visits. Please try again.'),
         ),
       );
     }

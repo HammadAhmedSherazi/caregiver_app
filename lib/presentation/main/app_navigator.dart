@@ -70,8 +70,17 @@ class AppNavigator {
   static Future<bool?> openUpload(
     BuildContext context, {
     String? initialType,
+    int? replacesDocumentId,
+    bool directDeposit = false,
   }) =>
-      _push<bool>(context, UploadView(initialType: initialType));
+      _push<bool>(
+        context,
+        UploadView(
+          initialType: initialType,
+          replacesDocumentId: replacesDocumentId,
+          directDeposit: directDeposit,
+        ),
+      );
 
   static Future<void> openPaystub(BuildContext context, {required String id}) =>
       _push(context, PaystubView(paystubId: id));

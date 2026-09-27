@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/i18n/tr.dart';
 
 /// OR divider used between primary login and social buttons.
 class AuthOrDivider extends StatelessWidget {
@@ -24,7 +25,7 @@ class AuthOrDivider extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
           ),
           child: Text(
-            'OR',
+            tr('OR'),
             style: AppTextStyles.authOrLabel,
           ),
         ),

@@ -8,6 +8,7 @@ import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../widgets/velora/velora.dart';
 import '../cubit/checkin_cubit.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Check-in tab: the open monthly sign-off and past check-ins.
 class CheckInTabView extends StatelessWidget {
@@ -34,24 +35,24 @@ class CheckInTabView extends StatelessWidget {
           underTabBar: true,
           onRefresh: () => context.read<CheckInCubit>().load(),
           header: VeloraHeader(
-            title: current != null ? '${current.periodLabel} sign-off' : 'Check-in',
-            subtitle: 'Your check-in with the office',
+            title: current != null ? tr('{0} sign-off', [current.periodLabel]) : tr('Check-in'),
+            subtitle: tr('Your check-in with the office'),
           ),
           children: [
             if (state.hasError)
               VeloraErrorState(
-                message: state.errorMessage ?? 'We couldn\'t load your check-ins.',
+                message: state.errorMessage ?? tr('We couldn\'t load your check-ins.'),
                 onRetry: () => context.read<CheckInCubit>().load(),
               )
             else if (state.isLoading || state.status == CheckInStatus.initial)
-              const VeloraLoadingState(message: 'Loading your check-ins…')
+              VeloraLoadingState(message: tr('Loading your check-ins…'))
             else ...[
               if (current != null)
                 _OverviewCard(form: current, onStart: () => _start(context, current))
               else
-                const VeloraDoneCard(
-                  title: 'You\'re all caught up',
-                  message: 'There\'s no check-in to sign right now. We\'ll let you know when the next one opens.',
+                VeloraDoneCard(
+                  title: tr('You\'re all caught up'),
+                  message: tr('There\'s no check-in to sign right now. We\'ll let you know when the next one opens.'),
                 ),
               if (state.pending.length > 1)
                 VeloraCard(
@@ -59,7 +60,7 @@ class CheckInTabView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SectionCaption('Also open', padding: EdgeInsets.only(top: 8, bottom: 4)),
+                      SectionCaption(tr('Also open'), padding: EdgeInsets.only(top: 8, bottom: 4)),
                       for (final form in state.pending.skip(1))
                         VeloraListRow(
                           leading: IconTile(
@@ -70,7 +71,7 @@ class CheckInTabView extends StatelessWidget {
                             radius: 11,
                           ),
                           title: form.periodLabel,
-                          subtitle: form.isOverdue ? 'Overdue' : form.status,
+                          subtitle: form.isOverdue ? tr('Overdue') : form.status,
                           onTap: () => _start(context, form),
                         ),
                     ],
@@ -86,14 +87,14 @@ class CheckInTabView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Need help with this?', style: VeloraText.body(14, weight: FontWeight.w700)),
+                          Text(tr('Need help with this?'), style: VeloraText.body(14, weight: FontWeight.w700)),
                           const SizedBox(height: 2),
-                          Text('The office can walk you through it.', style: VeloraText.subtitle),
+                          Text(tr('The office can walk you through it.'), style: VeloraText.subtitle),
                         ],
                       ),
                     ),
                     VeloraTextLink(
-                      label: 'Message',
+                      label: tr('Message'),
                       size: 13,
                       onTap: () => AppNavigator.openInbox(context),
                     ),
@@ -126,36 +127,36 @@ class _OverviewCard extends StatelessWidget {
               Expanded(child: Text(form.periodLabel, style: VeloraText.display(20))),
               const SizedBox(width: 10),
               StatusPill(
-                form.isOverdue ? 'Overdue' : (form.status.isEmpty ? 'Due' : form.status),
+                form.isOverdue ? tr('Overdue') : (form.status.isEmpty ? tr('Due') : form.status),
                 tone: form.isOverdue ? PillTone.danger : PillTone.warn,
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Answer a few questions about the month and sign. It\'s what releases your pay. About 1 minute.',
+            tr('Answer a few questions about the month and sign. It\'s what releases your pay. About 1 minute.'),
             style: VeloraText.body(13, color: VeloraColors.muted, height: 1.5),
           ),
           const SizedBox(height: 14),
-          const _Step(
+          _Step(
             number: 1,
             active: true,
-            title: 'You answer and sign',
-            subtitle: 'Sign as soon as you can after the month ends',
+            title: tr('You answer and sign'),
+            subtitle: tr('Sign as soon as you can after the month ends'),
           ),
-          const _Step(
+          _Step(
             number: 2,
-            title: 'The office confirms your days',
-            subtitle: 'Hospital days are taken out automatically',
+            title: tr('The office confirms your days'),
+            subtitle: tr('Hospital days are taken out automatically'),
           ),
-          const _Step(
+          _Step(
             number: 3,
-            title: 'You get paid',
-            subtitle: 'Direct deposit on the next payday',
+            title: tr('You get paid'),
+            subtitle: tr('Direct deposit on the next payday'),
             last: true,
           ),
           const SizedBox(height: 14),
-          VeloraButton(label: 'Review & sign', onPressed: onStart),
+          VeloraButton(label: tr('Review & sign'), onPressed: onStart),
         ],
       ),
     );
@@ -240,17 +241,17 @@ class _HistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SectionCaption(
-            'Past check-ins',
+            tr('Past check-ins'),
             padding: const EdgeInsets.only(top: 4, bottom: 2),
             trailing: VeloraTextLink(
-              label: 'See pay',
+              label: tr('See pay'),
               onTap: () => AppNavigator.goToTab(context, MainTab.pay),
             ),
           ),
           if (records.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Text('No past check-ins yet.', style: VeloraText.subtitle),
+              child: Text(tr('No past check-ins yet.'), style: VeloraText.subtitle),
             )
           else
             for (final record in records.take(6))
@@ -264,7 +265,7 @@ class _HistoryCard extends StatelessWidget {
                 ),
                 title: record.periodLabel,
                 subtitle: record.submittedAt != null
-                    ? 'Signed ${VeloraFormat.monthDay(record.submittedAt!.toLocal())}'
+                    ? tr('Signed {0}', [VeloraFormat.monthDay(record.submittedAt!.toLocal())])
                     : record.status,
                 showChevron: false,
               ),

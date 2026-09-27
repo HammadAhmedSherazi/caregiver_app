@@ -1,9 +1,12 @@
 import '../../../core/base/base_cubit.dart';
+import '../../../core/network/api_error_message.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/home_dashboard_model.dart';
 import '../../../data/repositories/home_repository.dart';
 import '../../../data/repositories/visit_repository.dart';
 import 'home_state.dart';
+import '../../../core/i18n/tr.dart';
 
 class HomeCubit extends BaseCubit<HomeState> {
   HomeCubit({
@@ -33,7 +36,7 @@ class HomeCubit extends BaseCubit<HomeState> {
       emit(
         state.copyWith(
           status: HomeStatus.failure,
-          errorMessage: 'Failed to load dashboard. Please try again.',
+          errorMessage: tr('Failed to load dashboard. Please try again.'),
         ),
       );
     }
@@ -73,7 +76,7 @@ class HomeCubit extends BaseCubit<HomeState> {
         clientName: visit.clientName,
         serviceType: serviceType,
         status: ShiftStatus.inProgress,
-        startedAtLabel: 'Started now · $serviceType',
+        startedAtLabel: tr('Started now · {0}', [serviceType]),
         shiftStartedAt: visit.clockInAt,
       );
 
@@ -88,7 +91,7 @@ class HomeCubit extends BaseCubit<HomeState> {
       logError('Clock in failed', error: error, stackTrace: stackTrace);
       emit(
         state.copyWith(
-          errorMessage: 'Clock in failed. Please try again.',
+          errorMessage: tr('Clock in failed. Please try again.'),
         ),
       );
     }
@@ -108,6 +111,7 @@ class HomeCubit extends BaseCubit<HomeState> {
     double? latitude,
     double? longitude,
     String? notes,
+    ClockOutAnswers? answers,
   }) async {
     final dashboard = state.dashboard;
     if (dashboard == null || state.isClockingOut) return;
@@ -120,6 +124,7 @@ class HomeCubit extends BaseCubit<HomeState> {
         latitude: latitude,
         longitude: longitude,
         notes: notes,
+        answers: answers,
       );
 
       final refreshed = await repository.getDashboard();
@@ -133,14 +138,14 @@ class HomeCubit extends BaseCubit<HomeState> {
           isEndingShift: false,
           isClockingOut: false,
           infoMessage: anotherVisit
-              ? 'Clock-out saved. Another open visit for ${refreshed.activeShift!.clientName} still needs to be ended.'
+              ? tr('Clock-out saved. Another open visit for {0} still needs to be ended.', [refreshed.activeShift!.clientName])
               : null,
         ),
       );
     } on ApiException catch (error) {
       emit(
         state.copyWith(
-          errorMessage: error.message,
+          errorMessage: apiErrorMessage(error),
           isClockingOut: false,
         ),
       );
@@ -148,7 +153,7 @@ class HomeCubit extends BaseCubit<HomeState> {
       logError('Clock out failed', error: error, stackTrace: stackTrace);
       emit(
         state.copyWith(
-          errorMessage: 'Clock out failed. Please try again.',
+          errorMessage: tr('Clock out failed. Please try again.'),
           isEndingShift: false,
           isClockingOut: false,
         ),
@@ -186,7 +191,7 @@ class HomeCubit extends BaseCubit<HomeState> {
       emit(state.copyWith(errorMessage: error.message));
     } catch (error, stackTrace) {
       logError('Task toggle failed', error: error, stackTrace: stackTrace);
-      emit(state.copyWith(errorMessage: 'Unable to update task.'));
+      emit(state.copyWith(errorMessage: tr('Unable to update task.')));
     }
   }
 }

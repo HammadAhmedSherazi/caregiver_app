@@ -24,8 +24,21 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>https</string>
+		<string>http</string>
+		<string>comgooglemaps</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is needed to photograph documents for upload.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to sign in to VELORA with just a glance.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library access is needed to upload your documents.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -47,17 +60,6 @@
 			</array>
 		</dict>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera access is needed to photograph documents for upload.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Photo library access is needed to upload your documents.</string>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>tel</string>
-		<string>https</string>
-		<string>http</string>
-		<string>comgooglemaps</string>
-	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

@@ -11,6 +11,7 @@ import '../cubit/auth_state.dart';
 import '../models/signup_flow_data.dart';
 import 'activation_code_view.dart';
 import 'registration_view.dart';
+import '../../../core/i18n/tr.dart';
 
 class FinishAccountSetupView extends StatefulWidget {
   const FinishAccountSetupView({super.key, required this.flowData});
@@ -63,7 +64,7 @@ class _FinishAccountSetupViewState extends State<FinishAccountSetupView> {
 
     SnackbarHelper.showSuccess(
       context,
-      'Verification email sent. Please check your inbox.',
+      tr('Verification email sent. Please check your inbox.'),
     );
   }
 
@@ -85,19 +86,19 @@ class _FinishAccountSetupViewState extends State<FinishAccountSetupView> {
                 children: [
                   const SizedBox(height: 100),
                   Text(
-                    'Finish Account Setup Screen',
+                    tr('Finish Account Setup Screen'),
                     style: AppTextStyles.authTitle,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 39),
                   AuthSetupOptionButton(
-                    label: 'Perform Electronic Visit Verification (EVV)',
+                    label: tr('Perform Electronic Visit Verification (EVV)'),
                     isActive: _selectedType == AccountSetupType.evv,
                     onTap: () => _selectType(AccountSetupType.evv),
                   ),
                   const SizedBox(height: 19),
                   AuthSetupOptionButton(
-                    label: 'To Only answer daily Patient questions',
+                    label: tr('To Only answer daily Patient questions'),
                     isActive: _selectedType == AccountSetupType.patientQuestionsOnly,
                     onTap: () =>
                         _selectType(AccountSetupType.patientQuestionsOnly),
@@ -111,7 +112,7 @@ class _FinishAccountSetupViewState extends State<FinishAccountSetupView> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      'Resend Verification Email',
+                      tr('Resend Verification Email'),
                       style: AppTextStyles.authResendLinkRegular,
                     ),
                   ),

@@ -10,6 +10,7 @@ import '../../task/cubit/task_cubit.dart';
 import '../../task/cubit/task_state.dart';
 import '../../widgets/velora/velora.dart';
 import '../cubit/documents_cubit.dart';
+import '../../../core/i18n/tr.dart';
 
 /// Docs tab: upload entry point, office requests and documents on file.
 ///
@@ -39,8 +40,8 @@ class DocumentsTabView extends StatelessWidget {
             ]);
           },
           header: VeloraHeader(
-            title: 'Documents',
-            subtitle: 'Your file with the office',
+            title: tr('Documents'),
+            subtitle: tr('Your file with the office'),
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
             bottom: Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -51,17 +52,17 @@ class DocumentsTabView extends StatelessWidget {
             _RequestsCard(onUpload: () => _upload(context)),
             if (state.hasError)
               VeloraErrorState(
-                message: state.errorMessage ?? 'We couldn\'t load your documents.',
+                message: state.errorMessage ?? tr('We couldn\'t load your documents.'),
                 onRetry: () => context.read<DocumentsCubit>().load(),
               )
             else if (state.isLoading || state.status == DocumentsStatus.initial)
-              const VeloraLoadingState(message: 'Loading your documents…')
+              VeloraLoadingState(message: tr('Loading your documents…'))
             else if (state.documents.isEmpty)
               VeloraEmptyState(
-                title: 'No documents yet',
-                message: 'Documents you send, and papers from the office, will show here.',
+                title: tr('No documents yet'),
+                message: tr('Documents you send, and papers from the office, will show here.'),
                 action: VeloraButton(
-                  label: 'Upload a document',
+                  label: tr('Upload a document'),
                   icon: VeloraIcons.camera,
                   onPressed: () => _upload(context),
                 ),
@@ -107,10 +108,10 @@ class _UploadBanner extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Upload a document',
+                    Text(tr('Upload a document'),
                         style: VeloraText.body(15, weight: FontWeight.w700, color: VeloraColors.amberInk)),
                     Text(
-                      'Snap a photo or pick a file · goes straight to the office',
+                      tr('Snap a photo or pick a file · goes straight to the office'),
                       style: VeloraText.body(12,
                           weight: FontWeight.w600, color: VeloraColors.amberInk.withValues(alpha: 0.8)),
                     ),
@@ -145,9 +146,9 @@ class _RequestsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SectionCaption(
-                'Requested by the office',
+                tr('Requested by the office'),
                 trailing: StatusPill(
-                  '${requests.length} needs attention',
+                  tr('{0} needs attention', [requests.length]),
                   tone: PillTone.warn,
                 ),
               ),
@@ -164,7 +165,7 @@ class _RequestsCard extends StatelessWidget {
                   title: task.title,
                   subtitle: task.subtitle,
                   subtitleColor: VeloraColors.warnText,
-                  trailing: const StatusPill('Upload', tone: PillTone.warn),
+                  trailing: StatusPill(tr('Upload'), tone: PillTone.warn),
                   showChevron: false,
                   onTap: onUpload,
                 ),
@@ -183,12 +184,12 @@ class _FileCard extends StatelessWidget {
 
   static (String, PillTone) _status(DocumentModel d) {
     final s = d.verificationStatus.toLowerCase();
-    if (s.contains('reject') || s.contains('declin')) return ('Needs a new copy', PillTone.danger);
-    if (s.contains('pend') || s.contains('review')) return ('In review', PillTone.warn);
+    if (s.contains('reject') || s.contains('declin')) return (tr('Needs a new copy'), PillTone.danger);
+    if (s.contains('pend') || s.contains('review')) return (tr('In review'), PillTone.warn);
     if (s.contains('verif') || s.contains('approv') || s.contains('accept')) {
-      return ('On file', PillTone.good);
+      return (tr('On file'), PillTone.good);
     }
-    return (d.verificationStatus.isEmpty ? 'Received' : d.verificationStatus, PillTone.mute);
+    return (d.verificationStatus.isEmpty ? tr('Received') : d.verificationStatus, PillTone.mute);
   }
 
   Future<void> _open(BuildContext context, DocumentModel doc) async {
@@ -196,7 +197,7 @@ class _FileCard extends StatelessWidget {
     if (url == null || url.isEmpty) return;
     final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     if (!ok && context.mounted) {
-      showVeloraToast(context, 'Couldn\'t open this document.');
+      showVeloraToast(context, tr('Couldn\'t open this document.'));
     }
   }
 
@@ -210,8 +211,8 @@ class _FileCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SectionCaption(
-            'Your file',
-            trailing: Text('$onFile of ${documents.length} on file',
+            tr('Your file'),
+            trailing: Text(tr('{0} of {1} on file', [onFile, documents.length]),
                 style: VeloraText.body(12, color: VeloraColors.muted)),
           ),
           const SizedBox(height: 12),

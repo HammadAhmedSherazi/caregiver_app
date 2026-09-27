@@ -2,6 +2,8 @@ import '../api/caregiver_api.dart';
 import '../mappers/api_mappers.dart';
 import '../models/chat_message_model.dart';
 import '../models/inbox_thread_model.dart';
+import '../api/velora_api.dart';
+import '../models/api/velora/velora_models.dart';
 
 abstract class InboxRepository {
   Future<List<InboxThread>> fetchThreads();
@@ -11,12 +13,20 @@ abstract class InboxRepository {
     required String body,
   });
   Future<int> getUnreadCount();
+
+  /// `GET /inbox/office-thread` — 🚧 PLANNED — NOT LIVE. Messages then use
+  /// the existing `/conversations/{thread_id}` endpoints.
+  Future<OfficeThreadModel> getOfficeThread();
 }
 
 class InboxRepositoryImpl implements InboxRepository {
-  InboxRepositoryImpl({required this._api});
+  InboxRepositoryImpl({required this._api, required this._velora});
 
   final CaregiverApi _api;
+  final VeloraApi _velora;
+
+  @override
+  Future<OfficeThreadModel> getOfficeThread() => _velora.getOfficeThread();
 
   @override
   Future<List<InboxThread>> fetchThreads() async {

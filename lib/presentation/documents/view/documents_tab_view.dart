@@ -12,10 +12,12 @@ import '../../widgets/velora/velora.dart';
 import '../cubit/documents_cubit.dart';
 import '../../../core/i18n/tr.dart';
 
-/// Docs tab: upload entry point, office requests and documents on file.
+/// Docs tab: upload entry point, office requests, documents on file and
+/// papers from the office (pay schedule, check-in receipts, W-2).
 ///
-/// Data: `GET /documents` (DocumentsCubit) and document-request
-/// notifications from the task page (TaskCubit).
+/// Data: `GET /documents` and `GET /documents/office` (DocumentsCubit) and
+/// document-request notifications from the task page (TaskCubit). Office
+/// papers open in the in-app document viewer.
 class DocumentsTabView extends StatelessWidget {
   const DocumentsTabView({super.key});
 
@@ -69,6 +71,7 @@ class DocumentsTabView extends StatelessWidget {
               )
             else
               _FileCard(documents: state.documents),
+            _FromOfficeCard(state: state),
           ],
         );
       },
@@ -249,6 +252,110 @@ class _FileCard extends StatelessWidget {
               },
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// "From the office": pay schedule, check-in receipts and W-2s
+/// (`GET /documents/office`, 🚧 planned). Each opens the document viewer.
+class _FromOfficeCard extends StatelessWidget {
+  const _FromOfficeCard({required this.state});
+
+  final DocumentsState state;
+
+  static VeloraIcons _icon(String kind) => switch (kind) {
+        'pay_schedule' => VeloraIcons.calendarSheet,
+        'check_in_receipt' => VeloraIcons.clipboardCheck,
+        _ => VeloraIcons.document,
+      };
+
+  Widget _note(String text) => Padding(
+        padding: const EdgeInsets.only(top: 8, bottom: 12),
+        child: Text(text, style: VeloraText.body(13, color: VeloraColors.muted, height: 1.45)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final documents = state.officeDocuments;
+    final children = switch (state.officeStatus) {
+      OfficeDocumentsStatus.initial || OfficeDocumentsStatus.loading => [
+          _note(tr('Loading papers from the office…')),
+        ],
+      OfficeDocumentsStatus.notLive => [
+          _note(tr('Pay schedules, check-in receipts and W-2s aren\'t connected to the app yet. Ask the office for a copy.')),
+        ],
+      OfficeDocumentsStatus.failure => [
+          _note(tr('We couldn\'t load papers from the office.')),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: VeloraTextLink(
+              label: tr('Try again'),
+              size: 13,
+              onTap: () => context.read<DocumentsCubit>().loadOfficeDocuments(),
+            ),
+          ),
+        ],
+      OfficeDocumentsStatus.success when documents.isEmpty => [
+          _note(tr('Nothing from the office yet.')),
+        ],
+      OfficeDocumentsStatus.success => [
+          const SizedBox(height: 6),
+          for (var i = 0; i < documents.length; i++)
+            VeloraListRow(
+              showDivider: i > 0,
+              leading: IconTile(_icon(documents[i].kind), tone: IconTileTone.mint, size: 40, iconSize: 18, radius: 12),
+              title: documents[i].title,
+              subtitle: documents[i].subtitle ?? 'PDF',
+              trailing: _OpenButton(
+                label: tr('Open {0}', [documents[i].title]),
+                onTap: () => AppNavigator.openOfficeDocument(context, documents[i]),
+              ),
+              showChevron: false,
+              onTap: () => AppNavigator.openOfficeDocument(context, documents[i]),
+            ),
+        ],
+    };
+
+    return VeloraCard(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [SectionCaption(tr('From the office')), ...children],
+      ),
+    );
+  }
+}
+
+/// Square download button (`.dl`) at the end of an office-document row.
+class _OpenButton extends StatelessWidget {
+  const _OpenButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: VeloraColors.subtle,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: VeloraColors.line),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: const SizedBox(
+            width: 44,
+            height: 44,
+            child: Center(
+              child: VeloraIcon(VeloraIcons.download, size: 17, color: VeloraColors.teal, strokeWidth: 2),
+            ),
+          ),
+        ),
       ),
     );
   }

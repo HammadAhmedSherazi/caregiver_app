@@ -40,6 +40,8 @@ enum VeloraIcons {
   hospital('<path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-5h6v5"/><path d="M12 7v5M9.5 9.5h5"/>'),
   pulse('<path d="M20 12h-4l-3 7-4-14-3 7H2"/>'),
   calendar('<path d="M3.5 7.5h17v12h-17z"/><path d="M3.5 11h17M8 4v5M16 4v5"/>'),
+  /// Rounded month sheet (pay schedule in Docs › From the office).
+  calendarSheet('<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/>'),
   heart('<path d="M12 20s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.5-7 10-7 10z"/>'),
   dots('<path d="M5 12h.01M12 12h.01M19 12h.01"/>'),
   send('<path d="M4 12l16-8-6 17-3-7z"/>'),

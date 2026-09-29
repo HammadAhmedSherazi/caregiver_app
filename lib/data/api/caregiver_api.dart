@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_config.dart';
 import '../../core/network/api_exception.dart';
+import '../models/api/realtime_config_model.dart';
 import '../models/api/assignment_model.dart';
 import '../models/api/call_model.dart';
 import '../models/api/caregiver_profile_model.dart';
@@ -373,6 +374,20 @@ class CaregiverApi {
         },
       );
       return _parsePaginated(response.data, ConversationSummaryModel.fromJson);
+    } catch (error) {
+      ApiClient.rethrowAsApiException(error);
+    }
+  }
+
+  /// `GET /realtime/config` — socket connection values (key, host, port,
+  /// auth endpoint, channel patterns, event). `enabled: false` = REST only.
+  Future<RealtimeConfigModel> getRealtimeConfig() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>('/realtime/config');
+      return RealtimeConfigModel.fromJson(
+        response.data ?? const {},
+        apiBaseUrl: ApiConfig.baseUrl,
+      );
     } catch (error) {
       ApiClient.rethrowAsApiException(error);
     }

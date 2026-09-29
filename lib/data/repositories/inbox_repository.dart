@@ -1,5 +1,6 @@
 import '../api/caregiver_api.dart';
 import '../mappers/api_mappers.dart';
+import '../models/api/realtime_config_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/inbox_thread_model.dart';
 import '../api/velora_api.dart';
@@ -13,6 +14,9 @@ abstract class InboxRepository {
     required String body,
   });
   Future<int> getUnreadCount();
+
+  /// `GET /realtime/config` — socket values; `enabled: false` = REST only.
+  Future<RealtimeConfigModel> getRealtimeConfig();
 
   /// `GET /inbox/office-thread` — 🚧 PLANNED — NOT LIVE. Messages then use
   /// the existing `/conversations/{thread_id}` endpoints.
@@ -54,4 +58,7 @@ class InboxRepositoryImpl implements InboxRepository {
 
   @override
   Future<int> getUnreadCount() => _api.getConversationsUnreadCount();
+
+  @override
+  Future<RealtimeConfigModel> getRealtimeConfig() => _api.getRealtimeConfig();
 }

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/utils/extensions/context_extensions.dart';
 import '../../../data/models/chat_message_model.dart';
 import '../../widgets/velora/velora.dart';
 import '../../../core/i18n/tr.dart';
@@ -26,51 +23,47 @@ class ChatBubble extends StatelessWidget {
     final isOutgoing = message.direction == ChatMessageDirection.outgoing;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment:
             isOutgoing ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Align(
             alignment:
-                isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+                isOutgoing ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.72,
+                maxWidth: MediaQuery.sizeOf(context).width * 0.8,
               ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: isOutgoing ? VeloraColors.brand : _incomingFill,
                   border: isOutgoing ? null : Border.all(color: VeloraColors.line),
                   borderRadius: isOutgoing
-                      ? const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                          bottomRight: Radius.circular(4),
-                          bottomLeft: Radius.circular(16),
+                      ? const BorderRadiusDirectional.only(
+                          topStart: Radius.circular(16),
+                          topEnd: Radius.circular(16),
+                          bottomEnd: Radius.circular(4),
+                          bottomStart: Radius.circular(16),
                         )
-                      : const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
-                          bottomLeft: Radius.circular(4),
+                      : const BorderRadiusDirectional.only(
+                          topStart: Radius.circular(16),
+                          topEnd: Radius.circular(16),
+                          bottomEnd: Radius.circular(16),
+                          bottomStart: Radius.circular(4),
                         ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: 14,
+                    vertical: 11,
                   ),
                   child: Text(
                     message.text,
-                    style: context.responsiveStyle(
-                      AppTextStyles.bodyLarge.copyWith(
-                        fontSize: 14,
-                        height: 1.45,
-                        color: isOutgoing
-                            ? AppColors.authOnGradient
-                            : _bubbleTextColor,
-                      ),
+                    style: VeloraText.body(
+                      14,
+                      height: 1.45,
+                      color: isOutgoing ? Colors.white : _bubbleTextColor,
                     ),
                   ),
                 ),
@@ -105,19 +98,19 @@ class _StatusRow extends StatelessWidget {
     switch (message.sendStatus) {
       case ChatMessageSendStatus.sending:
         return Align(
-          alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isOutgoing ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
           child: SizedBox(
             width: 12,
             height: 12,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: AppColors.homeMutedText,
+              color: VeloraColors.muted,
             ),
           ),
         );
       case ChatMessageSendStatus.failed:
         return Align(
-          alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isOutgoing ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
           child: GestureDetector(
             onTap: onRetry,
             behavior: HitTestBehavior.opaque,
@@ -125,12 +118,7 @@ class _StatusRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Text(
                 tr('Tap to send again'),
-                style: context.responsiveStyle(
-                  AppTextStyles.homeNavLabel.copyWith(
-                    fontSize: 12,
-                    color: AppColors.error,
-                  ),
-                ),
+                style: VeloraText.body(12, weight: FontWeight.w600, color: VeloraColors.dangerText),
               ),
             ),
           ),
@@ -140,15 +128,10 @@ class _StatusRow extends StatelessWidget {
           return const SizedBox.shrink();
         }
         return Align(
-          alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isOutgoing ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
           child: Text(
             message.timestampLabel!,
-            style: context.responsiveStyle(
-              AppTextStyles.homeNavLabel.copyWith(
-                fontSize: 12,
-                color: AppColors.homeDarkText,
-              ),
-            ),
+            style: VeloraText.body(11.5, color: VeloraColors.muted),
           ),
         );
     }

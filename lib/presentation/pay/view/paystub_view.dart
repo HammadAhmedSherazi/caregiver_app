@@ -9,8 +9,7 @@ import '../../../core/i18n/tr.dart';
 
 /// Paystub detail (`GET /pay/{id}`) with the PDF download (`GET /pay/{id}/stub`).
 ///
-/// The PDF opens in the device's viewer, which provides Save / Share; the
-/// design's in-app document viewer is not built.
+/// "View or save PDF" opens the in-app document viewer.
 class PaystubView extends StatefulWidget {
   const PaystubView({super.key, required this.paystubId});
 
@@ -22,7 +21,6 @@ class PaystubView extends StatefulWidget {
 
 class _PaystubViewState extends State<PaystubView> {
   late Future<PaystubDetail> _future;
-  bool _downloading = false;
 
   @override
   void initState() {
@@ -36,17 +34,8 @@ class _PaystubViewState extends State<PaystubView> {
     });
   }
 
-  Future<void> _openPdf(PaystubDetail detail) async {
-    setState(() => _downloading = true);
-    try {
-      await context.read<TaskCubit>().downloadAndOpenPayStub(detail.id);
-    } on PayStubDownloadException catch (error) {
-      if (mounted) showVeloraToast(context, error.message);
-    } catch (_) {
-      if (mounted) showVeloraToast(context, tr('Unable to open the paystub PDF.'));
-    } finally {
-      if (mounted) setState(() => _downloading = false);
-    }
+  void _openPdf(PaystubDetail detail) {
+    AppNavigator.openPaystubPdf(context, id: detail.id, periodLabel: detail.periodLabel);
   }
 
   @override
@@ -173,7 +162,6 @@ class _PaystubViewState extends State<PaystubView> {
                   label: tr('View or save PDF'),
                   icon: VeloraIcons.download,
                   variant: VeloraButtonVariant.ghost,
-                  isLoading: _downloading,
                   onPressed: () => _openPdf(detail),
                 ),
               Center(

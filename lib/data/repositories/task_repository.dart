@@ -6,7 +6,6 @@ import '../models/selected_document.dart';
 import '../models/task_page_model.dart';
 import '../api/velora_api.dart';
 import '../models/api/velora/velora_models.dart';
-import '../../core/utils/pay_stub_file_helper.dart';
 
 abstract class TaskRepository {
   Future<TaskPageData> getTaskPage();
@@ -38,8 +37,8 @@ abstract class TaskRepository {
   /// `GET /documents/office`.
   Future<List<OfficeDocumentModel>> getOfficeDocuments();
 
-  /// `GET /documents/office/{id}/download` → saved and opened as a PDF.
-  Future<void> openOfficeDocument(OfficeDocumentModel document);
+  /// `GET /documents/office/{id}/download` → PDF bytes for the viewer.
+  Future<List<int>> downloadOfficeDocument(String id);
 
   /// `PUT /compliance-forms/{id}/draft`.
   Future<ComplianceFormDetailModel> saveCheckInDraft(int formId, CheckInDraftRequest request);
@@ -47,8 +46,8 @@ abstract class TaskRepository {
   /// Extended `POST /compliance-forms/{id}/submit` (typed-name signature).
   Future<ComplianceFormDetailModel> submitCheckIn(int formId, CheckInSubmitRequest request);
 
-  /// `GET /compliance-forms/{id}/receipt` → saved and opened as a PDF.
-  Future<void> openCheckInReceipt(int formId);
+  /// `GET /compliance-forms/{id}/receipt` → PDF bytes (404 until submitted).
+  Future<List<int>> downloadCheckInReceipt(int formId);
 
   /// `GET /pay/next`.
   Future<PayNextModel> getPayNext();
@@ -275,10 +274,7 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<List<OfficeDocumentModel>> getOfficeDocuments() => _velora.getOfficeDocuments();
 
   @override
-  Future<void> openOfficeDocument(OfficeDocumentModel document) async {
-    final bytes = await _velora.downloadOfficeDocument(document.id);
-    await PayStubFileHelper.saveAndOpen(bytes: bytes, fileName: '${document.id}.pdf');
-  }
+  Future<List<int>> downloadOfficeDocument(String id) => _velora.downloadOfficeDocument(id);
 
   @override
   Future<ComplianceFormDetailModel> saveCheckInDraft(int formId, CheckInDraftRequest request) {
@@ -291,10 +287,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<void> openCheckInReceipt(int formId) async {
-    final bytes = await _velora.downloadCheckInReceipt(formId);
-    await PayStubFileHelper.saveAndOpen(bytes: bytes, fileName: 'check-in-receipt-$formId.pdf');
-  }
+  Future<List<int>> downloadCheckInReceipt(int formId) => _velora.downloadCheckInReceipt(formId);
 
   @override
   Future<PayNextModel> getPayNext() => _velora.getPayNext();

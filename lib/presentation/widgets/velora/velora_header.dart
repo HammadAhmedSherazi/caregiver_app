@@ -21,6 +21,7 @@ class VeloraHeader extends StatelessWidget {
     this.bottom,
     this.gradient = false,
     this.padding,
+    this.showRings = true,
   });
 
   final String title;
@@ -34,6 +35,9 @@ class VeloraHeader extends StatelessWidget {
   final Widget? bottom;
   final bool gradient;
   final EdgeInsetsGeometry? padding;
+
+  /// The faint rings top-right; the document viewer header has none.
+  final bool showRings;
 
   bool get _isPushed => onBack != null;
 
@@ -57,11 +61,12 @@ class VeloraHeader extends StatelessWidget {
         clipBehavior: Clip.hardEdge,
         child: Stack(
           children: [
-            const Positioned(
-              right: -70,
-              top: -80,
-              child: HeaderRings(size: 240),
-            ),
+            if (showRings)
+              const Positioned(
+                right: -70,
+                top: -80,
+                child: HeaderRings(size: 240),
+              ),
             Padding(
               padding: (padding ?? const EdgeInsets.fromLTRB(20, 20, 20, 22))
                   .add(EdgeInsets.only(top: topInset)),

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/network/api_config.dart';
 import '../../../data/models/task_page_model.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../main/app_navigator.dart';
@@ -375,6 +376,28 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
           VeloraDoneCard(
             title: tr('Check-in sent'),
             message: tr('Thanks. The office has your {0} check-in.', [widget.periodLabel]),
+            // The receipt is `GET /compliance-forms/{id}/receipt` (🚧 planned):
+            // only claim a saved copy when that API is on; the link itself
+            // shows the viewer's "not connected yet" message while it is off.
+            details: ApiConfig.veloraApiEnabled
+                ? KeyValueRow(
+                    showDivider: false,
+                    label: tr('Copy saved'),
+                    value: tr('Docs › From the office'),
+                  )
+                : null,
+            actions: [
+              VeloraTextLink(
+                label: tr('View my receipt'),
+                size: 13.5,
+                icon: VeloraIcons.document,
+                onTap: () => AppNavigator.openCheckInReceipt(
+                  context,
+                  formId: widget.formId,
+                  periodLabel: widget.periodLabel,
+                ),
+              ),
+            ],
           ),
           VeloraButton(
             label: tr('See my pay'),

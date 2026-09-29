@@ -102,17 +102,22 @@ public class SwiftPusherChannelsFlutterPlugin: NSObject, FlutterPlugin, PusherDe
       "socketId": socketID,
       "channelName": channelName,
     ]) { authData in
-      if authData != nil {
-        let authDataCast = authData as! [String: String]
-        completionHandler(
-          PusherAuth(
-            auth: authDataCast["auth"]!,
-            channelData: authDataCast["channel_data"],
-            sharedSecret: authDataCast["shared_secret"]
-          ))
-      } else {
+      // The Dart authorizer returns a map, or a FlutterError when it throws
+      // (403, network error, missing token). Never force-cast: a failed auth
+      // must fail the subscription, not crash the app.
+      guard let authMap = authData as? [String: Any],
+            let auth = authMap["auth"] as? String
+      else {
+        print("Pusher native (iOS): authorizer failed for \(channelName)")
         completionHandler(nil)
+        return
       }
+      completionHandler(
+        PusherAuth(
+          auth: auth,
+          channelData: authMap["channel_data"] as? String,
+          sharedSecret: authMap["shared_secret"] as? String
+        ))
     }
   }
 

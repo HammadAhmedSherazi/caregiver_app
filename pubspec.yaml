@@ -25,11 +25,12 @@ dependencies:
   url_launcher: ^6.3.2
   skeletonizer: ^2.1.3
   path_provider: ^2.1.5
-  open_filex: ^4.7.0
   pusher_channels_flutter:
     path: packages/pusher_channels_flutter
   local_auth: ^3.0.2
   flutter_secure_storage: ^10.3.4
+  pdfx: ^2.11.0
+  share_plus: ^12.0.2
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
+import 'dart:typed_data';
+
 import '../../../core/base/base_cubit.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/utils/pay_stub_file_helper.dart';
 import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/selected_document.dart';
 import '../../../data/models/task_page_model.dart';
@@ -118,31 +119,62 @@ class TaskCubit extends BaseCubit<TaskState> {
     );
   }
 
-  Future<void> downloadAndOpenPayStub(String id) async {
+  /// PDF bytes for the document viewer: `GET /pay/{id}/stub` (live).
+  Future<Uint8List> loadPayStubPdf(String id) => _loadPdf(
+        () => repository.downloadPayStub(id),
+        notFound: tr('Pay stub is not available.'),
+        forbidden: tr('You do not have access to this pay stub.'),
+        fallback: tr('Unable to download pay stub.'),
+      );
+
+  /// 🚧 Planned. `GET /documents/office/{id}/download` (W-2, pay schedule,
+  /// check-in receipt listed in Docs › From the office).
+  Future<Uint8List> loadOfficeDocumentPdf(String id) => _loadPdf(
+        () => repository.downloadOfficeDocument(id),
+        notFound: tr('This document is no longer available.'),
+        forbidden: tr('You do not have access to this document.'),
+        fallback: tr('Unable to download this document.'),
+      );
+
+  /// 🚧 Planned. `GET /compliance-forms/{id}/receipt` (404 until submitted).
+  Future<Uint8List> loadCheckInReceiptPdf(int formId) => _loadPdf(
+        () => repository.downloadCheckInReceipt(formId),
+        notFound: tr('The receipt is ready once your check-in is sent.'),
+        forbidden: tr('You do not have access to this receipt.'),
+        fallback: tr('Unable to download the receipt.'),
+      );
+
+  Future<Uint8List> _loadPdf(
+    Future<List<int>> Function() download, {
+    required String notFound,
+    required String forbidden,
+    required String fallback,
+  }) async {
     try {
-      final bytes = await repository.downloadPayStub(id);
-      await PayStubFileHelper.saveAndOpen(
-        bytes: bytes,
-        fileName: 'paystub_$id.pdf',
+      return Uint8List.fromList(await download());
+    } on ApiNotLiveException {
+      throw DocumentDownloadException(
+        tr('This document can\'t be opened from the app yet. Please message the office for a copy.'),
+        notLive: true,
       );
     } on NotFoundException {
-      throw PayStubDownloadException(tr('Pay stub is not available.'));
+      throw DocumentDownloadException(notFound);
     } on ForbiddenException {
-      throw PayStubDownloadException(tr('You do not have access to this pay stub.'));
+      throw DocumentDownloadException(forbidden);
     } on ApiException catch (error) {
-      throw PayStubDownloadException(
-        error.message.isNotEmpty
-            ? error.message
-            : tr('Unable to download pay stub.'),
-      );
+      throw DocumentDownloadException(error.message.isNotEmpty ? error.message : fallback);
     }
   }
 }
 
-class PayStubDownloadException implements Exception {
-  PayStubDownloadException(this.message);
+/// A PDF for the document viewer could not be loaded.
+class DocumentDownloadException implements Exception {
+  DocumentDownloadException(this.message, {this.notLive = false});
 
   final String message;
+
+  /// The endpoint is 🚧 planned and `VELORA_API` is off.
+  final bool notLive;
 
   @override
   String toString() => message;

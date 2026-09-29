@@ -45,17 +45,23 @@ class ChatInputBar extends StatelessWidget {
               Semantics(
                 button: true,
                 label: tr('Send'),
+                // The design keeps the brand-green button; only the icon dims.
                 child: Material(
-                  color: enabled ? VeloraColors.brand : VeloraColors.disabled,
+                  color: VeloraColors.brand,
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     onTap: enabled ? onSend : null,
                     borderRadius: BorderRadius.circular(14),
-                    child: const SizedBox(
-                      width: 50,
-                      height: 50,
+                    child: SizedBox(
+                      width: 52,
+                      height: 52,
                       child: Center(
-                        child: VeloraIcon(VeloraIcons.send, size: 20, color: VeloraColors.amber, strokeWidth: 2),
+                        child: VeloraIcon(
+                          VeloraIcons.send,
+                          size: 20,
+                          color: enabled ? VeloraColors.amber : VeloraColors.amber.withValues(alpha: 0.45),
+                          strokeWidth: 2,
+                        ),
                       ),
                     ),
                   ),

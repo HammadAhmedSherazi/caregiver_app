@@ -28,7 +28,7 @@ class VeloraTabBar extends StatelessWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(12, 0, 12, bottomInset > 0 ? bottomInset : 14),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset > 0 ? bottomInset * 0.55 : 14),
       child: Container(
         height: 72,
         padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -51,6 +51,7 @@ class VeloraTabBar extends StatelessWidget {
         ),
       ),
     );
+  
   }
 }
 

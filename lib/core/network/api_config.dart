@@ -12,45 +12,23 @@ class ApiConfig {
     defaultValue: defaultBaseUrl,
   );
 
-  /// Broadcasting auth is **not** under `/api`.
-  static const String broadcastingAuthUrl = String.fromEnvironment(
-    'BROADCASTING_AUTH_URL',
-    defaultValue: 'https://beydountech.com/broadcasting/auth',
-  );
+  // Chat socket (Laravel Reverb). The app key, auth endpoint, channels and
+  // `enabled` come from `GET /realtime/config`; the socket itself is always
+  // reached at [socketHost] over TLS (wss, 443). The `REVERB_*` defines are
+  // optional local-debug overrides.
+  static const String defaultSocketHost = 'chat.beydountech.com';
+  static const String socketHost = String.fromEnvironment('REVERB_HOST', defaultValue: defaultSocketHost);
+  static const int socketPort = int.fromEnvironment('REVERB_PORT', defaultValue: 443);
+  static const String reverbAppKeyOverride = String.fromEnvironment('REVERB_APP_KEY');
+  static const String broadcastingAuthUrlOverride = String.fromEnvironment('BROADCASTING_AUTH_URL');
 
-  /// Laravel Reverb app key. Override via `--dart-define=REVERB_APP_KEY=...`.
-  static const String reverbAppKey = String.fromEnvironment(
-    'REVERB_APP_KEY',
-    defaultValue: 'a48ba23a9fe72910b0eb',
-  );
+  /// Open chats poll `GET /conversations/{id}` at this rate while the socket
+  /// is not live.
+  static const Duration chatPollInterval = Duration(seconds: 10);
 
-  static const String reverbHost = String.fromEnvironment(
-    'REVERB_HOST',
-    defaultValue: 'beydountech.com',
-  );
-
-  static const int reverbPort = int.fromEnvironment(
-    'REVERB_PORT',
-    defaultValue: 443,
-  );
-
-  /// Laravel `.env` uses `https`/`http`; [reverbUseTls] maps that for the client.
-  static const String _reverbSchemeEnv = String.fromEnvironment(
-    'REVERB_SCHEME',
-    defaultValue: 'https',
-  );
-
-  static bool get reverbUseTls {
-    switch (_reverbSchemeEnv.toLowerCase()) {
-      case 'http':
-      case 'ws':
-        return false;
-      case 'https':
-      case 'wss':
-      default:
-        return true;
-    }
-  }
+  /// After a failed socket connect, stay on REST this long before retrying,
+  /// so a 404 socket path can't loop connect → disconnect → reconnect.
+  static const Duration realtimeRetryCooldown = Duration(minutes: 2);
 
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

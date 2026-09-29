@@ -172,8 +172,10 @@ class PusherChannelsFlutter {
         } catch (_) {}
         return Future.value(null);
       case 'onError':
-        onError?.call(call.arguments['message'], call.arguments['code'],
-            call.arguments['error']);
+        // Android sends the code as a String ("4001" or ""), iOS as an Int.
+        final rawCode = call.arguments['code'];
+        final code = rawCode is int ? rawCode : int.tryParse('${rawCode ?? ''}');
+        onError?.call(call.arguments['message'], code, call.arguments['error']);
         // Debug log: surface native errors
         try {
           print('Pusher debug: onError message=${call.arguments['message']} code=${call.arguments['code']} error=${call.arguments['error']}');

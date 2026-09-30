@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "542105523140",
+    "project_id": "kindra-app-ve",
+    "storage_bucket": "kindra-app-ve.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542105523140:android:8ad3c2748b0663c8698a91",
+        "android_client_info": {
+          "package_name": "com.example.kindra_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkW9hNHym5eiX005A9didTHUa1W8tSE2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542105523140:android:2d9ae9fab6bb38dc698a91",
+        "android_client_info": {
+          "package_name": "com.homecare.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkW9hNHym5eiX005A9didTHUa1W8tSE2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542105523140:android:abbf72437e7d7ad4698a91",
+        "android_client_info": {
+          "package_name": "com.trusti.nl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkW9hNHym5eiX005A9didTHUa1W8tSE2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

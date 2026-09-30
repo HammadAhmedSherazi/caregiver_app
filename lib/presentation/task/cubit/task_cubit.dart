@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../../../core/base/base_cubit.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../data/models/api/compliance_form_model.dart';
 import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/selected_document.dart';
 import '../../../data/models/task_page_model.dart';
@@ -82,11 +83,21 @@ class TaskCubit extends BaseCubit<TaskState> {
     return repository.getComplianceHistoryPage();
   }
 
-  Future<List<ComplianceQuestion>> loadComplianceForm(int id) async {
-    final form = await repository.getComplianceForm(id);
-    return form.questions
-        .map((q) => ComplianceQuestion(id: q.key, prompt: q.text))
-        .toList();
+  /// Full `GET /compliance-forms/{id}`, including the planned `check_in`
+  /// block (prefill, days, counts) that drives the "Your days" step.
+  Future<ComplianceFormDetailModel> loadComplianceDetail(int id) {
+    return repository.getComplianceForm(id);
+  }
+
+  /// 🚧 Planned. `PUT /compliance-forms/{id}/draft` ("Save & exit").
+  Future<void> saveCheckInDraft(int formId, CheckInDraftRequest request) async {
+    await repository.saveCheckInDraft(formId, request);
+  }
+
+  /// 🚧 Planned. `POST /compliance-forms/{id}/submit` with the typed name.
+  Future<ComplianceFormDetailModel> submitCheckIn(int formId, CheckInSubmitRequest request) {
+    request.validate();
+    return repository.submitCheckIn(formId, request);
   }
 
   Future<void> submitComplianceForm({

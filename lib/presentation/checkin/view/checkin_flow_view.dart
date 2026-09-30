@@ -5,13 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_config.dart';
+import '../../../data/models/api/compliance_form_model.dart';
 import '../../../data/models/task_page_model.dart';
 import '../../auth/cubit/auth_cubit.dart';
+import '../../home/cubit/home_cubit.dart';
 import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../widgets/velora/velora.dart';
 import '../../../core/i18n/tr.dart';
+import 'checkin_days_flow.dart';
 
 /// Monthly sign-off: questions → review & sign → sent.
 ///
@@ -20,8 +23,9 @@ import '../../../core/i18n/tr.dart';
 /// (rendered as a PNG data URI, the format the endpoint already receives)
 /// and optional notes.
 ///
-/// The design's "Your days" calendar step is not included: there is no API
-/// for per-day worked / hospital marks (API REQUIRED).
+/// When the planned API is on and the form carries the `check_in` block
+/// (days, prefill, mode), the design's full flow runs instead — see
+/// [CheckInDaysFlow] for the "Your days" calendar and live-in modes.
 class CheckInFlowView extends StatefulWidget {
   const CheckInFlowView({
     super.key,
@@ -41,6 +45,7 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
 
   int _step = 0; // 0 questions, 1 sign, 2 done
   List<ComplianceQuestion> _questions = const [];
+  ComplianceFormDetailModel? _detail;
   bool _loading = true;
   bool _loadFailed = false;
   bool _submitting = false;
@@ -70,10 +75,13 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
       _loadFailed = false;
     });
     try {
-      final questions = await context.read<TaskCubit>().loadComplianceForm(widget.formId);
+      final detail = await context.read<TaskCubit>().loadComplianceDetail(widget.formId);
       if (!mounted) return;
       setState(() {
-        _questions = questions;
+        _detail = detail;
+        _questions = [
+          for (final q in detail.questions) ComplianceQuestion(id: q.key, prompt: q.text),
+        ];
         _loading = false;
       });
     } catch (_) {
@@ -151,6 +159,17 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
 
   @override
   Widget build(BuildContext context) {
+    final checkIn = _detail?.checkIn;
+    if (ApiConfig.veloraApiEnabled && checkIn != null) {
+      return CheckInDaysFlow(
+        formId: widget.formId,
+        periodLabel: widget.periodLabel,
+        detail: _detail!,
+        checkIn: checkIn,
+        clientName: context.read<HomeCubit>().state.dashboard?.activeShift?.clientName,
+        initialName: _nameController.text,
+      );
+    }
     final inFlow = _step < 2;
     final title = switch (_step) {
       0 => tr('A few questions'),
@@ -180,47 +199,11 @@ class _CheckInFlowViewState extends State<CheckInFlowView> {
                 : tr('{0} check-in', [widget.periodLabel]),
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
             leading: inFlow
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              tr('STEP {0} OF {1}', [_step + 1, _stepCount]),
-                              style: VeloraText.body(
-                                12.5,
-                                weight: FontWeight.w700,
-                                color: VeloraColors.amber,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ),
-                          Material(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(11),
-                            child: InkWell(
-                              onTap: _submitting ? null : () => _close(),
-                              borderRadius: BorderRadius.circular(11),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                                child: Text(
-                                  tr('Exit'),
-                                  style: VeloraText.body(13, weight: FontWeight.w700, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      VeloraProgressBar(
-                        value: (_step + 1) / _stepCount,
-                        height: 6,
-                        color: VeloraColors.amber,
-                        track: Colors.white.withValues(alpha: 0.14),
-                      ),
-                    ],
+                ? CheckInStepHeader(
+                    step: _step + 1,
+                    stepCount: _stepCount,
+                    exitLabel: tr('Exit'),
+                    onExit: _submitting ? null : () => _close(),
                   )
                 : null,
           ),

@@ -141,6 +141,20 @@ class _PaystubViewState extends State<PaystubView> {
                     ],
                   ),
                 ),
+              if (detail.ytdGross != null || detail.ytdNet != null)
+                VeloraCard(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SectionCaption(tr('Year to date'), padding: EdgeInsets.only(top: 8, bottom: 2)),
+                      if (detail.ytdGross != null)
+                        KeyValueRow(showDivider: false, label: tr('Gross'), value: detail.ytdGross!),
+                      if (detail.ytdNet != null)
+                        KeyValueRow(showDivider: detail.ytdGross != null, label: tr('Net'), value: detail.ytdNet!),
+                    ],
+                  ),
+                ),
               if (detail.visitSummary.isNotEmpty)
                 VeloraCard(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),

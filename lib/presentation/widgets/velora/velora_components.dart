@@ -623,6 +623,7 @@ class VeloraTextField extends StatelessWidget {
     this.obscureText = false,
     this.validator,
     this.onSubmitted,
+    this.onChanged,
     this.autofillHints,
     this.suffix,
     this.readOnly = false,
@@ -641,6 +642,7 @@ class VeloraTextField extends StatelessWidget {
   final bool obscureText;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
   final Iterable<String>? autofillHints;
   final Widget? suffix;
   final bool readOnly;
@@ -694,6 +696,7 @@ class VeloraTextField extends StatelessWidget {
           obscureText: obscureText,
           validator: validator,
           onFieldSubmitted: onSubmitted,
+          onChanged: onChanged,
           autofillHints: autofillHints,
           readOnly: readOnly,
           onTap: onTap,

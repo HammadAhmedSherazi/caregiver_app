@@ -29,6 +29,9 @@ class _DocType {
   String get apiType => ApiConfig.veloraApiEnabled ? plannedType.value : legacyType;
 
   bool get needsExpiry => id == 'id' && ApiConfig.veloraApiEnabled;
+
+  /// `back_file` is only sent with the planned API (photo ID only).
+  bool get takesBackSide => id == 'id' && ApiConfig.veloraApiEnabled;
 }
 
 const _types = [
@@ -79,6 +82,10 @@ class _UploadViewState extends State<UploadView> {
   );
   _Step _step = _Step.type;
   SelectedDocument? _document;
+  SelectedDocument? _backDocument;
+
+  /// The capture step is taking the back of the ID, not the front.
+  bool _capturingBack = false;
   DateTime? _expiresOn;
   bool _picking = false;
   bool _uploading = false;
@@ -105,7 +112,12 @@ class _UploadViewState extends State<UploadView> {
         return;
       }
       setState(() {
-        _document = doc;
+        if (_capturingBack) {
+          _backDocument = doc;
+        } else {
+          _document = doc;
+        }
+        _capturingBack = false;
         _picking = false;
         _step = _Step.review;
       });
@@ -143,8 +155,11 @@ class _UploadViewState extends State<UploadView> {
     ].join(' – ');
 
     final isTax = _type.id == 'tax';
+    final back = _type.takesBackSide ? _backDocument : null;
     final extras = DocumentUploadExtras(
       expiresOn: _type.id == 'id' ? _expiresOn : null,
+      backFilePath: back?.filePath,
+      backFileName: back?.fileName,
       replacesDocumentId: widget.replacesDocumentId,
       purpose: widget.directDeposit && isTax ? DocumentUploadPurpose.directDeposit : null,
     );
@@ -174,6 +189,11 @@ class _UploadViewState extends State<UploadView> {
       case _Step.type:
       case _Step.sent:
         Navigator.of(context).pop(_uploadedAny);
+      case _Step.capture when _capturingBack:
+        setState(() {
+          _capturingBack = false;
+          _step = _Step.review;
+        });
       case _Step.capture:
         setState(() => _step = _Step.type);
       case _Step.review:
@@ -245,7 +265,9 @@ class _UploadViewState extends State<UploadView> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
-                        _type.id == 'id'
+                        _capturingBack
+                            ? tr('Take a clear photo of the back of your ID')
+                            : _type.id == 'id'
                             ? tr('Take a clear photo of the front of your ID')
                             : tr('Take a clear photo, or choose a file'),
                         textAlign: TextAlign.center,
@@ -276,35 +298,22 @@ class _UploadViewState extends State<UploadView> {
 
   List<Widget> _reviewStep() {
     final doc = _document!;
-    final path = doc.filePath;
+    final back = _backDocument;
     return [
       VeloraCard(
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                width: 118,
-                height: 76,
-                child: doc.isImage && path != null
-                    ? Image.file(File(path), fit: BoxFit.cover)
-                    : doc.isImage && doc.bytes != null
-                        ? Image.memory(doc.bytes!, fit: BoxFit.cover)
-                        : const ColoredBox(
-                            color: VeloraColors.mint,
-                            child: Center(
-                              child: VeloraIcon(VeloraIcons.document, size: 30, color: VeloraColors.teal),
-                            ),
-                          ),
-              ),
-            ),
+            _Thumbnail(doc),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tr(_type.label), style: VeloraText.body(15, weight: FontWeight.w700)),
+                  Text(
+                    _type.takesBackSide ? tr('Photo ID · front') : tr(_type.label),
+                    style: VeloraText.body(15, weight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 3),
                   Text(
                     '${doc.fileName} · ${doc.formattedSize}',
@@ -323,6 +332,42 @@ class _UploadViewState extends State<UploadView> {
           ],
         ),
       ),
+      if (_type.takesBackSide && back != null)
+        VeloraCard(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              _Thumbnail(back),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(tr('Photo ID · back'), style: VeloraText.body(15, weight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    Text('${back.fileName} · ${back.formattedSize}',
+                        maxLines: 2, overflow: TextOverflow.ellipsis, style: VeloraText.subtitle),
+                    VeloraTextLink(
+                      label: tr('Remove'),
+                      size: 13,
+                      onTap: () => setState(() => _backDocument = null),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )
+      else if (_type.takesBackSide)
+        VeloraButton(
+          label: tr('Add the back side'),
+          icon: VeloraIcons.plus,
+          variant: VeloraButtonVariant.ghost,
+          onPressed: () => setState(() {
+            _capturingBack = true;
+            _step = _Step.capture;
+          }),
+        ),
       if (_type.needsExpiry)
         VeloraCard(
           child: DateField(
@@ -372,6 +417,7 @@ class _UploadViewState extends State<UploadView> {
               size: 13,
               onTap: () => setState(() {
                 _document = null;
+                _backDocument = null;
                 _expiresOn = null;
                 _notesController.clear();
                 _step = _Step.type;
@@ -380,6 +426,35 @@ class _UploadViewState extends State<UploadView> {
           ],
         ),
       ];
+}
+
+/// 118×76 preview of a picked photo, or a document icon for PDFs.
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail(this.doc);
+
+  final SelectedDocument doc;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = doc.filePath;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 118,
+        height: 76,
+        child: doc.isImage && path != null
+            ? Image.file(File(path), fit: BoxFit.cover)
+            : doc.isImage && doc.bytes != null
+                ? Image.memory(doc.bytes!, fit: BoxFit.cover)
+                : const ColoredBox(
+                    color: VeloraColors.mint,
+                    child: Center(
+                      child: VeloraIcon(VeloraIcons.document, size: 30, color: VeloraColors.teal),
+                    ),
+                  ),
+      ),
+    );
+  }
 }
 
 class _TypeOption extends StatelessWidget {

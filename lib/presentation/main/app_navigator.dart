@@ -5,6 +5,7 @@ import '../../core/i18n/tr.dart';
 import '../../data/models/api/velora/velora_models.dart';
 
 import '../checkin/view/checkin_flow_view.dart';
+import '../clock/view/clock_view.dart';
 import '../documents/view/document_viewer_view.dart';
 import '../documents/view/upload_view.dart';
 import '../help/view/help_view.dart';
@@ -90,6 +91,9 @@ class AppNavigator {
 
   static Future<void> openPaystub(BuildContext context, {required String id}) =>
       _push(context, PaystubView(paystubId: id));
+
+  /// Full-screen clock in / out (the design's `Clock` page).
+  static Future<void> openClock(BuildContext context) => _push(context, const ClockView());
 
   /// Returns `true` when the check-in was submitted.
   static Future<bool?> openCheckInFlow(

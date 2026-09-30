@@ -464,13 +464,7 @@ class _LoginViewState extends State<LoginView> {
                               onLanguageChanged: _languageStore.set,
                             ),
                           ),
-                          Center(
-                            child: ConstrainedBox(
-                              constraints:
-                                  const BoxConstraints(maxWidth: 520),
-                              child: _buildSheet(context, strings),
-                            ),
-                          ),
+                          _buildSheet(context, strings),
                         ],
                       ),
                     ),
@@ -502,36 +496,44 @@ class _LoginViewState extends State<LoginView> {
         22,
         26 + MediaQuery.paddingOf(context).bottom,
       ),
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          return AnimatedSize(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 380),
-              switchInCurve: const Cubic(0.2, 0.7, 0.2, 1),
-              transitionBuilder: (child, animation) => FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween(
-                    begin: const Offset(0, 0.06),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: child,
-                ),
-              ),
-              layoutBuilder: (current, previous) => Stack(
+      // The white panel spans the full width (tablets too); its content
+      // stays phone-width and centred.
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, state) {
+              return AnimatedSize(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
                 alignment: Alignment.topCenter,
-                children: [...previous, ?current],
-              ),
-              child: KeyedSubtree(
-                key: ValueKey(_step),
-                child: _buildStep(context, state, strings),
-              ),
-            ),
-          );
-        },
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 380),
+                  switchInCurve: const Cubic(0.2, 0.7, 0.2, 1),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween(
+                        begin: const Offset(0, 0.06),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  layoutBuilder: (current, previous) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [...previous, ?current],
+                  ),
+                  child: KeyedSubtree(
+                    key: ValueKey(_step),
+                    child: _buildStep(context, state, strings),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

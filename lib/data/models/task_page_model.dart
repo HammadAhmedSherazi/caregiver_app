@@ -240,6 +240,8 @@ class PaystubDetail extends Equatable {
     this.stateTax,
     this.fica,
     this.estimatedBreakdown = false,
+    this.ytdGross,
+    this.ytdNet,
   });
 
   final String id;
@@ -257,6 +259,10 @@ class PaystubDetail extends Equatable {
   final String? stateTax;
   final String? fica;
   final bool estimatedBreakdown;
+
+  /// Year to date (🚧 planned `year_to_date` of `GET /pay/{id}`).
+  final String? ytdGross;
+  final String? ytdNet;
 
   bool get isPaid => status == 'Paid';
 
@@ -277,6 +283,8 @@ class PaystubDetail extends Equatable {
         stateTax,
         fica,
         estimatedBreakdown,
+        ytdGross,
+        ytdNet,
       ];
 }
 

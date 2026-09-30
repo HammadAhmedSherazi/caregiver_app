@@ -63,7 +63,7 @@ class VeloraPage extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 640),
+                    constraints: const BoxConstraints(maxWidth: VeloraSpacing.maxContentWidth),
                     child: list,
                   ),
                 ),
@@ -80,7 +80,12 @@ class VeloraPage extends StatelessWidget {
                     16,
                     12 + MediaQuery.paddingOf(context).bottom,
                   ),
-                  child: footer,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: VeloraSpacing.maxContentWidth - 32),
+                      child: footer,
+                    ),
+                  ),
                 ),
             ],
           ),

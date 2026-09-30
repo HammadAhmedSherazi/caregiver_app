@@ -70,64 +70,78 @@ class VeloraHeader extends StatelessWidget {
             Padding(
               padding: (padding ?? const EdgeInsets.fromLTRB(20, 20, 20, 22))
                   .add(EdgeInsets.only(top: topInset)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (leading != null) ...[leading!, const SizedBox(height: 22)],
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+              // On tablets the text lines up with the centred page column;
+              // the green band and rings still fill the width.
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: VeloraSpacing.maxContentWidth - 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_isPushed) ...[
-                        HeaderSquareButton(
-                          icon: VeloraIcons.chevronLeft,
-                          semanticLabel: tr('Back'),
-                          onTap: onBack!,
-                        ),
-                        const SizedBox(width: 14),
+                      if (leading != null) ...[
+                        leading!,
+                        const SizedBox(height: 22),
                       ],
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (overline != null) ...[
-                              Text(
-                                overline!,
-                                style: VeloraText.body(
-                                  13,
-                                  weight: FontWeight.w500,
-                                  color: VeloraColors.onHeaderMuted,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                            ],
-                            Text(
-                              title,
-                              style: VeloraText.display(
-                                _isPushed ? 22 : 27,
-                                color: Colors.white,
-                              ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (_isPushed) ...[
+                            HeaderSquareButton(
+                              icon: VeloraIcons.chevronLeft,
+                              semanticLabel: tr('Back'),
+                              onTap: onBack!,
                             ),
-                            if (subtitle != null && subtitle!.isNotEmpty) ...[
-                              SizedBox(height: _isPushed ? 2 : 4),
-                              Text(
-                                subtitle!,
-                                style: VeloraText.body(
-                                  _isPushed ? 12.5 : 13,
-                                  color: VeloraColors.onHeaderMuted,
-                                ),
-                              ),
-                            ],
+                            const SizedBox(width: 14),
                           ],
-                        ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (overline != null) ...[
+                                  Text(
+                                    overline!,
+                                    style: VeloraText.body(
+                                      13,
+                                      weight: FontWeight.w500,
+                                      color: VeloraColors.onHeaderMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                ],
+                                Text(
+                                  title,
+                                  style: VeloraText.display(
+                                    _isPushed ? 22 : 27,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                if (subtitle != null &&
+                                    subtitle!.isNotEmpty) ...[
+                                  SizedBox(height: _isPushed ? 2 : 4),
+                                  Text(
+                                    subtitle!,
+                                    style: VeloraText.body(
+                                      _isPushed ? 12.5 : 13,
+                                      color: VeloraColors.onHeaderMuted,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (trailing != null) ...[
+                            const SizedBox(width: 12),
+                            trailing!,
+                          ],
+                        ],
                       ),
-                      if (trailing != null) ...[
-                        const SizedBox(width: 12),
-                        trailing!,
-                      ],
+                      ?bottom,
                     ],
                   ),
-                  ?bottom,
-                ],
+                ),
               ),
             ),
           ],
@@ -210,7 +224,12 @@ class HeaderSquareButton extends StatelessWidget {
             width: 44,
             height: 44,
             child: Center(
-              child: VeloraIcon(icon, size: 20, color: foreground, strokeWidth: 2.2),
+              child: VeloraIcon(
+                icon,
+                size: 20,
+                color: foreground,
+                strokeWidth: 2.2,
+              ),
             ),
           ),
         ),

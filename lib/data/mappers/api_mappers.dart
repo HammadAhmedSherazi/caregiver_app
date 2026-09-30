@@ -517,6 +517,8 @@ PaystubDetail payDetailToPaystubDetail(PayDetailModel detail) {
     stateTax: formatCurrency(detail.breakdown.stateTax),
     fica: formatCurrency(detail.breakdown.fica),
     estimatedBreakdown: detail.breakdown.estimated,
+    ytdGross: detail.velora?.ytdGross == null ? null : formatCurrency(detail.velora!.ytdGross!),
+    ytdNet: detail.velora?.ytdNet == null ? null : formatCurrency(detail.velora!.ytdNet!),
   );
 }
 

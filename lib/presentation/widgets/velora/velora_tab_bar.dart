@@ -28,30 +28,42 @@ class VeloraTabBar extends StatelessWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset > 0 ? bottomInset * 0.55 : 14),
-      child: Container(
-        height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        decoration: BoxDecoration(
-          color: VeloraColors.brandDark,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: VeloraShadows.tabBar,
-        ),
-        child: Row(
-          children: [
-            for (var i = 0; i < items.length; i++)
-              Expanded(
-                child: _TabButton(
-                  item: items[i],
-                  selected: i == selectedIndex,
-                  onTap: () => onSelected(i),
-                ),
-              ),
-          ],
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        bottomInset > 0 ? bottomInset * 0.55 : 14,
+      ),
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: VeloraSpacing.maxContentWidth - 32,
+          ),
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: VeloraColors.brandDark,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: VeloraShadows.tabBar,
+            ),
+            child: Row(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Expanded(
+                    child: _TabButton(
+                      item: items[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onSelected(i),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
-  
   }
 }
 
@@ -94,7 +106,9 @@ class _TabButton extends StatelessWidget {
                 style: VeloraText.body(
                   11,
                   weight: selected ? FontWeight.w700 : FontWeight.w600,
-                  color: selected ? VeloraColors.tabActive : VeloraColors.tabInactive,
+                  color: selected
+                      ? VeloraColors.tabActive
+                      : VeloraColors.tabInactive,
                 ),
               ),
             ),

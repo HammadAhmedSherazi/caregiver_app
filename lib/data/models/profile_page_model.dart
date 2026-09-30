@@ -47,6 +47,7 @@ class ProfilePageData extends Equatable {
     this.address,
     this.initials,
     this.isLiveIn = false,
+    this.liveInApprovedThrough,
   });
 
   final String headerTitle;
@@ -69,6 +70,10 @@ class ProfilePageData extends Equatable {
   final String? initials;
   final bool isLiveIn;
 
+  /// `live_in_exemption.approved_through` (🚧 planned) — when set, live-in
+  /// caregivers don't clock in until this date.
+  final DateTime? liveInApprovedThrough;
+
   @override
   List<Object?> get props => [
         headerTitle,
@@ -88,5 +93,6 @@ class ProfilePageData extends Equatable {
         address,
         initials,
         isLiveIn,
+        liveInApprovedThrough,
       ];
 }

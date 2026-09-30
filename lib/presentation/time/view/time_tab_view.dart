@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/velora_format.dart';
 import '../../../data/models/api/schedule_item_model.dart';
+import '../../../data/models/api/velora/velora_models.dart';
 import '../../../data/models/api/visit_model.dart';
+import '../../main/app_action_router.dart';
 import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../widgets/velora/velora.dart';
@@ -56,7 +58,9 @@ class _TimeTabViewState extends State<TimeTabView> {
             else if (state.isLoading || state.status == TimeStatus.initial)
               VeloraLoadingState(message: tr('Loading your visits…'))
             else if (_month)
-              ..._monthChildren(context, VisitPeriodSummary.month(state.visits), now)
+              ..._monthChildren(context, VisitPeriodSummary.month(state.visits), now, state.month?.approvedHours)
+            else if (state.week case final week? when week.plan?.isSetDays ?? false)
+              ..._setDaysWeekChildren(week, state.upcoming)
             else
               ..._weekChildren(context, VisitPeriodSummary.week(state.visits), now, state.upcoming),
           ],
@@ -97,10 +101,44 @@ class _TimeTabViewState extends State<TimeTabView> {
     ];
   }
 
+  /// Set-days plan (e.g. Mon, Wed, Fri) from the planned `GET /time/week`:
+  /// off days are "Not a set day" and a missed set day asks why.
+  List<Widget> _setDaysWeekChildren(TimeWeekModel week, List<ScheduleItemModel> upcoming) {
+    final plan = week.plan!;
+    final range = week.weekStart != null && week.weekEnd != null
+        ? '${VeloraFormat.monthDay(week.weekStart!)} – ${VeloraFormat.monthDay(week.weekEnd!)}'
+        : week.label;
+    final shown = week.days;
+    return [
+      _SummaryCard(
+        leftCaption: tr('Set days done'),
+        left: week.daysOf == null ? '${week.daysDone}' : tr('{0} of {1}', [week.daysDone, week.daysOf]),
+        rightCaption: tr('Hours'),
+        right: week.hoursLabel ?? (week.hours == null ? '—' : tr('{0} hrs', [week.hours!.toStringAsFixed(1)])),
+        note: [plan.label ?? tr('Your client\'s plan has set days'), range].join(' · '),
+      ),
+      VeloraCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Column(
+          children: [
+            for (var i = 0; i < shown.length; i++) _PlanDayRow(day: shown[i], showDivider: i > 0),
+          ],
+        ),
+      ),
+      if (week.footnote != null)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(week.footnote!, style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.45)),
+        ),
+      if (upcoming.isNotEmpty) _UpcomingCard(items: upcoming),
+    ];
+  }
+
   List<Widget> _monthChildren(
     BuildContext context,
     VisitPeriodSummary month,
     DateTime now,
+    ApprovedHoursModel? approved,
   ) {
     final visits = month.days.expand((d) => d.visits).toList();
     final completed = visits.where((v) => v.clockOutAt != null).length;
@@ -113,6 +151,7 @@ class _TimeTabViewState extends State<TimeTabView> {
         rightCaption: tr('Hours'),
         right: VeloraFormat.duration(month.total),
       ),
+      if (approved != null && approved.limit > 0) _ApprovedHoursCard(hours: approved),
       VeloraCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,6 +301,164 @@ class _SummaryCard extends StatelessWidget {
             Text(note!, style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.4)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// "104.8 of 120 hrs" — the client's approved hours for the month.
+class _ApprovedHoursCard extends StatelessWidget {
+  const _ApprovedHoursCard({required this.hours});
+
+  final ApprovedHoursModel hours;
+
+  static String _h(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final nearLimit = hours.percentUsed >= 90;
+    return VeloraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SectionCaption(
+            tr('Approved hours'),
+            trailing: Text(
+              tr('{0} of {1} hrs', [_h(hours.used), _h(hours.limit)]),
+              style: VeloraText.body(13, weight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 12),
+          VeloraProgressBar(
+            value: (hours.used / hours.limit).clamp(0, 1).toDouble(),
+            height: 10,
+            color: nearLimit ? VeloraColors.dangerStrong : VeloraColors.amber,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            hours.warning ??
+                tr('{0} hours left this month. Hours past what your client\'s plan approves can\'t be paid, so we\'ll warn you before you reach the limit.',
+                    [_h(hours.remaining)]),
+            style: VeloraText.body(12.5, color: nearLimit ? VeloraColors.dangerText : VeloraColors.muted, height: 1.45),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One day of a set-days week, as the server describes it.
+class _PlanDayRow extends StatelessWidget {
+  const _PlanDayRow({required this.day, required this.showDivider});
+
+  final TimeWeekDayModel day;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final offDay = day.state == 'not_set_day' || day.state == 'day_off';
+    final missed = day.state == 'missed';
+    final fix = day.state == 'missing_clockout' || day.state == 'pending_fix';
+    final (tileBg, tileBorder, tileFg) = missed
+        ? (VeloraColors.dangerBg, VeloraColors.dangerBg, VeloraColors.dangerText)
+        : fix
+            ? (VeloraColors.warnBg, VeloraColors.noteBorder, VeloraColors.warnText)
+            : day.isToday
+                ? (Colors.white, VeloraColors.amber, VeloraColors.brand)
+                : (VeloraColors.subtle, VeloraColors.line, VeloraColors.ink);
+    final tone = switch (day.state) {
+      'sent' => PillTone.good,
+      'missed' => PillTone.danger,
+      'missing_clockout' || 'pending_fix' => PillTone.warn,
+      'not_started' => PillTone.info,
+      _ => PillTone.mute,
+    };
+    final visit = day.visit;
+    final title = visit?.clockInAt != null
+        ? '${VeloraFormat.time(visit!.clockInAt!)} – ${visit.clockOutAt != null ? VeloraFormat.time(visit.clockOutAt!) : '?'}'
+        : switch (day.state) {
+            'not_set_day' => tr('Not a set day'),
+            'missed' => tr('Set day · no visit'),
+            'not_started' => tr('Set day · today'),
+            _ => day.stateLabel,
+          };
+    final detail = visit == null
+        ? day.note
+        : [visit.hoursLabel, visit.servicesLabel].whereType<String>().where((t) => t.isNotEmpty).join(' · ');
+    final cta = day.cta;
+
+    return Opacity(
+      opacity: offDay ? 0.55 : 1,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          border: showDivider ? const Border(top: BorderSide(color: VeloraColors.line)) : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 46,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: tileBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: tileBorder, width: day.isToday ? 2 : 1),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    (day.date != null ? VeloraFormat.weekdayShort(day.date!) : day.weekdayShort).toUpperCase(),
+                    style: VeloraText.body(10, weight: FontWeight.w700, color: tileFg),
+                  ),
+                  Text('${day.dayNumber}', style: VeloraText.display(18, color: tileFg)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: VeloraText.body(14.5,
+                              weight: FontWeight.w700, color: offDay ? VeloraColors.chevron : VeloraColors.ink),
+                        ),
+                      ),
+                      if (!offDay) ...[const SizedBox(width: 8), StatusPill(day.stateLabel, tone: tone)],
+                    ],
+                  ),
+                  if (detail != null && detail.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(detail, style: VeloraText.subtitle),
+                  ],
+                  if (cta?.action != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: _SmallButton(label: cta!.label, onTap: () => AppActionRouter.open(context, cta.action!)),
+                    ),
+                  ] else if (missed)
+                    VeloraTextLink(label: tr('Tell us why'), size: 13, onTap: () => AppNavigator.openReportChange(context))
+                  else if (day.state == 'not_started' && day.isToday) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: _SmallButton(
+                        label: tr('Clock in from Home'),
+                        onTap: () => AppNavigator.goToTab(context, MainTab.home),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

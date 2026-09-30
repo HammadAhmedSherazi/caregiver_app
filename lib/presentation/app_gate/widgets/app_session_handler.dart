@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,6 +8,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/navigation/root_navigator.dart';
 import '../../../core/network/chat_realtime_service.dart';
 import '../../../core/network/session_expired_notifier.dart';
+import '../../../core/push/firebase_push_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../auth/cubit/auth_cubit.dart';
@@ -16,6 +18,7 @@ import '../../documents/cubit/documents_cubit.dart';
 import '../../home/cubit/home_cubit.dart';
 import '../../task/cubit/task_cubit.dart';
 import '../../time/cubit/time_cubit.dart';
+import '../../widgets/velora/velora.dart';
 import '../../../core/i18n/tr.dart';
 
 class AppSessionHandler extends StatefulWidget {
@@ -37,12 +40,24 @@ class _AppSessionHandlerState extends State<AppSessionHandler>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     sl<SessionExpiredNotifier>().onSessionExpired = _onSessionExpired;
+    sl<FirebasePushService>().foregroundNotification.addListener(_onForegroundPush);
+  }
+
+  /// Android doesn't show a banner while the app is open, so show a toast.
+  /// (iOS shows the system banner itself.)
+  void _onForegroundPush() {
+    final n = sl<FirebasePushService>().foregroundNotification.value;
+    final context = rootNavigatorKey.currentContext;
+    if (n == null || context == null || defaultTargetPlatform != TargetPlatform.android) return;
+    final text = [n.title, n.body].whereType<String>().where((t) => t.isNotEmpty).join(' · ');
+    if (text.isNotEmpty && ScaffoldMessenger.maybeOf(context) != null) showVeloraToast(context, text);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     sl<SessionExpiredNotifier>().onSessionExpired = null;
+    sl<FirebasePushService>().foregroundNotification.removeListener(_onForegroundPush);
     super.dispose();
   }
 
@@ -78,6 +93,21 @@ class _AppSessionHandlerState extends State<AppSessionHandler>
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
+        final push = sl<FirebasePushService>();
+        if (state.status == AuthStatus.authenticated) {
+          unawaited(push.onSignedIn());
+        } else if (state.status == AuthStatus.unauthenticated) {
+          push.onSignedOut();
+        }
+      },
+      child: _sessionListeners(),
+    );
+  }
+
+  Widget _sessionListeners() {
     return BlocListener<AuthCubit, AuthState>(
       listenWhen: (previous, current) =>
           previous.status == AuthStatus.authenticated &&

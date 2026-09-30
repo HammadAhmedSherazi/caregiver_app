@@ -4,6 +4,7 @@ import '../../core/auth/biometric_auth.dart';
 import '../../core/i18n/translations.dart';
 import '../../core/network/api_client.dart';
 import '../../core/push/push_notification_handler.dart';
+import '../../core/push/firebase_push_service.dart';
 import '../constants/app_constants.dart';
 import '../../core/network/chat_realtime_service.dart';
 import '../../core/network/session_expired_notifier.dart';
@@ -131,6 +132,12 @@ Future<void> setupServiceLocator() async {
       devices: sl<DeviceRepository>(),
       languageStore: sl<LanguageStore>(),
       appVersion: AppConstants.appVersion,
+    ),
+  );
+  sl.registerLazySingleton<FirebasePushService>(
+    () => FirebasePushService(
+      handler: sl<PushNotificationHandler>(),
+      languageStore: sl<LanguageStore>(),
     ),
   );
   sl.registerLazySingleton<ClientRepository>(

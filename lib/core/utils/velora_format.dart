@@ -43,6 +43,14 @@ class VeloraFormat {
     return '$hour:$minute ${local.hour < 12 ? tr('AM') : tr('PM')}';
   }
 
+  /// `$1,293.16`
+  static String money(double amount) {
+    final fixed = amount.abs().toStringAsFixed(2);
+    final whole = fixed.substring(0, fixed.length - 3);
+    final grouped = whole.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+    return '${amount < 0 ? '-' : ''}\$$grouped${fixed.substring(fixed.length - 3)}';
+  }
+
   /// `6h 08m`
   static String duration(Duration d) {
     final hours = d.inHours;

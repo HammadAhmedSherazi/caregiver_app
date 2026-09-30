@@ -22,6 +22,8 @@ plugins {
     // Keep in sync with plugins like image_picker_android (AGP 8.13.1).
     id("com.android.application") version "8.13.1" apply false
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    // Firebase (push).
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")

@@ -112,7 +112,10 @@ class _HomeTabViewState extends State<HomeTabView> {
                     onClockOut: _clockOut,
                     onStartAnother: () => setState(() => _savedSummary = null),
                   ),
-                  const _ThisWeekCard(),
+                  if (dashboard.velora?.week case final week? when week.planType == 'set_days')
+                    _SetDaysWeekCard(week: week)
+                  else
+                    const _ThisWeekCard(),
                   const _AttentionCard(),
                   VeloraCard(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
@@ -362,7 +365,23 @@ class _VisitCardState extends State<_VisitCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SectionCaption(caption, trailing: StatusPill(pill, tone: tone)),
+          SectionCaption(
+            caption,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (shift != null && saved == null) ...[
+                  VeloraTextLink(
+                    label: tr('Full screen'),
+                    size: 12.5,
+                    onTap: () => AppNavigator.openClock(context),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                StatusPill(pill, tone: tone),
+              ],
+            ),
+          ),
           const SizedBox(height: 12),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 250),
@@ -566,7 +585,7 @@ class _OnShiftBody extends StatelessWidget {
         ),
         if (started != null) ...[
           const SizedBox(height: 8),
-          _LiveTimer(startedAt: started),
+          LiveShiftTimer(startedAt: started),
         ],
         const SizedBox(height: 12),
         VeloraButton(
@@ -581,16 +600,18 @@ class _OnShiftBody extends StatelessWidget {
   }
 }
 
-class _LiveTimer extends StatefulWidget {
-  const _LiveTimer({required this.startedAt});
+/// Pulsing dot + `1:18:32` shift timer (Home and the full-screen clock).
+class LiveShiftTimer extends StatefulWidget {
+  const LiveShiftTimer({super.key, required this.startedAt, this.size = 46});
 
   final DateTime startedAt;
+  final double size;
 
   @override
-  State<_LiveTimer> createState() => _LiveTimerState();
+  State<LiveShiftTimer> createState() => _LiveShiftTimerState();
 }
 
-class _LiveTimerState extends State<_LiveTimer> {
+class _LiveShiftTimerState extends State<LiveShiftTimer> {
   Timer? _timer;
 
   @override
@@ -628,7 +649,7 @@ class _LiveTimerState extends State<_LiveTimer> {
               fit: BoxFit.scaleDown,
               child: Text(
                 VeloraFormat.timer(elapsed),
-                style: VeloraText.display(46, letterSpacing: -0.03),
+                style: VeloraText.display(widget.size, letterSpacing: -0.03),
               ),
             ),
           ),
@@ -740,6 +761,132 @@ class _ThisWeekCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// "1 of 3 set days" — the client's plan has fixed days (planned
+/// `week` block of `GET /dashboard`).
+class _SetDaysWeekCard extends StatelessWidget {
+  const _SetDaysWeekCard({required this.week});
+
+  final DashboardWeekModel week;
+
+  @override
+  Widget build(BuildContext context) {
+    final of = week.of;
+    final missed = week.missedNote;
+    return VeloraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SectionCaption(
+            tr('This week'),
+            trailing: VeloraTextLink(
+              label: tr('See hours'),
+              onTap: () => AppNavigator.goToTab(context, MainTab.time),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('${week.done}', style: VeloraText.display(34, letterSpacing: -0.03)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  of == null ? tr('set days done') : tr('of {0} set days', [of]),
+                  style: VeloraText.body(14, weight: FontWeight.w600, color: VeloraColors.muted),
+                ),
+              ),
+            ],
+          ),
+          if (of != null && of > 0) ...[
+            const SizedBox(height: 8),
+            VeloraProgressBar(value: (week.done / of).clamp(0, 1).toDouble()),
+          ],
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              for (final day in week.days) Expanded(child: _PlanDayDot(day: day)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            tr('Your client\'s plan has set days. Other days are off.'),
+            style: VeloraText.body(12.5, color: VeloraColors.muted, height: 1.45),
+          ),
+          if (missed != null)
+            VeloraTextLink(
+              label: missed.label,
+              size: 13,
+              onTap: () => missed.action != null
+                  ? AppActionRouter.open(context, missed.action!)
+                  : AppNavigator.openReportChange(context),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanDayDot extends StatelessWidget {
+  const _PlanDayDot({required this.day});
+
+  final DashboardWeekDayModel day;
+
+  @override
+  Widget build(BuildContext context) {
+    final today = day.state == 'today';
+    final (bg, fg, mark, border) = switch (day.state) {
+      'worked' => (VeloraColors.teal, Colors.white, '✓', null),
+      'missed' => (VeloraColors.dangerBg, VeloraColors.dangerText, '✕', null),
+      'needs_fix' => (VeloraColors.warnBg, VeloraColors.warnText, '!', null),
+      'today' => (Colors.white, VeloraColors.brand, '${day.dayNumber}', VeloraColors.amber),
+      _ => (Colors.transparent, VeloraColors.faint, '${day.dayNumber}', VeloraColors.line),
+    };
+    final label = today
+        ? tr('Today')
+        : day.date != null
+            ? VeloraFormat.weekdayShort(day.date!)
+            : day.weekdayShort;
+    final stateLabel = switch (day.state) {
+      'worked' => tr('worked'),
+      'missed' => tr('missed'),
+      'needs_fix' => tr('needs a clock-out'),
+      'off' => tr('not a set day'),
+      _ => tr('not worked'),
+    };
+    return Semantics(
+      label: '$label: $stateLabel',
+      excludeSemantics: true,
+      child: Column(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(11),
+              border: border != null ? Border.all(color: border, width: today ? 2 : 1) : null,
+            ),
+            child: Text(mark, style: VeloraText.body(12.5, weight: FontWeight.w700, color: fg)),
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: VeloraText.body(
+                10.5,
+                weight: FontWeight.w600,
+                color: today ? VeloraColors.brand : (day.state == 'missed' ? VeloraColors.dangerText : VeloraColors.caption),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

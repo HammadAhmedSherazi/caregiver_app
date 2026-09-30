@@ -51,10 +51,22 @@ class _HelpViewState extends State<HelpView> {
       (c) => AppNavigator.openReportChange(c),
     ),
     _Faq(
+      'Can I work more than the plan allows?',
+      'Hours past what your client\'s plan approves can\'t be paid. The Time tab shows your hours this week and this month.',
+      'See my hours',
+      (c) => AppNavigator.goToTab(c, MainTab.time),
+    ),
+    _Faq(
       'How do I send the office a document?',
       'Go to Docs and tap Upload. Take a photo or pick a file and it goes straight to your file at the office.',
       'Upload a document',
       (c) => AppNavigator.openUpload(c),
+    ),
+    _Faq(
+      'Face ID stopped working',
+      'Sign in with your phone number instead, then turn Face ID back on in your profile.',
+      'Open profile',
+      (c) => AppNavigator.openProfile(c),
     ),
     _Faq(
       'How do I update my phone or address?',

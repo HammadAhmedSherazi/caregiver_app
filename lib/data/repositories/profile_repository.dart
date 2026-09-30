@@ -105,6 +105,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
       address: profile.address,
       initials: profile.initials,
       isLiveIn: profile.liveIn,
+      liveInApprovedThrough: profile.velora?.liveInExemption?.approved ?? false
+          ? profile.velora!.liveInExemption!.approvedThrough
+          : null,
     );
   }
 }

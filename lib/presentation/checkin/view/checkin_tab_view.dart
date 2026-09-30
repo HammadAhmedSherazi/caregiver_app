@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/utils/velora_format.dart';
 import '../../../data/models/api/compliance_form_model.dart';
+import '../../../data/models/api/velora/velora_models.dart';
 import '../../main/app_navigator.dart';
 import '../../main/widgets/main_bottom_nav_bar.dart';
 import '../../task/cubit/task_cubit.dart';
@@ -35,7 +36,9 @@ class CheckInTabView extends StatelessWidget {
           underTabBar: true,
           onRefresh: () => context.read<CheckInCubit>().load(),
           header: VeloraHeader(
-            title: current != null ? tr('{0} sign-off', [current.periodLabel]) : tr('Check-in'),
+            title: current != null && (current.velora?.mode ?? CheckInMode.clocks) == CheckInMode.clocks
+                ? tr('{0} sign-off', [current.periodLabel])
+                : tr('Check-in'),
             subtitle: tr('Your check-in with the office'),
           ),
           children: [
@@ -117,6 +120,24 @@ class _OverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ext = form.velora;
+    final mode = ext?.mode ?? CheckInMode.clocks;
+    final clocks = mode == CheckInMode.clocks;
+    final intro = switch (mode) {
+      CheckInMode.clocks => ext == null
+          ? tr('Answer a few questions about the month and sign. It\'s what releases your pay. About 1 minute.')
+          : tr('You already answered the questions after each visit. Just look over your month and sign. About 1 minute.'),
+      CheckInMode.liveInDhs =>
+        tr('You live with your client, so instead of clocking in you answer here once a month. About 3 minutes.'),
+      CheckInMode.liveInMich =>
+        tr('Your client\'s plan (MICH) checks in twice a month: once for the 1st–15th, once for the 16th to the end.'),
+    };
+    final timeline = {for (final t in ext?.timeline ?? const <CheckInTimelineStepModel>[]) t.step: t};
+    String? line(int step) => timeline[step]?.title ?? timeline[step]?.label;
+    final pill = form.isOverdue
+        ? tr('Overdue')
+        : ext?.dueLabel ?? (form.status.isEmpty ? tr('Due') : form.status);
+
     return VeloraCard(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       child: Column(
@@ -126,37 +147,85 @@ class _OverviewCard extends StatelessWidget {
             children: [
               Expanded(child: Text(form.periodLabel, style: VeloraText.display(20))),
               const SizedBox(width: 10),
-              StatusPill(
-                form.isOverdue ? tr('Overdue') : (form.status.isEmpty ? tr('Due') : form.status),
-                tone: form.isOverdue ? PillTone.danger : PillTone.warn,
-              ),
+              StatusPill(pill, tone: form.isOverdue ? PillTone.danger : PillTone.warn),
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            tr('Answer a few questions about the month and sign. It\'s what releases your pay. About 1 minute.'),
-            style: VeloraText.body(13, color: VeloraColors.muted, height: 1.5),
-          ),
+          Text(intro, style: VeloraText.body(13, color: VeloraColors.muted, height: 1.5)),
           const SizedBox(height: 14),
+          if (mode == CheckInMode.liveInMich && ext?.periodShort != null) ...[
+            VeloraNote(
+              icon: VeloraIcons.calendar,
+              text: tr('Twice a month · this check-in covers {0}', [ext!.periodShort!]),
+            ),
+            const SizedBox(height: 14),
+          ],
+          if (clocks && ext != null) ...[
+            _Summary(ext: ext),
+            const SizedBox(height: 14),
+          ],
           _Step(
             number: 1,
             active: true,
-            title: tr('You answer and sign'),
-            subtitle: tr('Sign as soon as you can after the month ends'),
+            title: line(1) ?? (clocks ? tr('You review and sign') : tr('You answer and sign')),
+            subtitle: timeline[1]?.subtitle ??
+                (ext?.dueLabel != null ? tr('By {0}', [ext!.dueLabel!]) : tr('Sign as soon as you can after the month ends')),
           ),
           _Step(
             number: 2,
-            title: tr('The office confirms your days'),
-            subtitle: tr('Hospital days are taken out automatically'),
+            title: line(2) ?? tr('The office confirms your days'),
+            subtitle: timeline[2]?.subtitle ?? tr('Hospital days are taken out automatically'),
           ),
           _Step(
             number: 3,
-            title: tr('You get paid'),
-            subtitle: tr('Direct deposit on the next payday'),
+            title: line(3) ?? tr('You get paid'),
+            subtitle: timeline[3]?.subtitle ??
+                (ext?.payLabel != null ? tr('{0} · direct deposit', [ext!.payLabel!]) : tr('Direct deposit on the next payday')),
             last: true,
           ),
           const SizedBox(height: 14),
-          VeloraButton(label: tr('Review & sign'), onPressed: onStart),
+          VeloraButton(label: clocks ? tr('Review & sign') : tr('Start check-in'), onPressed: onStart),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Visits with answers · Hospital stays · Care not given" (clock-in mode).
+class _Summary extends StatelessWidget {
+  const _Summary({required this.ext});
+
+  final ComplianceFormExtensionModel ext;
+
+  @override
+  Widget build(BuildContext context) {
+    final done = ext.visitsWithAnswersDone;
+    final total = ext.visitsWithAnswersTotal;
+    final stays = ext.hospitalStays.where((h) => h.wasInHospital).toList();
+    final careDays = ext.careNotGivenDays ?? 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: VeloraColors.line),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          if (done != null && total != null)
+            KeyValueRow(showDivider: false, label: tr('Visits with answers'), value: tr('{0} of {1}', [done, total])),
+          KeyValueRow(
+            showDivider: done != null && total != null,
+            label: tr('Hospital stays reported'),
+            value: stays.isEmpty
+                ? tr('None')
+                : stays.length == 1 && stays.first.summaryLine != null
+                    ? stays.first.summaryLine!
+                    : tr('{0} reported', [stays.length]),
+          ),
+          KeyValueRow(
+            label: tr('Care not given'),
+            value: careDays == 0 ? tr('None') : (careDays == 1 ? tr('1 day') : tr('{0} days', [careDays])),
+          ),
         ],
       ),
     );
@@ -233,6 +302,16 @@ class _HistoryCard extends StatelessWidget {
 
   final List<ComplianceHistoryRecordModel> records;
 
+  /// "Signed Sep 1 · paid Sep 11" when the planned fields are there.
+  static String _subtitle(ComplianceHistoryRecordModel record) {
+    final signed = record.velora?.signedAt ?? record.submittedAt;
+    if (signed == null) return record.status;
+    final paid = record.velora?.paidAt;
+    return paid == null
+        ? tr('Signed {0}', [VeloraFormat.monthDay(signed.toLocal())])
+        : tr('Signed {0} · paid {1}', [VeloraFormat.monthDay(signed.toLocal()), VeloraFormat.monthDay(paid.toLocal())]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return VeloraCard(
@@ -264,10 +343,14 @@ class _HistoryCard extends StatelessWidget {
                   radius: 11,
                 ),
                 title: record.periodLabel,
-                subtitle: record.submittedAt != null
-                    ? tr('Signed {0}', [VeloraFormat.monthDay(record.submittedAt!.toLocal())])
-                    : record.status,
-                showChevron: false,
+                subtitle: _subtitle(record),
+                trailing: record.velora?.netPay != null
+                    ? Text(VeloraFormat.money(record.velora!.netPay!), style: VeloraText.body(15, weight: FontWeight.w700))
+                    : null,
+                showChevron: record.velora?.payId != null,
+                onTap: record.velora?.payId != null
+                    ? () => AppNavigator.openPaystub(context, id: '${record.velora!.payId}')
+                    : null,
               ),
         ],
       ),

@@ -223,6 +223,10 @@ void showVeloraToast(BuildContext context, String message) {
     ..showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
+        // Tablets: a phone-width toast instead of one across the screen.
+        width: MediaQuery.sizeOf(context).width > VeloraSpacing.maxContentWidth
+            ? VeloraSpacing.maxContentWidth - 32
+            : null,
         backgroundColor: VeloraColors.brandDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         content: Row(

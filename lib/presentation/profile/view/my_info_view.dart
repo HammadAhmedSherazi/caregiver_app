@@ -13,8 +13,8 @@ import '../../../core/i18n/tr.dart';
 
 /// "My info" form, pre-filled from `GET /me`.
 ///
-/// Sends `POST /me/info-change` (🚧 PLANNED — NOT LIVE) when
-/// `ApiConfig.veloraApiEnabled`; otherwise "Send changes" explains the
+/// Sends `POST /me/info-change` (live, Group 1) when
+/// `ApiConfig.veloraGroup1Enabled`; otherwise "Send changes" explains the
 /// endpoint isn't available. Only changed fields are sent, and the profile
 /// is **not** updated locally — the change stays pending until the office
 /// approves. Bank changes go through the document upload.
@@ -40,7 +40,7 @@ class _MyInfoViewState extends State<MyInfoView> {
       c.text.trim() == initial.trim() ? null : c.text;
 
   Future<void> _send() async {
-    if (!ApiConfig.veloraApiEnabled) {
+    if (!ApiConfig.veloraGroup1Enabled) {
       await showApiRequiredSheet(
         context,
         feature: tr('Profile changes'),

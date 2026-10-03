@@ -716,6 +716,14 @@
     "of {0} set days": "من {0} أيام محددة",
     "set days done": "أيام محددة منجزة",
     "{0} hours left this month. Hours past what your client's plan approves can't be paid, so we'll warn you before you reach the limit.": "تبقّى {0} ساعة هذا الشهر. لا يمكن دفع الساعات التي تتجاوز ما تعتمده خطة عميلك، لذا سننبّهك قبل الوصول إلى الحد.",
-    "{0} of {1} hrs": "{0} من {1} ساعة"
+    "{0} of {1} hrs": "{0} من {1} ساعة",
+    "Delete my account": "حذف حسابي",
+    "Delete your account?": "هل تريد حذف حسابك؟",
+    "This can't be undone. You will be signed out everywhere and your personal details will be erased.": "لا يمكن التراجع عن هذا. سيتم تسجيل خروجك من كل الأجهزة وستُمحى بياناتك الشخصية.",
+    "Visit, pay and check-in records are kept without your name, because healthcare and payroll rules require it.": "تُحفظ سجلات الزيارات والرواتب والمراجعات الشهرية بدون اسمك، لأن قواعد الرعاية الصحية والرواتب تتطلب ذلك.",
+    "Enter your password to confirm.": "أدخل كلمة المرور للتأكيد.",
+    "Account deletion": "حذف الحساب",
+    "Enter your password.": "أدخل كلمة المرور.",
+    "Your account has been deleted.": "تم حذف حسابك."
   }
 }

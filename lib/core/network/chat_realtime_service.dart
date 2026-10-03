@@ -535,6 +535,13 @@ class ChatRealtimeService {
         debugPrint('Pusher: could not parse message payload');
         return;
       }
+      if (kDebugMode) {
+        final createdAt = DateTime.tryParse('${json['created_at']}');
+        if (createdAt != null) {
+          final lag = DateTime.now().toUtc().difference(createdAt.toUtc());
+          debugPrint('Pusher: message ${json['id']} arrived ${lag.inMilliseconds} ms after created_at');
+        }
+      }
 
       final channelName = event.channelName;
       final threadId = _activeThreadId;

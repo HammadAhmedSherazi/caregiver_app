@@ -107,6 +107,21 @@ class FirebasePushService {
 
   void onSignedOut() => _signedIn = false;
 
+  /// This phone's FCM token for `POST /login` / `POST /logout`, or `null`
+  /// when push is off or no token is available yet (iOS before permission).
+  /// Never waits long: sign-in and sign-out must not hang on Firebase.
+  Future<String?> currentToken() async {
+    if (!_available) return null;
+    try {
+      final token = await FirebaseMessaging.instance
+          .getToken()
+          .timeout(const Duration(seconds: 3));
+      return token == null || token.isEmpty ? null : token;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _sendToken(String? token) async {
     if (!_signedIn || token == null) return;
     try {

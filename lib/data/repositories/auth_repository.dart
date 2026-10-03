@@ -14,7 +14,12 @@ abstract class AuthRepository {
 
   Future<UserModel?> getCurrentUser();
   Future<bool> hasStoredSession();
-  Future<UserModel> login({required String email, required String password});
+  /// [device] also registers this phone for push in the same call.
+  Future<UserModel> login({
+    required String email,
+    required String password,
+    DeviceRegistrationRequest? device,
+  });
   Future<void> signup({
     required String name,
     required String email,
@@ -34,8 +39,13 @@ abstract class AuthRepository {
   });
   Future<void> acceptPrivacyTerms({required String email});
   Future<void> forgotPassword({required String email});
-  Future<void> logout();
+  /// [fcmToken] stops pushes for this account on this phone.
+  Future<void> logout({String? fcmToken});
   Future<void> clearLocalSession();
+
+  /// `DELETE /account` — permanent. On success the local session is cleared.
+  /// Returns the server's confirmation message.
+  Future<String> deleteAccount({required String password});
   Future<bool> refreshSession();
 
   // 🚧 PLANNED — NOT LIVE (MOBILE_API_VELORA.md §1). Email + password keeps
@@ -142,9 +152,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserModel> login({
     required String email,
     required String password,
+    DeviceRegistrationRequest? device,
   }) async {
     try {
-      final result = await _api.login(email: email, password: password);
+      final result = await _api.login(
+        email: email,
+        password: password,
+        device: device,
+      );
       _cachedUser = result.user;
       await _sessionStorage.saveUser(result.user);
       return result.user;
@@ -197,12 +212,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> logout() async {
+  Future<void> logout({String? fcmToken}) async {
     try {
-      await _api.logout();
+      await _api.logout(fcmToken: fcmToken);
     } finally {
       await clearLocalSession();
     }
+  }
+
+  @override
+  Future<String> deleteAccount({required String password}) async {
+    final message = await _velora.deleteAccount(password: password);
+    await clearLocalSession();
+    return message;
   }
 
   @override

@@ -7,17 +7,21 @@ import '../../../data/repositories/profile_repository.dart';
 import '../../main/app_navigator.dart';
 import '../../widgets/velora/velora.dart';
 import '../../../core/i18n/tr.dart';
+import 'delete_account_sheet.dart';
 
 /// Privacy: static explanation of what the app keeps.
 ///
 /// "Get a copy of my information" → `POST /privacy/data-request`
-/// (🚧 PLANNED — NOT LIVE) when `ApiConfig.veloraApiEnabled`; otherwise it
+/// (live, Group 1) when `ApiConfig.veloraGroup1Enabled`; otherwise it
 /// explains the request can't be sent from the app yet.
+///
+/// "Delete my account" → `DELETE /account` via [DeleteAccountSheet]
+/// (App Store / Google Play requirement), behind the same flag.
 class PrivacyView extends StatelessWidget {
   const PrivacyView({super.key});
 
   Future<void> _requestCopy(BuildContext context) async {
-    if (!ApiConfig.veloraApiEnabled) {
+    if (!ApiConfig.veloraGroup1Enabled) {
       await showApiRequiredSheet(
         context,
         feature: tr('Information requests'),
@@ -31,6 +35,18 @@ class PrivacyView extends StatelessWidget {
     } catch (error) {
       if (context.mounted) showVeloraToast(context, apiErrorMessage(error));
     }
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    if (!ApiConfig.veloraGroup1Enabled) {
+      await showApiRequiredSheet(
+        context,
+        feature: tr('Account deletion'),
+        onContactOffice: () => AppNavigator.openInbox(context),
+      );
+      return;
+    }
+    await DeleteAccountSheet.show(context);
   }
 
   @override
@@ -120,6 +136,14 @@ class PrivacyView extends StatelessWidget {
               label: tr('Question about privacy? Message the office'),
               size: 13.5,
               onTap: () => AppNavigator.openInbox(context),
+            ),
+          ),
+          Center(
+            child: VeloraTextLink(
+              label: tr('Delete my account'),
+              size: 13.5,
+              color: VeloraColors.dangerText,
+              onTap: () => _deleteAccount(context),
             ),
           ),
         ],

@@ -43,9 +43,13 @@ class CaregiverApi {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
 
+  /// `POST /login`. With [device] the phone is also registered for push in
+  /// the same call (optional `fcm_token`, `platform`, `app_version`,
+  /// `language` — MOBILE_API_VELORA.md §1; older servers ignore them).
   Future<LoginResult> login({
     required String email,
     required String password,
+    DeviceRegistrationRequest? device,
   }) async {
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
@@ -53,6 +57,12 @@ class CaregiverApi {
         data: {
           'email': email.trim(),
           'password': password,
+          if (device != null) ...{
+            'fcm_token': device.token,
+            'platform': device.platform,
+            'app_version': device.appVersion,
+            'language': device.language,
+          },
         },
       );
 
@@ -97,9 +107,13 @@ class CaregiverApi {
     }
   }
 
-  Future<void> logout() async {
+  /// `POST /logout`. [fcmToken] stops pushes for this account on this phone.
+  Future<void> logout({String? fcmToken}) async {
     try {
-      await _apiClient.post<void>('/logout');
+      await _apiClient.post<void>(
+        '/logout',
+        data: fcmToken == null ? null : {'fcm_token': fcmToken},
+      );
     } catch (error) {
       ApiClient.rethrowAsApiException(error);
     } finally {

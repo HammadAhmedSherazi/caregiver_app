@@ -118,7 +118,7 @@ class VeloraTextLink extends StatelessWidget {
   }
 }
 
-enum VeloraButtonVariant { primary, ghost, outline, amber }
+enum VeloraButtonVariant { primary, ghost, outline, amber, danger }
 
 /// Full-width action button (`.btn`, `.btn.ghost`, `.btn.out`, `.btn.big`).
 class VeloraButton extends StatelessWidget {
@@ -167,6 +167,12 @@ class VeloraButton extends StatelessWidget {
           VeloraColors.amber,
           VeloraColors.amberInk,
           VeloraColors.amberInk,
+          null,
+        ),
+      VeloraButtonVariant.danger => (
+          enabled ? VeloraColors.dangerText : VeloraColors.disabled,
+          Colors.white,
+          Colors.white,
           null,
         ),
     };

@@ -695,9 +695,9 @@ class _LoginViewState extends State<LoginView> {
           icon: VeloraIcons.send,
           onPressed: ready ? () => _sendCode(strings) : null,
         ),
-        // Phone sign-in isn't live on the server yet (VELORA_API); keep the
-        // working email sign-in one tap away until it is.
-        if (!ApiConfig.veloraApiEnabled && !_errorIsNotLive)
+        // Phone sign-in turned off (VELORA_GROUP1=false); keep the working
+        // email sign-in one tap away.
+        if (!ApiConfig.veloraGroup1Enabled && !_errorIsNotLive)
           _LinkButton(
             label: strings.emailLink,
             muted: true,

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/base/base_cubit.dart';
 import '../../../core/di/service_locator.dart';
+import '../../../core/push/firebase_push_service.dart';
 import '../../../core/push/push_notification_handler.dart';
 import '../../../core/network/chat_realtime_service.dart';
 import '../../../data/local/face_id_store.dart';
@@ -187,7 +188,11 @@ class AuthCubit extends BaseCubit<AuthState> {
     emit(state.copyWith(isSubmitting: true, clearError: true));
 
     try {
-      final user = await repository.login(email: email, password: password);
+      final user = await repository.login(
+        email: email,
+        password: password,
+        device: await _pushRegistration(),
+      );
       await sl<FaceIdStore>().clearLockedToken();
       await repository.setOnboardingCompleted();
       await rememberMeStorage.save(
@@ -442,7 +447,7 @@ class AuthCubit extends BaseCubit<AuthState> {
 
     try {
       await sl<ChatRealtimeService>().disconnect();
-      // Stop pushes to this phone (no-op while the planned API is off).
+      // Stop pushes to this phone (no-op while Group 1 is switched off).
       await sl<PushNotificationHandler>().onSignOut();
 
       final faceStore = sl<FaceIdStore>();
@@ -454,7 +459,9 @@ class AuthCubit extends BaseCubit<AuthState> {
         await faceStore.lockToken(token);
         await repository.clearLocalSession();
       } else {
-        await repository.logout();
+        await repository.logout(
+          fcmToken: await sl<FirebasePushService>().currentToken(),
+        );
       }
       emit(
         state.copyWith(
@@ -473,5 +480,52 @@ class AuthCubit extends BaseCubit<AuthState> {
         ),
       );
     }
+  }
+
+  /// This phone's push fields for `POST /login`, or `null` without a token.
+  Future<DeviceRegistrationRequest?> _pushRegistration() async {
+    final token = await sl<FirebasePushService>().currentToken();
+    return token == null
+        ? null
+        : sl<PushNotificationHandler>().registrationFor(token);
+  }
+
+  /// `DELETE /account` (Profile → Privacy). Throws [ApiException]s — e.g. a
+  /// `ValidationException` for a wrong password — so the sheet can show them.
+  /// On success every trace of the session is removed from this phone and
+  /// the app returns to sign-in; there is no undo.
+  Future<String> deleteAccount({required String password}) async {
+    emit(state.copyWith(isSubmitting: true, clearError: true));
+    final String message;
+    try {
+      message = await repository.deleteAccount(password: password);
+    } catch (_) {
+      emit(state.copyWith(isSubmitting: false));
+      rethrow;
+    }
+
+    // The account is gone; a local cleanup failure must not keep the
+    // caregiver signed in.
+    for (final cleanup in <Future<void> Function()>[
+      () => sl<ChatRealtimeService>().disconnect(),
+      () => sl<PushNotificationHandler>().onAccountDeleted(),
+      () => sl<FaceIdStore>().disable(),
+      () => rememberMeStorage.save(enabled: false),
+    ]) {
+      try {
+        await cleanup();
+      } catch (error, stackTrace) {
+        logError('Account cleanup step failed', error: error, stackTrace: stackTrace);
+      }
+    }
+    emit(
+      state.copyWith(
+        status: AuthStatus.unauthenticated,
+        clearUser: true,
+        isSubmitting: false,
+        faceLocked: false,
+      ),
+    );
+    return message;
   }
 }

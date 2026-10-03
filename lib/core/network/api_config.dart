@@ -26,6 +26,10 @@ class ApiConfig {
   /// is not live.
   static const Duration chatPollInterval = Duration(seconds: 10);
 
+  /// While the socket is live, open chats still poll at this slower rate so
+  /// a message the server failed to broadcast shows up anyway.
+  static const Duration chatLivePollInterval = Duration(seconds: 30);
+
   /// After a failed socket connect, stay on REST this long before retrying,
   /// so a 404 socket path can't loop connect → disconnect → reconnect.
   static const Duration realtimeRetryCooldown = Duration(minutes: 2);
@@ -50,6 +54,14 @@ class ApiConfig {
     'VELORA_API',
     defaultValue: false,
   );
+
+  /// Group 1 of `MOBILE_API_VELORA.md` is **live** on the server: phone and
+  /// invite sign-in, `PUT /me/settings`, `POST /me/info-change`,
+  /// `POST /privacy/data-request`, `POST|DELETE /devices` and
+  /// `DELETE /account`. On by default; `--dart-define=VELORA_GROUP1=false`
+  /// turns it off. [veloraApiEnabled] implies it.
+  static const bool veloraGroup1Enabled = veloraApiEnabled ||
+      bool.fromEnvironment('VELORA_GROUP1', defaultValue: true);
 
   /// Languages the server localizes `*_label` strings and pushes into.
   static const List<String> supportedLanguages = ['en', 'ar'];

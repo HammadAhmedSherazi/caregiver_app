@@ -11,17 +11,22 @@ import 'chat_state.dart';
 /// One chat thread. Messages come from `GET /conversations/{id}`; new ones
 /// arrive over the socket when it is live, otherwise by polling the same
 /// endpoint every [pollInterval] (FLUTTER_SOCKET_CONNECT.pdf:
-/// keep the REST path working until the socket is live).
+/// keep the REST path working until the socket is live). While live it still
+/// polls every [livePollInterval], in case the server misses a broadcast.
 class ChatCubit extends BaseCubit<ChatState> {
   ChatCubit({
     required this.threadId,
     required this.repository,
     required this.realtime,
     this.pollInterval = ApiConfig.chatPollInterval,
+    this.livePollInterval = ApiConfig.chatLivePollInterval,
   }) : super(const ChatState());
 
   /// How often to fetch messages while the socket is not live.
   final Duration pollInterval;
+
+  /// Safety-net poll while the socket is live.
+  final Duration livePollInterval;
 
   final String threadId;
   final InboxRepository repository;
@@ -29,6 +34,7 @@ class ChatCubit extends BaseCubit<ChatState> {
 
   StreamSubscription<ChatMessage>? _socketSub;
   Timer? _pollTimer;
+  Duration? _pollEvery;
   bool _polling = false;
 
   /// True while another thread's [ChatView] is open on top of the inline
@@ -42,15 +48,19 @@ class ChatCubit extends BaseCubit<ChatState> {
     await _initSocket();
   }
 
-  /// Poll only while the conversation channel is not subscribed.
+  /// Fast polling while the conversation channel is not subscribed, a slow
+  /// safety-net poll while it is, none while paused.
   void _syncPolling() {
     if (isClosed) return;
-    if (_paused || realtime.conversationLive.value) {
-      _pollTimer?.cancel();
-      _pollTimer = null;
-    } else {
-      _pollTimer ??= Timer.periodic(pollInterval, (_) => _poll());
-    }
+    final every = _paused
+        ? null
+        : realtime.conversationLive.value
+            ? livePollInterval
+            : pollInterval;
+    if (every == _pollEvery && (_pollTimer != null) == (every != null)) return;
+    _pollTimer?.cancel();
+    _pollEvery = every;
+    _pollTimer = every == null ? null : Timer.periodic(every, (_) => _poll());
   }
 
   Future<void> _poll() async {
@@ -81,6 +91,7 @@ class ChatCubit extends BaseCubit<ChatState> {
     _paused = true;
     _pollTimer?.cancel();
     _pollTimer = null;
+    _pollEvery = null;
     await _socketSub?.cancel();
     _socketSub = null;
   }

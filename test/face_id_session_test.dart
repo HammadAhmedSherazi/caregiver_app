@@ -38,7 +38,7 @@ class _Repo implements AuthRepository {
     await sl<TokenStorage>().clearToken();
   }
   @override
-  Future<void> logout() async {
+  Future<void> logout({String? fcmToken}) async {
     revoked = true;
     await clearLocalSession();
   }

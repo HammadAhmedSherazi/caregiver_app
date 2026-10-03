@@ -30,17 +30,21 @@ class PushNotificationHandler {
   final LanguageStore _languageStore;
   final String appVersion;
 
-  /// Registers this phone (`POST /devices`). No-op while the planned API is off.
-  Future<void> onToken(String token) async {
-    if (!ApiConfig.veloraApiEnabled || token.isEmpty) return;
-    await _devices.register(
-      DeviceRegistrationRequest(
-        token: token,
-        platform: Platform.isIOS ? 'ios' : 'android',
-        appVersion: appVersion,
-        language: _languageStore.current,
-      ),
+  /// This phone's push registration for [token] — `POST /devices`, and the
+  /// optional push fields of `POST /login`.
+  DeviceRegistrationRequest registrationFor(String token) {
+    return DeviceRegistrationRequest(
+      token: token,
+      platform: Platform.isIOS ? 'ios' : 'android',
+      appVersion: appVersion,
+      language: _languageStore.current,
     );
+  }
+
+  /// Registers this phone (`POST /devices`). No-op while Group 1 is switched off.
+  Future<void> onToken(String token) async {
+    if (!ApiConfig.veloraGroup1Enabled || token.isEmpty) return;
+    await _devices.register(registrationFor(token));
   }
 
   /// Push payload `data: { screen, …params }` → the matching screen.
@@ -54,11 +58,15 @@ class PushNotificationHandler {
   /// `DELETE /devices/{id}` on sign-out (best effort, before the token is
   /// cleared so the request is still authenticated).
   Future<void> onSignOut() async {
-    if (!ApiConfig.veloraApiEnabled) return;
+    if (!ApiConfig.veloraGroup1Enabled) return;
     try {
       await _devices.unregister();
     } catch (error) {
       debugPrint('Push device unregister failed: $error');
     }
   }
+
+  /// After `DELETE /account` the server has already removed every push
+  /// registration; only the saved device id is left to drop.
+  Future<void> onAccountDeleted() => _devices.forget();
 }

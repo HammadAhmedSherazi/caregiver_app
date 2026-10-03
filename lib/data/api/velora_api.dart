@@ -23,8 +23,25 @@ class VeloraApi {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
 
+  /// Group 1 endpoints — live on the server ([ApiConfig.veloraGroup1Enabled]).
+  static const _group1 = {
+    'POST /auth/phone/send-code',
+    'POST /auth/phone/verify',
+    'POST /auth/invite/check',
+    'POST /auth/invite/confirm',
+    'PUT /me/settings',
+    'POST /me/info-change',
+    'POST /privacy/data-request',
+    'POST /devices',
+    'DELETE /devices/{id}',
+    'DELETE /account',
+  };
+
   static void _ensureLive(String endpoint) {
-    if (!ApiConfig.veloraApiEnabled) throw ApiNotLiveException(endpoint);
+    final live = _group1.contains(endpoint)
+        ? ApiConfig.veloraGroup1Enabled
+        : ApiConfig.veloraApiEnabled;
+    if (!live) throw ApiNotLiveException(endpoint);
   }
 
   Future<Json> _send(
@@ -139,6 +156,27 @@ class VeloraApi {
     final result = PrivacyRequestResultModel.maybeFromJson(json);
     if (result == null) throw ApiException('Invalid data-request response');
     return result;
+  }
+
+  /// 23. `DELETE /account` (§10a) — permanent; required by Apple / Google.
+  /// The server revokes every token and push registration. Wrong password is
+  /// a `422` with `errors.password`. Returns the server's message.
+  Future<String> deleteAccount({required String password}) async {
+    if (password.isEmpty) {
+      throw RequestValidationException({
+        'password': ['Enter your password.'],
+      });
+    }
+    final json = await _send('DELETE /account', () {
+      return _apiClient.delete<Map<String, dynamic>>(
+        '/account',
+        data: {'password': password},
+      );
+    });
+    final message = json['message'];
+    return message is String && message.isNotEmpty
+        ? message
+        : 'Your account has been deleted.';
   }
 
   // -------------------------------------------------------------- §11 Push

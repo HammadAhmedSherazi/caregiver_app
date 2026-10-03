@@ -14,6 +14,9 @@ abstract class DeviceRepository {
   Future<int> register(DeviceRegistrationRequest request);
   Future<void> unregister();
   Future<int?> registeredDeviceId();
+
+  /// Drops the saved device id without calling the server.
+  Future<void> forget();
 }
 
 class DeviceRepositoryImpl implements DeviceRepository {
@@ -47,5 +50,11 @@ class DeviceRepositoryImpl implements DeviceRepository {
   Future<int?> registeredDeviceId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_keyDeviceId);
+  }
+
+  @override
+  Future<void> forget() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyDeviceId);
   }
 }

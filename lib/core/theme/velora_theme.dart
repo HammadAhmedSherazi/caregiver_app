@@ -146,9 +146,10 @@ class VeloraSpacing {
   static const double gutter = 16;
   static const double gap = 14;
 
-  /// Width of the phone-designed column on tablets: page content, header
-  /// text, tab bar and toasts stay this wide, centred.
-  static const double maxContentWidth = 640;
+  /// Max width of page content, header text, tab bar and toasts. Unbounded:
+  /// on tablets every screen uses the full width. Set a number (e.g. 640)
+  /// to bring back a centred phone-width column.
+  static const double maxContentWidth = double.infinity;
 
   /// Bottom padding for scroll views that sit under the floating tab bar.
   static double tabBarClearance(BuildContext context) =>

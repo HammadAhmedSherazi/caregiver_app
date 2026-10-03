@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Caregiver App';
+  static const String appName = 'Velora Cares';
 
   /// Sent as `app_version` to `POST /devices`; keep in sync with pubspec.
   static const String appVersion = '1.0.0';

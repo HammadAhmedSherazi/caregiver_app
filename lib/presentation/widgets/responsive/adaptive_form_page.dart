@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/responsive/responsive_breakpoints.dart';
 import '../../../core/responsive/responsive_helper.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -36,7 +37,7 @@ class AdaptiveFormPage extends StatelessWidget {
   Widget _buildContent(BuildContext context) {
     return AdaptiveContent(
       scrollable: true,
-      maxWidth: ResponsiveHelper.isTabletOrLarger(context) ? 430 : double.infinity,
+      maxWidth: ResponsiveBreakpoints.formMaxWidth,
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.value(
           context,

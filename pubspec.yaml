@@ -2,7 +2,7 @@ name: caregiver_app
 description: Caregiver App - mobile-first Flutter application for Android and iOS.
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: ^3.12.2

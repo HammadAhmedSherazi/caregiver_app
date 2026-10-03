@@ -10,6 +10,9 @@ class AppTheme {
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
+        // Material 3 caps bottom sheets at 640 wide; on tablets they span
+        // the full width like every other screen.
+        bottomSheetTheme: const BottomSheetThemeData(constraints: BoxConstraints()),
         fontFamily: AppFonts.fontFamily,
         brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.background,

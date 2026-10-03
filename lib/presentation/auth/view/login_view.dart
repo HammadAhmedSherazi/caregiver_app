@@ -496,12 +496,11 @@ class _LoginViewState extends State<LoginView> {
         22,
         26 + MediaQuery.paddingOf(context).bottom,
       ),
-      // The white panel spans the full width (tablets too); its content
-      // stays phone-width and centred.
+      // The white panel and its content span the full width (tablets too).
       child: Center(
         heightFactor: 1,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: VeloraSpacing.maxContentWidth),
           child: BlocBuilder<AuthCubit, AuthState>(
             builder: (context, state) {
               return AnimatedSize(
